@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 
@@ -11,35 +11,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://pyus1528_db_user:qG3feuciLBXuBciS@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority&appName=Manit-Mess';
-
-// Dual SMTP Transporters configured for Port 465 (SSL)
-const transporters = [
-    nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.EMAIL_1 ? process.env.EMAIL_1.trim() : '',
-            pass: process.env.PASS_1 ? process.env.PASS_1.replace(/\s+/g, '') : ''
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000
-    }),
-    nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.EMAIL_2 ? process.env.EMAIL_2.trim() : '',
-            pass: process.env.PASS_2 ? process.env.PASS_2.replace(/\s+/g, '') : ''
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000
-    })
-];
-let currentTransporterIndex = 0;
+const resend = new Resend(process.env.RESEND_API_KEY || 're_fallback');
 
 mongoose.connect(MONGO_URI, {
     maxPoolSize: 50,
@@ -84,7 +56,7 @@ function getCurrentMealSlot() {
     return { active: true, id: `${dateStr}-${mealSlot}`, name: mealSlot };
 }
 
-// 1. Request OTP
+// 1. Request OTP via HTTPS API (No SMTP / No Port Blocking)
 app.post('/api/request-otp', async (req, res) => {
     try {
         const { scholarId } = req.body;
@@ -103,11 +75,8 @@ app.post('/api/request-otp', async (req, res) => {
         await OtpRecord.deleteMany({ scholarId: cleanId });
         await OtpRecord.create({ scholarId: cleanId, otp });
 
-        const activeTransporter = transporters[currentTransporterIndex];
-        currentTransporterIndex = (currentTransporterIndex + 1) % transporters.length;
-
-        const mailOptions = {
-            from: `"MANIT Hostel Mess Portal" <${activeTransporter.options.auth.user}>`,
+        const emailResponse = await resend.emails.send({
+            from: 'MANIT Mess Pass <onboarding@resend.dev>',
             to: collegeEmail,
             subject: `MANIT Mess Registration OTP: ${otp}`,
             html: `
@@ -120,16 +89,17 @@ app.post('/api/request-otp', async (req, res) => {
                     <p style="font-size: 12px; color: #64748b;">This OTP will expire in 10 minutes. If you did not request this, please disregard this email.</p>
                 </div>
             `
-        };
+        });
 
-        await activeTransporter.sendMail(mailOptions);
+        if (emailResponse.error) {
+            console.error("Resend API returned error:", emailResponse.error);
+            return res.status(500).json({ success: false, message: emailResponse.error.message || "Email dispatch failed" });
+        }
+
         res.json({ success: true, message: `OTP sent to ${collegeEmail}` });
     } catch (err) {
-        console.error("OTP Error:", err);
-        res.status(500).json({ 
-            success: false, 
-            message: `Mailer Error: ${err.message || "Failed to dispatch OTP"}` 
-        });
+        console.error("OTP Endpoint Error:", err);
+        res.status(500).json({ success: false, message: err.message || "Failed to dispatch email OTP" });
     }
 });
 
