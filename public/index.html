@@ -60,8 +60,6 @@
         .toast.show { transform: translateX(-50%) translateY(0); }
         .toast.success { background: var(--primary); }
         .toast.error { background: var(--danger); }
-        .admin-controls { margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: left; }
-        .admin-controls h4 { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -88,34 +86,55 @@
             </div>
             <button id="btn-login" onclick="handleLogin()">Display Identity Card</button>
             <div style="text-align: center; margin-top: 15px;">
-                <button class="btn-link" onclick="switchView('view-register')">New Student? Register Card</button>
+                <button class="btn-link" onclick="switchView('view-register-step1')">New Student? Register via MANIT Mail</button>
             </div>
             <button class="btn-outline" onclick="switchView('view-admin-login')">Mess Staff Scanner</button>
         </div>
     </div>
 
-    <!-- VIEW 2: Student Registration -->
-    <div id="view-register" class="view">
+    <!-- VIEW 2A: Registration Step 1 (Request OTP) -->
+    <div id="view-register-step1" class="view">
         <div class="panel-box">
             <div class="header-emblem">
                 <img src="/manit-logo.png" alt="MANIT Logo" class="logo-img-top">
-                <h1>Card Registration</h1>
-                <p>Official Record Setup</p>
+                <h1>Step 1: Institutional Verification</h1>
+                <p>Hostel 10 Authorization</p>
+            </div>
+            <div class="input-group">
+                <label>Scholar Number <span class="req">*</span></label>
+                <input type="text" id="reg-init-id" placeholder="e.g. 241112001" oninput="updateDerivedEmail()">
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
+                OTP will be delivered strictly to:<br>
+                <strong id="derived-email" style="color: var(--accent);">scholar@stu.manit.ac.in</strong>
+            </p>
+            <button id="btn-send-otp" onclick="handleSendOtp()">Dispatch Verification OTP</button>
+            <button class="btn-outline" onclick="switchView('view-login')">Back to Login</button>
+        </div>
+    </div>
+
+    <!-- VIEW 2B: Registration Step 2 (Verify OTP & Complete Profile) -->
+    <div id="view-register-step2" class="view">
+        <div class="panel-box">
+            <div class="header-emblem">
+                <img src="/manit-logo.png" alt="MANIT Logo" class="logo-img-top">
+                <h1>Step 2: Profile Activation</h1>
+                <p>Complete Record</p>
+            </div>
+            <div class="input-group">
+                <label>6-Digit Email OTP <span class="req">*</span></label>
+                <input type="text" id="reg-otp" placeholder="Enter 6-digit code">
             </div>
             <div class="input-group">
                 <label>Full Name <span class="req">*</span></label>
                 <input type="text" id="reg-name" placeholder="Student Full Name">
             </div>
             <div class="input-group">
-                <label>Scholar ID <span class="req">*</span></label>
-                <input type="text" id="reg-id" placeholder="e.g. 241112001">
-            </div>
-            <div class="input-group">
                 <label>Hostel & Room Number <span class="req">*</span></label>
                 <input type="text" id="reg-room" placeholder="e.g. Hostel 10, Room 304">
             </div>
             <div class="input-group">
-                <label>Student Profile Photograph <span class="req">*</span></label>
+                <label>Profile Photograph <span class="req">*</span></label>
                 <input type="file" id="reg-photo-input" accept="image/*" onchange="previewPhoto(event)">
                 <div style="margin-top: 10px; display: none; align-items: center;" id="photo-preview-container">
                     <img id="reg-photo-preview" src="" style="width: 60px; height: 75px; object-fit: cover; border-radius: 8px; border: 2px solid var(--accent);">
@@ -124,10 +143,10 @@
             </div>
             <div class="input-group">
                 <label>Create Login Password <span class="req">*</span></label>
-                <input type="password" id="reg-pass" placeholder="Password">
+                <input type="password" id="reg-pass" placeholder="Create Password">
             </div>
-            <button id="btn-register" onclick="handleRegister()">Save Record & Generate Card</button>
-            <button class="btn-outline" onclick="switchView('view-login')">Cancel</button>
+            <button id="btn-final-register" onclick="handleFinalRegister()">Verify OTP & Activate Card</button>
+            <button class="btn-outline" onclick="switchView('view-register-step1')">Back</button>
         </div>
     </div>
 
@@ -181,7 +200,7 @@
                 
                 <div class="claimed-box" id="claimed-container-box">
                     <h3>✅ Meal Received</h3>
-                    <p>QR code verified. It will regenerate automatically for the next scheduled meal, or upon staff reset.</p>
+                    <p>Verified. QR will reset automatically for the next scheduled meal window.</p>
                 </div>
                 
                 <div>
@@ -207,11 +226,10 @@
             
             <div id="reader" style="border-radius: 14px; overflow: hidden; border: none;"></div>
 
-            <!-- MANUAL QR RESET SECTION -->
-            <div class="admin-controls">
-                <h4>Manual Card Reset</h4>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: left;">
+                <h4 style="font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 8px;">Staff Card Reset</h4>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="manual-reset-id" placeholder="Scholar ID to reset" style="padding: 10px; font-size: 13px;">
+                    <input type="text" id="manual-reset-id" placeholder="Scholar ID" style="padding: 10px; font-size: 13px;">
                     <button onclick="resetSingleStudent()" style="width: auto; padding: 10px 15px; margin: 0; font-size: 13px; background: var(--accent);">Reset</button>
                 </div>
                 <button onclick="resetAllStudents()" style="background: var(--accent-gold); margin-top: 10px; padding: 12px; font-size: 13px;">Reset All Students (Next Meal)</button>
@@ -225,6 +243,7 @@
 
 <script>
     const API_URL = '/api';
+    let verifiedScholarId = "";
     let uploadedPhotoBase64 = "";
     let qrcodeInstance = null;
     let clockInterval = null;
@@ -235,12 +254,44 @@
         const toast = document.getElementById('toast');
         toast.className = `toast ${type} show`;
         toast.innerHTML = msg;
-        setTimeout(() => toast.classList.remove('show'), 2500);
+        setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     function switchView(viewId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(viewId).classList.add('active');
+    }
+
+    function updateDerivedEmail() {
+        const val = document.getElementById('reg-init-id').value.trim();
+        document.getElementById('derived-email').innerText = val ? `${val}@stu.manit.ac.in` : 'scholar@stu.manit.ac.in';
+    }
+
+    async function handleSendOtp() {
+        const scholarId = document.getElementById('reg-init-id').value.trim();
+        const btn = document.getElementById('btn-send-otp');
+        if (!scholarId) return showToast("Enter your Scholar Number", "error");
+
+        btn.disabled = true; btn.innerText = "Dispatching OTP...";
+        try {
+            const res = await fetch(`${API_URL}/request-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scholarId })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                verifiedScholarId = scholarId;
+                showToast(data.message, "success");
+                switchView('view-register-step2');
+            } else {
+                showToast(data.message || "Could not dispatch OTP", "error");
+            }
+        } catch(e) {
+            showToast("Server error during OTP request.", "error");
+        } finally {
+            btn.disabled = false; btn.innerText = "Dispatch Verification OTP";
+        }
     }
 
     function previewPhoto(event) {
@@ -267,47 +318,42 @@
                 document.getElementById('reg-photo-preview').src = uploadedPhotoBase64;
                 document.getElementById('photo-preview-container').style.display = 'flex';
                 const sizeInKb = (Math.round((uploadedPhotoBase64.length * 3) / 4) / 1024).toFixed(1);
-                document.getElementById('photo-size-label').innerText = `Ready! (${sizeInKb} KB)`;
+                document.getElementById('photo-size-label').innerText = `Ready (${sizeInKb} KB)`;
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
 
-    async function handleRegister() {
+    async function handleFinalRegister() {
+        const otp = document.getElementById('reg-otp').value.trim();
         const name = document.getElementById('reg-name').value.trim();
-        const scholarId = document.getElementById('reg-id').value.trim();
         const room = document.getElementById('reg-room').value.trim();
         const password = document.getElementById('reg-pass').value;
-        const btn = document.getElementById('btn-register');
+        const btn = document.getElementById('btn-final-register');
 
-        if (!name || !scholarId || !room || !password || !uploadedPhotoBase64) {
-            return showToast("Please upload a photo and fill all fields", "error");
+        if (!otp || !name || !room || !password || !uploadedPhotoBase64) {
+            return showToast("Please fill all fields and provide photo & OTP", "error");
         }
 
-        btn.disabled = true; btn.innerText = "Processing...";
+        btn.disabled = true; btn.innerText = "Validating...";
         try {
-            const res = await fetch(`${API_URL}/register`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, scholarId, room, password, photo: uploadedPhotoBase64 })
+            const res = await fetch(`${API_URL}/verify-and-register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scholarId: verifiedScholarId, otp, name, room, password, photo: uploadedPhotoBase64 })
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                showToast("ID Card Registered Successfully!", "success");
-                document.getElementById('reg-name').value = '';
-                document.getElementById('reg-id').value = '';
-                document.getElementById('reg-room').value = '';
-                document.getElementById('reg-pass').value = '';
-                uploadedPhotoBase64 = "";
-                document.getElementById('photo-preview-container').style.display = 'none';
+                showToast("Identity pass registered successfully!", "success");
                 switchView('view-login');
             } else {
-                showToast(data.message || "Registration failed", "error");
+                showToast(data.message || "OTP verification failed", "error");
             }
-        } catch (err) {
-            showToast("Server error. Please try again.", "error");
+        } catch(e) {
+            showToast("Server verification failure.", "error");
         } finally {
-            btn.disabled = false; btn.innerText = "Save Record & Generate Card";
+            btn.disabled = false; btn.innerText = "Verify OTP & Activate Card";
         }
     }
 
@@ -396,7 +442,6 @@
         if (cached) { try { renderStudentCard(JSON.parse(cached)); } catch(e) { localStorage.removeItem('manit_active_student'); } }
     });
 
-    // --- STAFF SCANNER & MANUAL RESET LOGIC ---
     let html5QrcodeScanner = null;
     let isProcessingScan = false;
 
@@ -427,7 +472,7 @@
             } else if (data.status === 'denied') {
                 showToast(`LIMIT REACHED: ${data.name} already received meal!`, "error");
             } else {
-                showToast(data.message || "UNRECOGNIZED ID CARD", "error");
+                showToast(data.message || "UNREGISTERED CARD", "error");
             }
         } catch (e) { showToast("Scan error", "error"); }
 
@@ -450,11 +495,11 @@
             } else {
                 showToast(data.message, "error");
             }
-        } catch (e) { showToast("Reset request failed", "error"); }
+        } catch (e) { showToast("Reset failed", "error"); }
     }
 
     async function resetAllStudents() {
-        if (!confirm("Are you sure you want to reset all cards for the next meal?")) return;
+        if (!confirm("Reset all cards for the next meal?")) return;
 
         try {
             const res = await fetch(`${API_URL}/reset-all`, {
@@ -467,7 +512,7 @@
             } else {
                 showToast(data.message, "error");
             }
-        } catch (e) { showToast("Reset all request failed", "error"); }
+        } catch (e) { showToast("Reset all failed", "error"); }
     }
 
     function stopScannerAndLogout() {
