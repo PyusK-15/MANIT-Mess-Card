@@ -11,7 +11,9 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://pyus1528_db_user:qG3feuciLBXuBciS@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority&appName=Manit-Mess';
-const resend = new Resend(process.env.RESEND_API_KEY || 're_fallback');
+
+// Embedded Resend API Key
+const resend = new Resend('re_N4fUM1Ts_EGApCB65ipomFRpdRBiQEJN6');
 
 mongoose.connect(MONGO_URI, {
     maxPoolSize: 50,
@@ -56,7 +58,7 @@ function getCurrentMealSlot() {
     return { active: true, id: `${dateStr}-${mealSlot}`, name: mealSlot };
 }
 
-// 1. Request OTP via HTTPS API (No SMTP / No Port Blocking)
+// 1. Request OTP via Resend HTTPS API
 app.post('/api/request-otp', async (req, res) => {
     try {
         const { scholarId } = req.body;
@@ -75,7 +77,9 @@ app.post('/api/request-otp', async (req, res) => {
         await OtpRecord.deleteMany({ scholarId: cleanId });
         await OtpRecord.create({ scholarId: cleanId, otp });
 
-        const emailResponse = await resend.emails.send({
+        console.log(`[OTP GENERATED] Scholar: ${cleanId} | Code: ${otp} | Target: ${collegeEmail}`);
+
+        const { data, error } = await resend.emails.send({
             from: 'MANIT Mess Pass <onboarding@resend.dev>',
             to: collegeEmail,
             subject: `MANIT Mess Registration OTP: ${otp}`,
@@ -91,15 +95,15 @@ app.post('/api/request-otp', async (req, res) => {
             `
         });
 
-        if (emailResponse.error) {
-            console.error("Resend API returned error:", emailResponse.error);
-            return res.status(500).json({ success: false, message: emailResponse.error.message || "Email dispatch failed" });
+        if (error) {
+            console.error("Resend API Failure:", error);
+            return res.status(400).json({ success: false, message: error.message || "Email dispatch failed" });
         }
 
         res.json({ success: true, message: `OTP sent to ${collegeEmail}` });
     } catch (err) {
-        console.error("OTP Endpoint Error:", err);
-        res.status(500).json({ success: false, message: err.message || "Failed to dispatch email OTP" });
+        console.error("Server API Exception:", err);
+        res.status(500).json({ success: false, message: err.message || "Internal server error dispatching OTP" });
     }
 });
 
