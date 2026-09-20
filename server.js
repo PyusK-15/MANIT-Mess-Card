@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const app = express();
 
@@ -11,55 +12,43 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://pyus1528_db_user:qG3feuciLBXuBciS@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority&appName=Manit-Mess';
 
+// SMTP Transporter for Sending College OTPs
+const transporter = nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+        user: process.env.SYSTEM_EMAIL || 'YOUR_GMAIL@gmail.com',
+        pass: process.env.SYSTEM_EMAIL_PASS || 'YOUR_16_CHAR_APP_PASSWORD'
+    }
+});
+
 mongoose.connect(MONGO_URI, {
     maxPoolSize: 50,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000
-}).then(() => {
-    console.log("✅ MongoDB Atlas Cloud Connected Successfully");
-    seedWhitelistedStudents();
-}).catch(err => console.error("❌ MongoDB Atlas Connection Error:", err));
+}).then(() => console.log("✅ MongoDB Atlas Cloud Connected"))
+  .catch(err => console.error("❌ MongoDB Atlas Connection Error:", err));
 
-// Whitelist of pre-authorized students
-const WHITELISTED_IDS = [
-    { scholarId: '260111011249', name: 'Authorized Student 1', room: 'Hostel 10' },
-    { scholarId: '260111011250', name: 'Authorized Student 2', room: 'Hostel 10' },
-    { scholarId: '260111011251', name: 'Authorized Student 3', room: 'Hostel 10' }
-];
-
+// Student Record Schema
 const studentSchema = new mongoose.Schema({
     scholarId: { type: String, required: true, unique: true, index: true },
+    collegeEmail: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     room: { type: String, required: true },
-    password: { type: String, default: null },
-    photo: { type: String, default: null },
-    isRegistered: { type: Boolean, default: false },
+    password: { type: String, required: true },
+    photo: { type: String, required: true },
     lastClaimedMeal: { type: String, default: '' }
 }, { timestamps: true });
 
 const Student = mongoose.model('Student', studentSchema);
 
-// Auto-seed the 3 allowed IDs on startup if they don't already exist
-async function seedWhitelistedStudents() {
-    try {
-        for (const item of WHITELISTED_IDS) {
-            const exists = await Student.findOne({ scholarId: item.scholarId });
-            if (!exists) {
-                await Student.create({
-                    scholarId: item.scholarId,
-                    name: item.name,
-                    room: item.room,
-                    isRegistered: false
-                });
-                console.log(`Initialized whitelist ID: ${item.scholarId}`);
-            }
-        }
-    } catch (e) {
-        console.error("Whitelist seed error:", e);
-    }
-}
+// Temporary OTP Collection (Self-destructs after 10 minutes)
+const otpSchema = new mongoose.Schema({
+    scholarId: { type: String, required: true, index: true },
+    otp: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now, expires: 600 } 
+});
+const OtpRecord = mongoose.model('OtpRecord', otpSchema);
 
-// Automated Scheduling Logic with fallback
 function getCurrentMealSlot() {
     const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
     const hh = d.getHours().toString().padStart(2, '0');
@@ -77,71 +66,105 @@ function getCurrentMealSlot() {
     return { active: true, id: `${dateStr}-${mealSlot}`, name: mealSlot };
 }
 
-// 1. Register / Activate (Enforces Whitelist)
-app.post('/api/register', async (req, res) => {
+// 1. STEP 1: Request OTP
+app.post('/api/request-otp', async (req, res) => {
     try {
-        const { scholarId, name, room, password, photo } = req.body;
-        if (!scholarId || !password || !photo) {
-            return res.status(400).json({ success: false, message: "Scholar ID, photo, and password are required." });
+        const { scholarId } = req.body;
+        if (!scholarId) return res.status(400).json({ success: false, message: "Enter Scholar ID" });
+
+        const cleanId = scholarId.trim().toLowerCase();
+        const collegeEmail = `${cleanId}@stu.manit.ac.in`;
+
+        const existing = await Student.findOne({ scholarId: cleanId });
+        if (existing) {
+            return res.status(409).json({ success: false, message: "Account already exists for this Scholar ID. Please log in." });
         }
 
-        const cleanId = scholarId.trim();
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // 1. Look up student in whitelist records
-        const student = await Student.findOne({ scholarId: cleanId });
-        if (!student) {
-            return res.status(403).json({ 
-                success: false, 
-                message: "Unauthorized: Scholar ID not found on Hostel 10 master records." 
-            });
-        }
+        await OtpRecord.deleteMany({ scholarId: cleanId });
+        await OtpRecord.create({ scholarId: cleanId, otp });
 
-        // 2. Prevent duplicate registrations / identity spoofing
-        if (student.isRegistered) {
-            return res.status(409).json({ 
-                success: false, 
-                message: "This Scholar ID has already been registered! Please log in." 
-            });
-        }
+        const mailOptions = {
+            from: '"MANIT Hostel Mess Portal" <no-reply@manit.ac.in>',
+            to: collegeEmail,
+            subject: `MANIT Mess Registration OTP: ${otp}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 500px;">
+                    <h2 style="color: #0a2540;">MANIT Hostel Digital Identity Pass</h2>
+                    <p>You requested registration for the Hostel Digital Mess Card using Scholar ID: <strong>${cleanId}</strong>.</p>
+                    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
+                        <span style="font-size: 26px; font-weight: 800; letter-spacing: 5px; color: #2563eb;">${otp}</span>
+                    </div>
+                    <p style="font-size: 12px; color: #64748b;">This OTP will expire in 10 minutes. If you did not request this, please disregard this email.</p>
+                </div>
+            `
+        };
 
-        // 3. Activate account
-        student.name = name && name.trim() ? name.trim() : student.name;
-        student.room = room && room.trim() ? room.trim() : student.room;
-        student.password = password;
-        student.photo = photo;
-        student.isRegistered = true;
-        await student.save();
-
-        res.status(201).json({ success: true, message: "ID Card registered and activated successfully!" });
+        await transporter.sendMail(mailOptions);
+        res.json({ success: true, message: `OTP sent to ${collegeEmail}` });
     } catch (err) {
-        console.error("Register Error:", err);
-        res.status(500).json({ success: false, message: "Registration error." });
+        console.error("OTP Error:", err);
+        res.status(500).json({ success: false, message: "Failed to dispatch email OTP. Verify mailer credentials." });
     }
 });
 
-// 2. Login
+// 2. STEP 2: Verify OTP and Register Account
+app.post('/api/verify-and-register', async (req, res) => {
+    try {
+        const { scholarId, otp, name, room, password, photo } = req.body;
+        if (!scholarId || !otp || !name || !room || !password || !photo) {
+            return res.status(400).json({ success: false, message: "All fields are required." });
+        }
+
+        const cleanId = scholarId.trim().toLowerCase();
+        const validOtp = await OtpRecord.findOne({ scholarId: cleanId, otp: otp.trim() });
+
+        if (!validOtp) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP. Please try again." });
+        }
+
+        const collegeEmail = `${cleanId}@stu.manit.ac.in`;
+        const newStudent = new Student({
+            scholarId: cleanId,
+            collegeEmail,
+            name: name.trim(),
+            room: room.trim(),
+            password,
+            photo
+        });
+
+        await newStudent.save();
+        await OtpRecord.deleteMany({ scholarId: cleanId });
+
+        res.status(201).json({ success: true, message: "Registration successful! You can now log in." });
+    } catch (err) {
+        console.error("Registration Error:", err);
+        res.status(500).json({ success: false, message: "Registration failed." });
+    }
+});
+
+// 3. Login
 app.post('/api/login', async (req, res) => {
     try {
         const { scholarId, password } = req.body;
-        const student = await Student.findOne({ scholarId: scholarId.trim(), password }).lean();
-        if (student && student.isRegistered) {
+        const student = await Student.findOne({ scholarId: scholarId.trim().toLowerCase(), password }).lean();
+        if (student) {
             res.json({ success: true, student: { scholarId: student.scholarId, name: student.name, room: student.room, photo: student.photo } });
-        } else if (student && !student.isRegistered) {
-            res.status(401).json({ success: false, message: "Card not registered yet. Please click 'Register Card' first." });
         } else {
-            res.status(401).json({ success: false, message: "Invalid credentials." });
+            res.status(401).json({ success: false, message: "Invalid Scholar ID or password." });
         }
     } catch (err) {
         res.status(500).json({ success: false, message: "Login error." });
     }
 });
 
-// 3. Status Poll
+// 4. Status Poll
 app.get('/api/status/:scholarId', async (req, res) => {
     try {
         const slot = getCurrentMealSlot();
-        const student = await Student.findOne({ scholarId: req.params.scholarId.trim() }).lean();
-        if (!student || !student.isRegistered) return res.json({ activeSlot: slot.name, claimed: false });
+        const student = await Student.findOne({ scholarId: req.params.scholarId.trim().toLowerCase() }).lean();
+        if (!student) return res.json({ activeSlot: slot.name, claimed: false });
 
         const hasClaimed = (student.lastClaimedMeal === slot.id);
         res.json({ activeSlot: slot.name, claimed: hasClaimed });
@@ -150,14 +173,14 @@ app.get('/api/status/:scholarId', async (req, res) => {
     }
 });
 
-// 4. Scanner Endpoint
+// 5. Staff Counter Scan
 app.post('/api/scan', async (req, res) => {
     try {
-        const cleanId = req.body.scholarId.trim();
+        const cleanId = req.body.scholarId.trim().toLowerCase();
         const slot = getCurrentMealSlot();
 
         const claimed = await Student.findOneAndUpdate(
-            { scholarId: cleanId, isRegistered: true, lastClaimedMeal: { $ne: slot.id } },
+            { scholarId: cleanId, lastClaimedMeal: { $ne: slot.id } },
             { $set: { lastClaimedMeal: slot.id } },
             { new: true }
         ).lean();
@@ -167,22 +190,22 @@ app.post('/api/scan', async (req, res) => {
         }
 
         const existing = await Student.findOne({ scholarId: cleanId }).lean();
-        if (!existing || !existing.isRegistered) return res.json({ status: 'error', message: "Unregistered or Invalid ID Card" });
+        if (!existing) return res.json({ status: 'error', message: "Unregistered Scholar ID" });
 
         return res.json({ status: 'denied', name: existing.name, room: existing.room });
     } catch (err) {
-        res.status(500).json({ status: 'error', message: "Scan error." });
+        res.status(500).json({ status: 'error', message: "Scan processing error." });
     }
 });
 
-// 5. Manual Reset - Single Student
+// 6. Manual Reset Endpoints
 app.post('/api/reset-one', async (req, res) => {
     try {
         const { scholarId, staffPin } = req.body;
         if (staffPin !== 'manitH10') return res.status(403).json({ success: false, message: "Unauthorized PIN" });
 
         const updated = await Student.findOneAndUpdate(
-            { scholarId: scholarId.trim() },
+            { scholarId: scholarId.trim().toLowerCase() },
             { $set: { lastClaimedMeal: '' } }
         );
 
@@ -193,7 +216,6 @@ app.post('/api/reset-one', async (req, res) => {
     }
 });
 
-// 6. Manual Reset - All Students
 app.post('/api/reset-all', async (req, res) => {
     try {
         const { staffPin } = req.body;
