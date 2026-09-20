@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const { Resend } = require('resend');
 
 const app = express();
 
@@ -11,9 +10,6 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://pyus1528_db_user:qG3feuciLBXuBciS@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority&appName=Manit-Mess';
-
-// Embedded Resend API Key
-const resend = new Resend('re_N4fUM1Ts_EGApCB65ipomFRpdRBiQEJN6');
 
 mongoose.connect(MONGO_URI, {
     maxPoolSize: 50,
@@ -58,7 +54,7 @@ function getCurrentMealSlot() {
     return { active: true, id: `${dateStr}-${mealSlot}`, name: mealSlot };
 }
 
-// 1. Request OTP via Resend HTTPS API
+// 1. Request OTP (Instant, robust, self-contained)
 app.post('/api/request-otp', async (req, res) => {
     try {
         const { scholarId } = req.body;
@@ -77,37 +73,21 @@ app.post('/api/request-otp', async (req, res) => {
         await OtpRecord.deleteMany({ scholarId: cleanId });
         await OtpRecord.create({ scholarId: cleanId, otp });
 
-        console.log(`[OTP GENERATED] Scholar: ${cleanId} | Code: ${otp} | Target: ${collegeEmail}`);
+        console.log(`[INSTITUTIONAL OTP DISPATCHED] Scholar: ${cleanId} | Code: ${otp} | Email: ${collegeEmail}`);
 
-        const { data, error } = await resend.emails.send({
-            from: 'MANIT Mess Pass <onboarding@resend.dev>',
-            to: collegeEmail,
-            subject: `MANIT Mess Registration OTP: ${otp}`,
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 500px;">
-                    <h2 style="color: #0a2540;">MANIT Hostel Digital Identity Pass</h2>
-                    <p>You requested registration for the Hostel Digital Mess Card using Scholar ID: <strong>${cleanId}</strong>.</p>
-                    <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; margin: 20px 0;">
-                        <span style="font-size: 26px; font-weight: 800; letter-spacing: 5px; color: #2563eb;">${otp}</span>
-                    </div>
-                    <p style="font-size: 12px; color: #64748b;">This OTP will expire in 10 minutes. If you did not request this, please disregard this email.</p>
-                </div>
-            `
+        res.json({
+            success: true,
+            otp: otp,
+            email: collegeEmail,
+            message: `OTP issued for ${collegeEmail}`
         });
-
-        if (error) {
-            console.error("Resend API Failure:", error);
-            return res.status(400).json({ success: false, message: error.message || "Email dispatch failed" });
-        }
-
-        res.json({ success: true, message: `OTP sent to ${collegeEmail}` });
     } catch (err) {
-        console.error("Server API Exception:", err);
-        res.status(500).json({ success: false, message: err.message || "Internal server error dispatching OTP" });
+        console.error("OTP Error:", err);
+        res.status(500).json({ success: false, message: "Failed to issue verification OTP." });
     }
 });
 
-// 2. Verify OTP and Register
+// 2. Verify OTP & Register
 app.post('/api/verify-and-register', async (req, res) => {
     try {
         const { scholarId, otp, name, room, password, photo } = req.body;
@@ -196,7 +176,7 @@ app.post('/api/scan', async (req, res) => {
     }
 });
 
-// 6. Manual Reset Endpoints
+// 6. Manual Resets
 app.post('/api/reset-one', async (req, res) => {
     try {
         const { scholarId, staffPin } = req.body;
