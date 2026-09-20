@@ -12,14 +12,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://pyus1528_db_user:qG3feuciLBXuBciS@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority&appName=Manit-Mess';
 
-// SMTP Transporter for Sending College OTPs
-const transporter = nodemailer.createTransporter({
-    service: 'gmail',
-    auth: {
-        user: process.env.SYSTEM_EMAIL || 'YOUR_GMAIL@gmail.com',
-        pass: process.env.SYSTEM_EMAIL_PASS || 'YOUR_16_CHAR_APP_PASSWORD'
-    }
-});
+// Dual SMTP Transporters for Load Splitting
+const transporters = [
+    nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: process.env.EMAIL_1, pass: process.env.PASS_1 }
+    }),
+    nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: process.env.EMAIL_2, pass: process.env.PASS_2 }
+    })
+];
+let currentTransporterIndex = 0; // Tracks which email account to use next
 
 mongoose.connect(MONGO_URI, {
     maxPoolSize: 50,
@@ -28,7 +32,6 @@ mongoose.connect(MONGO_URI, {
 }).then(() => console.log("✅ MongoDB Atlas Cloud Connected"))
   .catch(err => console.error("❌ MongoDB Atlas Connection Error:", err));
 
-// Student Record Schema
 const studentSchema = new mongoose.Schema({
     scholarId: { type: String, required: true, unique: true, index: true },
     collegeEmail: { type: String, required: true, unique: true },
@@ -41,7 +44,6 @@ const studentSchema = new mongoose.Schema({
 
 const Student = mongoose.model('Student', studentSchema);
 
-// Temporary OTP Collection (Self-destructs after 10 minutes)
 const otpSchema = new mongoose.Schema({
     scholarId: { type: String, required: true, index: true },
     otp: { type: String, required: true },
@@ -66,7 +68,7 @@ function getCurrentMealSlot() {
     return { active: true, id: `${dateStr}-${mealSlot}`, name: mealSlot };
 }
 
-// 1. STEP 1: Request OTP
+// 1. Request OTP (Alternating Mailers)
 app.post('/api/request-otp', async (req, res) => {
     try {
         const { scholarId } = req.body;
@@ -85,6 +87,10 @@ app.post('/api/request-otp', async (req, res) => {
         await OtpRecord.deleteMany({ scholarId: cleanId });
         await OtpRecord.create({ scholarId: cleanId, otp });
 
+        // Select the current transporter and increment the counter
+        const activeTransporter = transporters[currentTransporterIndex];
+        currentTransporterIndex = (currentTransporterIndex + 1) % transporters.length;
+
         const mailOptions = {
             from: '"MANIT Hostel Mess Portal" <no-reply@manit.ac.in>',
             to: collegeEmail,
@@ -101,7 +107,7 @@ app.post('/api/request-otp', async (req, res) => {
             `
         };
 
-        await transporter.sendMail(mailOptions);
+        await activeTransporter.sendMail(mailOptions);
         res.json({ success: true, message: `OTP sent to ${collegeEmail}` });
     } catch (err) {
         console.error("OTP Error:", err);
@@ -109,7 +115,7 @@ app.post('/api/request-otp', async (req, res) => {
     }
 });
 
-// 2. STEP 2: Verify OTP and Register Account
+// 2. Verify OTP and Register
 app.post('/api/verify-and-register', async (req, res) => {
     try {
         const { scholarId, otp, name, room, password, photo } = req.body;
