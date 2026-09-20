@@ -12,18 +12,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://pyus1528_db_user:qG3feuciLBXuBciS@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority&appName=Manit-Mess';
 
-// Dual SMTP Transporters for Load Splitting
+// Dual SMTP Transporters configured for Port 465 (SSL)
 const transporters = [
     nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.EMAIL_1, pass: process.env.PASS_1 }
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: process.env.EMAIL_1 ? process.env.EMAIL_1.trim() : '',
+            pass: process.env.PASS_1 ? process.env.PASS_1.replace(/\s+/g, '') : ''
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000
     }),
     nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.EMAIL_2, pass: process.env.PASS_2 }
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: process.env.EMAIL_2 ? process.env.EMAIL_2.trim() : '',
+            pass: process.env.PASS_2 ? process.env.PASS_2.replace(/\s+/g, '') : ''
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000
     })
 ];
-let currentTransporterIndex = 0; // Tracks which email account to use next
+let currentTransporterIndex = 0;
 
 mongoose.connect(MONGO_URI, {
     maxPoolSize: 50,
@@ -47,7 +63,7 @@ const Student = mongoose.model('Student', studentSchema);
 const otpSchema = new mongoose.Schema({
     scholarId: { type: String, required: true, index: true },
     otp: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now, expires: 600 } 
+    createdAt: { type: Date, default: Date.now, expires: 600 }
 });
 const OtpRecord = mongoose.model('OtpRecord', otpSchema);
 
@@ -68,7 +84,7 @@ function getCurrentMealSlot() {
     return { active: true, id: `${dateStr}-${mealSlot}`, name: mealSlot };
 }
 
-// 1. Request OTP (Alternating Mailers)
+// 1. Request OTP
 app.post('/api/request-otp', async (req, res) => {
     try {
         const { scholarId } = req.body;
@@ -87,12 +103,11 @@ app.post('/api/request-otp', async (req, res) => {
         await OtpRecord.deleteMany({ scholarId: cleanId });
         await OtpRecord.create({ scholarId: cleanId, otp });
 
-        // Select the current transporter and increment the counter
         const activeTransporter = transporters[currentTransporterIndex];
         currentTransporterIndex = (currentTransporterIndex + 1) % transporters.length;
 
         const mailOptions = {
-            from: '"MANIT Hostel Mess Portal" <no-reply@manit.ac.in>',
+            from: `"MANIT Hostel Mess Portal" <${activeTransporter.options.auth.user}>`,
             to: collegeEmail,
             subject: `MANIT Mess Registration OTP: ${otp}`,
             html: `
@@ -111,7 +126,10 @@ app.post('/api/request-otp', async (req, res) => {
         res.json({ success: true, message: `OTP sent to ${collegeEmail}` });
     } catch (err) {
         console.error("OTP Error:", err);
-        res.status(500).json({ success: false, message: "Failed to dispatch email OTP. Verify mailer credentials." });
+        res.status(500).json({ 
+            success: false, 
+            message: `Mailer Error: ${err.message || "Failed to dispatch OTP"}` 
+        });
     }
 });
 
