@@ -31,8 +31,6 @@
         .btn-link { background: transparent; color: var(--accent); border: none; font-size: 13px; font-weight: 600; margin-top: 12px; cursor: pointer; text-decoration: underline; }
         .btn-outline { background: transparent; color: var(--text-muted); border: 1.5px solid #e2e8f0; margin-top: 12px; }
         .btn-outline:hover { background: #f8fafc; color: var(--text-dark); }
-
-        /* ID Card */
         .id-badge { background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15); border-top: 8px solid var(--accent-gold); position: relative; }
         .badge-header { background: var(--primary); padding: 16px 18px; display: flex; align-items: center; gap: 14px; color: white; }
         .badge-logo-frame { width: 52px; height: 52px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent-gold); flex-shrink: 0; padding: 4px; overflow: hidden; }
@@ -46,28 +44,24 @@
         .meta-name { font-size: 17px; font-weight: 800; color: var(--primary); line-height: 1.2; margin-bottom: 6px; }
         .meta-field { font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
         .meta-field strong { color: var(--text-dark); }
-
-        /* Dynamic QR Section */
         .badge-qr-section { padding: 15px 20px 20px 20px; background: #f8fafc; border-top: 1px dashed #cbd5e1; text-align: center; min-height: 250px;}
         .qr-wrapper { position: relative; width: 180px; height: 180px; margin: 0 auto; background: white; padding: 10px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.04); overflow: hidden; }
         #qrcode img { width: 100%; height: 100%; }
         .scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: scan 2.4s infinite; }
         @keyframes scan { 0% { top: 0; } 50% { top: 96%; } 100% { top: 0; } }
-        
-        /* Claimed State Box */
-        .claimed-box { display: none; width: 100%; padding: 30px 20px; background: #ecfdf5; border: 2px solid var(--success); border-radius: 16px; margin: 10px auto; }
+        .claimed-box { display: none; width: 100%; padding: 25px 15px; background: #ecfdf5; border: 2px solid var(--success); border-radius: 16px; margin: 10px auto; }
         .claimed-box h3 { color: var(--success); font-size: 20px; font-weight: 800; margin-bottom: 8px;}
         .claimed-box p { font-size: 13px; color: var(--text-dark); font-weight: 600;}
-
         .live-status { margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; background: #ffffff; border: 1px solid #e2e8f0; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
         .live-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; animation: blink 1.2s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .active-slot { font-size: 12px; font-weight: 700; color: var(--accent); margin-top: 8px; text-transform: uppercase; }
-
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); padding: 15px 22px; border-radius: 14px; font-weight: 700; font-size: 14px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.15); transition: transform 0.3s; z-index: 1000; text-align: center; min-width: 280px; }
         .toast.show { transform: translateX(-50%) translateY(0); }
         .toast.success { background: var(--primary); }
         .toast.error { background: var(--danger); }
+        .admin-controls { margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: left; }
+        .admin-controls h4 { font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -164,7 +158,7 @@
                 <div class="badge-titles">
                     <h3>MAULANA AZAD NATIONAL INSTITUTE OF TECHNOLOGY</h3>
                     <p>BHOPAL, MADHYA PRADESH</p>
-                    <span>STUDENT MESS CARD</span>
+                    <span style="background: var(--accent-gold); color: black; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block;">STUDENT MESS CARD</span>
                 </div>
             </div>
 
@@ -180,15 +174,14 @@
             </div>
 
             <div class="badge-qr-section">
-                <!-- Dynamic Area: Shows QR if active, shows Claimed Box if used -->
                 <div class="qr-wrapper" id="qr-container-box">
                     <div id="qrcode"></div>
                     <div class="scanner-line"></div>
                 </div>
                 
                 <div class="claimed-box" id="claimed-container-box">
-                    <h3>✅ Meal Authorized</h3>
-                    <p>QR code removed. It will regenerate automatically at the start of the next scheduled meal.</p>
+                    <h3>✅ Meal Received</h3>
+                    <p>QR code verified. It will regenerate automatically for the next scheduled meal, or upon staff reset.</p>
                 </div>
                 
                 <div>
@@ -211,9 +204,20 @@
                 <h2 style="font-size: 16px; font-weight: 800;">Counter Camera</h2>
                 <span style="background: #e0e7ff; color: var(--accent); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">Live</span>
             </div>
+            
             <div id="reader" style="border-radius: 14px; overflow: hidden; border: none;"></div>
-            <!-- Note: Manual reset button removed because database now auto-cycles based on exact timings -->
-            <button class="btn-outline" onclick="stopScannerAndLogout()" style="margin-top: 20px;">Close Camera Terminal</button>
+
+            <!-- MANUAL QR RESET SECTION -->
+            <div class="admin-controls">
+                <h4>Manual Card Reset</h4>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="manual-reset-id" placeholder="Scholar ID to reset" style="padding: 10px; font-size: 13px;">
+                    <button onclick="resetSingleStudent()" style="width: auto; padding: 10px 15px; margin: 0; font-size: 13px; background: var(--accent);">Reset</button>
+                </div>
+                <button onclick="resetAllStudents()" style="background: var(--accent-gold); margin-top: 10px; padding: 12px; font-size: 13px;">Reset All Students (Next Meal)</button>
+            </div>
+
+            <button class="btn-outline" onclick="stopScannerAndLogout()" style="margin-top: 15px;">Close Terminal</button>
         </div>
     </div>
 
@@ -278,7 +282,7 @@
         const btn = document.getElementById('btn-register');
 
         if (!name || !scholarId || !room || !password || !uploadedPhotoBase64) {
-            return showToast("Please upload a photo and fill all mandatory (*) fields", "error");
+            return showToast("Please upload a photo and fill all fields", "error");
         }
 
         btn.disabled = true; btn.innerText = "Processing...";
@@ -346,19 +350,16 @@
 
         switchView('view-student');
         
-        // Start Live Clock
         if (clockInterval) clearInterval(clockInterval);
         clockInterval = setInterval(() => {
             document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('en-US');
         }, 1000);
 
-        // Start Auto-Polling for QR visibility
         if (pollInterval) clearInterval(pollInterval);
-        checkMealStatus(); // check immediately
-        pollInterval = setInterval(checkMealStatus, 3000); // Check every 3 seconds
+        checkMealStatus();
+        pollInterval = setInterval(checkMealStatus, 2500);
     }
 
-    // --- Dynamic QR Hiding Logic ---
     async function checkMealStatus() {
         if (!currentScholarId) return;
         try {
@@ -368,25 +369,17 @@
             const qrWrapper = document.getElementById('qr-container-box');
             const claimedBox = document.getElementById('claimed-container-box');
             
-            if (data.activeSlot === "None") {
+            document.getElementById('current-meal').innerText = `${data.activeSlot} Active`;
+            document.getElementById('live-dot').style.background = "var(--success)";
+
+            if (data.claimed) {
                 qrWrapper.style.display = 'none';
                 claimedBox.style.display = 'block';
-                claimedBox.innerHTML = `<h3>Service Offline</h3><p>QR code disabled until the next meal schedule.</p>`;
-                document.getElementById('current-meal').innerText = "System Offline";
-                document.getElementById('live-dot').style.background = "var(--danger)";
-            } else if (data.claimed) {
-                qrWrapper.style.display = 'none';
-                claimedBox.style.display = 'block';
-                claimedBox.innerHTML = `<h3>✅ ${data.activeSlot} Authorized</h3><p>QR code removed. It will regenerate automatically for the next scheduled meal.</p>`;
-                document.getElementById('current-meal').innerText = `${data.activeSlot} Service Active`;
-                document.getElementById('live-dot').style.background = "var(--success)";
             } else {
                 qrWrapper.style.display = 'block';
                 claimedBox.style.display = 'none';
-                document.getElementById('current-meal').innerText = `${data.activeSlot} Service Active`;
-                document.getElementById('live-dot').style.background = "var(--success)";
             }
-        } catch(e) { } // silent fail on minor poll interrupt
+        } catch(e) { }
     }
 
     function logout() {
@@ -403,7 +396,7 @@
         if (cached) { try { renderStudentCard(JSON.parse(cached)); } catch(e) { localStorage.removeItem('manit_active_student'); } }
     });
 
-    // --- STAFF SCANNER LOGIC ---
+    // --- STAFF SCANNER & MANUAL RESET LOGIC ---
     let html5QrcodeScanner = null;
     let isProcessingScan = false;
 
@@ -432,13 +425,49 @@
             if (data.status === 'allowed') {
                 showToast(`APPROVED: ${data.name} (${data.room})`, "success");
             } else if (data.status === 'denied') {
-                showToast(`LIMIT REACHED: ${data.name} has already claimed!`, "error");
+                showToast(`LIMIT REACHED: ${data.name} already received meal!`, "error");
             } else {
                 showToast(data.message || "UNRECOGNIZED ID CARD", "error");
             }
-        } catch (e) { showToast("Scan communication error", "error"); }
+        } catch (e) { showToast("Scan error", "error"); }
 
         setTimeout(() => { isProcessingScan = false; }, 2200);
+    }
+
+    async function resetSingleStudent() {
+        const scholarId = document.getElementById('manual-reset-id').value.trim();
+        if (!scholarId) return showToast("Enter Scholar ID", "error");
+
+        try {
+            const res = await fetch(`${API_URL}/reset-one`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scholarId, staffPin: 'manitH10' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, "success");
+                document.getElementById('manual-reset-id').value = '';
+            } else {
+                showToast(data.message, "error");
+            }
+        } catch (e) { showToast("Reset request failed", "error"); }
+    }
+
+    async function resetAllStudents() {
+        if (!confirm("Are you sure you want to reset all cards for the next meal?")) return;
+
+        try {
+            const res = await fetch(`${API_URL}/reset-all`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ staffPin: 'manitH10' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message, "success");
+            } else {
+                showToast(data.message, "error");
+            }
+        } catch (e) { showToast("Reset all request failed", "error"); }
     }
 
     function stopScannerAndLogout() {
