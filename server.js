@@ -499,13 +499,7 @@ app.post('/api/send-otp', async (req, res) => {
 
         }
 
-        const cleanId = cleanScholarId(scholarId);
-
-        /*
-          MANIT scholar numbers normally look like 9 digits.
-        */
-
-      const cleanId = String(scholarId || "").trim();
+      const cleanId = cleanScholarId(scholarId);
 
 if (!cleanId) {
   return res.status(400).json({
@@ -514,8 +508,7 @@ if (!cleanId) {
   });
 }
 
-        const collegeEmail =
-            `${cleanId}@stu.manit.ac.in`;
+const collegeEmail = `${cleanId}@stu.manit.ac.in`;
 
         /*
           Check if account already exists.
