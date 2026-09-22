@@ -143,7 +143,6 @@
         input[type="password"],
         input[type="file"],
         input[type="number"] {
-
             width: 100%;
             padding: 13px 15px;
             border: 1.5px solid #e2e8f0;
@@ -432,7 +431,6 @@
         }
 
         @keyframes scan {
-
             0% {
                 top: 0;
             }
@@ -444,7 +442,6 @@
             100% {
                 top: 0;
             }
-
         }
 
         .claimed-box {
@@ -492,7 +489,6 @@
         }
 
         @keyframes blink {
-
             0%, 100% {
                 opacity: 1;
             }
@@ -500,7 +496,6 @@
             50% {
                 opacity: 0.3;
             }
-
         }
 
         .active-slot {
@@ -550,14 +545,11 @@
 
 </head>
 
-
 <body>
 
 <div id="toast" class="toast"></div>
 
-
 <div class="app-container">
-
 
     <!-- =====================================================
          STUDENT LOGIN
@@ -581,7 +573,6 @@
 
             </div>
 
-
             <div class="input-group">
 
                 <label>
@@ -592,12 +583,11 @@
                 <input
                     type="text"
                     id="login-id"
-                    placeholder="e.g. 241112001"
+                    placeholder="Enter Scholar Number"
                     autocomplete="off"
                 >
 
             </div>
-
 
             <div class="input-group">
 
@@ -614,14 +604,12 @@
 
             </div>
 
-
             <button
                 id="btn-login"
                 onclick="handleLogin()"
             >
                 Display Identity Card
             </button>
-
 
             <div
                 style="
@@ -638,7 +626,6 @@
                 </button>
 
             </div>
-
 
             <button
                 class="btn-outline"
@@ -674,11 +661,7 @@
 
             </div>
 
-
-            <!-- REGISTRATION FORM -->
-
             <div id="registration-form">
-
 
                 <div class="input-group">
 
@@ -690,14 +673,12 @@
                     <input
                         type="text"
                         id="reg-id"
-                        placeholder="e.g. 241112001"
+                        placeholder="Enter Scholar Number"
                         autocomplete="off"
                     >
 
                 </div>
 
-
-                <!-- AUTOMATIC MANIT EMAIL -->
 
                 <div class="input-group">
 
@@ -770,7 +751,6 @@
                         accept="image/*"
                         onchange="previewPhoto(event)"
                     >
-
 
                     <div
                         style="
@@ -1312,23 +1292,14 @@
 
     const API_URL = '/api';
 
-
     let uploadedPhotoBase64 = "";
-
     let qrcodeInstance = null;
-
     let clockInterval = null;
-
     let pollInterval = null;
-
     let currentScholarId = null;
-
     let registrationScholarId = null;
-
     let resendTimer = null;
-
     let html5QrcodeScanner = null;
-
     let isProcessingScan = false;
 
 
@@ -1348,19 +1319,13 @@
             msg;
 
         setTimeout(() => {
-
             toast.classList.remove('show');
-
         }, 4000);
     }
 
 
     /* =====================================================
        SAFE API RESPONSE
-       
-       IMPORTANT:
-       This prevents a 404/HTML response from becoming
-       the misleading "Server connection failure".
        ===================================================== */
 
     async function readApiResponse(response) {
@@ -1368,18 +1333,20 @@
         const text =
             await response.text();
 
-        let data = null;
+        let data;
 
         try {
 
-            data =
-                JSON.parse(text);
+            data = text
+                ? JSON.parse(text)
+                : {};
 
         } catch (error) {
 
             data = {
                 success: false,
                 message:
+                    text ||
                     `Server returned HTTP ${response.status}.`
             };
         }
@@ -1404,15 +1371,11 @@
                 v.classList.remove('active')
             );
 
-
         const view =
             document.getElementById(viewId);
 
-
         if (view) {
-
             view.classList.add('active');
-
         }
     }
 
@@ -1429,11 +1392,9 @@
                 .value
                 .trim();
 
-
         const preview =
             document
                 .getElementById('email-preview');
-
 
         if (!scholarId) {
 
@@ -1443,6 +1404,10 @@
             return;
         }
 
+        /*
+         * NO LENGTH RESTRICTION.
+         * Any non-empty scholar number is accepted.
+         */
 
         preview.innerText =
             `${scholarId.toLowerCase()}@stu.manit.ac.in`;
@@ -1466,13 +1431,10 @@
         const file =
             event.target.files[0];
 
-
         if (!file)
             return;
 
-
         uploadedPhotoBase64 = "";
-
 
         document
             .getElementById(
@@ -1481,17 +1443,14 @@
             .style.display =
             'none';
 
-
         const reader =
             new FileReader();
-
 
         reader.onload =
             function(e) {
 
                 const img =
                     new Image();
-
 
                 img.onload =
                     function() {
@@ -1501,39 +1460,33 @@
                                 'canvas'
                             );
 
-
                         const TARGET_WIDTH = 350;
-
 
                         let scale =
                             img.width > TARGET_WIDTH
                                 ? TARGET_WIDTH / img.width
                                 : 1;
 
-
                         canvas.width =
-                            TARGET_WIDTH;
-
+                            Math.round(
+                                img.width * scale
+                            );
 
                         canvas.height =
                             Math.round(
                                 img.height * scale
                             );
 
-
                         const ctx =
                             canvas.getContext(
                                 '2d'
                             );
 
-
                         ctx.imageSmoothingEnabled =
                             true;
 
-
                         ctx.imageSmoothingQuality =
                             'high';
-
 
                         ctx.drawImage(
                             img,
@@ -1543,13 +1496,11 @@
                             canvas.height
                         );
 
-
                         uploadedPhotoBase64 =
                             canvas.toDataURL(
                                 'image/jpeg',
                                 0.82
                             );
-
 
                         document
                             .getElementById(
@@ -1558,7 +1509,6 @@
                             .src =
                             uploadedPhotoBase64;
 
-
                         document
                             .getElementById(
                                 'photo-preview-container'
@@ -1566,14 +1516,12 @@
                             .style.display =
                             'flex';
 
-
                         const sizeInKb =
                             (
                                 Math.round(
                                     (uploadedPhotoBase64.length * 3) / 4
                                 ) / 1024
                             ).toFixed(1);
-
 
                         document
                             .getElementById(
@@ -1583,11 +1531,9 @@
                             `Ready (${sizeInKb} KB)`;
                     };
 
-
                 img.src =
                     e.target.result;
             };
-
 
         reader.readAsDataURL(file);
     }
@@ -1595,8 +1541,6 @@
 
     /* =====================================================
        START REGISTRATION / SEND OTP
-       
-       MAIN OTP FUNCTION
        ===================================================== */
 
     async function handleRegister() {
@@ -1607,13 +1551,11 @@
                 .value
                 .trim();
 
-
         const name =
             document
                 .getElementById('reg-name')
                 .value
                 .trim();
-
 
         const room =
             document
@@ -1621,20 +1563,34 @@
                 .value
                 .trim();
 
-
         const password =
             document
                 .getElementById('reg-pass')
                 .value;
-
 
         const btn =
             document
                 .getElementById('btn-register');
 
 
+        /* =================================================
+           ONLY EMPTY CHECK
+           
+           THERE IS NO 9-DIGIT CHECK.
+           ================================================= */
+
+        if (!scholarId) {
+
+            showToast(
+                "Please enter your scholar number.",
+                "error"
+            );
+
+            return;
+        }
+
+
         if (
-            !scholarId ||
             !name ||
             !room ||
             !password ||
@@ -1643,17 +1599,6 @@
 
             showToast(
                 "Please fill all fields and upload photo.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (!/^\d{9}$/.test(scholarId)) {
-
-            showToast(
-                "Scholar Number must be 9 digits.",
                 "error"
             );
 
@@ -1679,11 +1624,6 @@
 
 
         try {
-
-            /*
-             * This is the primary endpoint used by
-             * the current OTP server.
-             */
 
             const res =
                 await fetch(
@@ -1721,7 +1661,6 @@
             const result =
                 await readApiResponse(res);
 
-
             const data =
                 result.data;
 
@@ -1748,6 +1687,7 @@
                         'otp-email'
                     )
                     .innerText =
+                    data.email ||
                     data.emailMasked ||
                     `${registrationScholarId}@stu.manit.ac.in`;
 
@@ -1808,9 +1748,8 @@
                 e
             );
 
-
             showToast(
-                "Could not reach the server. Check Render logs.",
+                `Could not reach the server: ${e.message}`,
                 "error"
             );
 
@@ -1838,7 +1777,6 @@
                 .getElementById('reg-otp')
                 .value
                 .trim();
-
 
         const btn =
             document
@@ -1879,7 +1817,6 @@
                 await fetch(
                     `${API_URL}/register/verify`,
                     {
-
                         method: 'POST',
 
                         headers: {
@@ -1902,7 +1839,6 @@
 
             const result =
                 await readApiResponse(res);
-
 
             const data =
                 result.data;
@@ -2031,10 +1967,7 @@
 
 
                 if (resendTimer) {
-
-                    clearInterval(
-                        resendTimer
-                    );
+                    clearInterval(resendTimer);
                 }
 
 
@@ -2060,9 +1993,8 @@
                 e
             );
 
-
             showToast(
-                "Could not reach the server. Check Render logs.",
+                `Could not reach the server: ${e.message}`,
                 "error"
             );
 
@@ -2113,7 +2045,6 @@
                 await fetch(
                     `${API_URL}/register/resend`,
                     {
-
                         method:
                             'POST',
 
@@ -2135,7 +2066,6 @@
             const result =
                 await readApiResponse(res);
 
-
             const data =
                 result.data;
 
@@ -2156,7 +2086,6 @@
                     "New OTP sent.",
                     "success"
                 );
-
 
                 startResendCountdown();
 
@@ -2191,12 +2120,10 @@
                 e
             );
 
-
             showToast(
-                "Could not reach the server. Check Render logs.",
+                `Could not reach the server: ${e.message}`,
                 "error"
             );
-
 
             btn.disabled =
                 false;
@@ -2211,10 +2138,7 @@
     function startResendCountdown() {
 
         if (resendTimer) {
-
-            clearInterval(
-                resendTimer
-            );
+            clearInterval(resendTimer);
         }
 
 
@@ -2290,10 +2214,7 @@
 
 
         if (resendTimer) {
-
-            clearInterval(
-                resendTimer
-            );
+            clearInterval(resendTimer);
         }
 
 
@@ -2391,7 +2312,6 @@
                 await fetch(
                     `${API_URL}/login`,
                     {
-
                         method:
                             'POST',
 
@@ -2413,7 +2333,6 @@
 
             const result =
                 await readApiResponse(res);
-
 
             const data =
                 result.data;
@@ -2456,7 +2375,7 @@
 
 
             showToast(
-                "Could not reach the server.",
+                `Could not reach the server: ${err.message}`,
                 "error"
             );
 
@@ -2555,7 +2474,6 @@
             new QRCode(
                 qrContainer,
                 {
-
                     text:
                         s.scholarId,
 
@@ -2583,10 +2501,7 @@
 
 
         if (clockInterval) {
-
-            clearInterval(
-                clockInterval
-            );
+            clearInterval(clockInterval);
         }
 
 
@@ -2607,10 +2522,7 @@
 
 
         if (pollInterval) {
-
-            clearInterval(
-                pollInterval
-            );
+            clearInterval(pollInterval);
         }
 
 
@@ -2645,7 +2557,6 @@
 
             const result =
                 await readApiResponse(res);
-
 
             const data =
                 result.data;
@@ -2735,18 +2646,12 @@
 
 
         if (clockInterval) {
-
-            clearInterval(
-                clockInterval
-            );
+            clearInterval(clockInterval);
         }
 
 
         if (pollInterval) {
-
-            clearInterval(
-                pollInterval
-            );
+            clearInterval(pollInterval);
         }
 
 
@@ -2881,7 +2786,6 @@
                 await fetch(
                     `${API_URL}/scan`,
                     {
-
                         method:
                             'POST',
 
@@ -2892,9 +2796,11 @@
 
                         body:
                             JSON.stringify({
-
                                 scholarId:
-                                    decodedText
+                                    decodedText,
+
+                                staffPin:
+                                    'manitH10'
                             })
                     }
                 );
@@ -2902,7 +2808,6 @@
 
             const result =
                 await readApiResponse(res);
-
 
             const data =
                 result.data;
@@ -2914,7 +2819,7 @@
             ) {
 
                 showToast(
-                    `APPROVED: ${data.name} (${data.room})`,
+                    `APPROVED: ${data.name || "Student"}${data.room ? ` (${data.room})` : ""}`,
                     "success"
                 );
 
@@ -2927,7 +2832,7 @@
 
                 showToast(
                     data.message ||
-                    `DENIED: ${data.name} already received meal!`,
+                    "DENIED: Student already received meal!",
                     "error"
                 );
 
@@ -2953,7 +2858,7 @@
 
 
             showToast(
-                "Scan error",
+                `Scan error: ${e.message}`,
                 "error"
             );
         }
@@ -3000,7 +2905,6 @@
                 await fetch(
                     `${API_URL}/reset-one`,
                     {
-
                         method:
                             'POST',
 
@@ -3023,7 +2927,6 @@
 
             const result =
                 await readApiResponse(res);
-
 
             const data =
                 result.data;
@@ -3064,7 +2967,7 @@
 
 
             showToast(
-                "Reset failed",
+                `Reset failed: ${e.message}`,
                 "error"
             );
         }
@@ -3092,7 +2995,6 @@
                 await fetch(
                     `${API_URL}/reset-all`,
                     {
-
                         method:
                             'POST',
 
@@ -3113,7 +3015,6 @@
 
             const result =
                 await readApiResponse(res);
-
 
             const data =
                 result.data;
@@ -3146,7 +3047,7 @@
 
 
             showToast(
-                "Reset all failed",
+                `Reset all failed: ${e.message}`,
                 "error"
             );
         }
