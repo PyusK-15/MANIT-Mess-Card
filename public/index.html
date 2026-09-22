@@ -22,963 +22,1568 @@
 
     <style>
 
+        @import url(
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'
+        );
+
+        :root {
+
+            --navy: #071a35;
+            --navy-2: #0b2548;
+
+            --blue: #2563eb;
+            --blue-light: #60a5fa;
+
+            --cyan: #06b6d4;
+
+            --green: #10b981;
+            --green-dark: #047857;
+
+            --red: #ef4444;
+
+            --gold: #f59e0b;
+
+            --white: #ffffff;
+
+            --text: #0f172a;
+
+            --muted: #64748b;
+
+            --background:
+                #eef2f7;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-        }
-
-        :root {
-            --navy: #0a2540;
-            --blue: #2563eb;
-            --blue2: #3b82f6;
-            --green: #059669;
-            --red: #dc2626;
-            --orange: #d97706;
-            --light: #f5f7fb;
-            --border: #e5e7eb;
-            --text: #172033;
-            --muted: #64748b;
-            --white: #ffffff;
+            font-family:
+                'Inter',
+                sans-serif;
         }
 
         body {
+
             min-height: 100vh;
-            font-family:
-                Inter,
-                Arial,
-                sans-serif;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            padding: 22px 12px;
+
+            color: var(--text);
+
+            overflow-x: hidden;
 
             background:
                 radial-gradient(
-                    circle at top left,
-                    #dbeafe,
+                    circle at 10% 10%,
+                    rgba(37,99,235,.16),
                     transparent 35%
                 ),
+
+                radial-gradient(
+                    circle at 90% 90%,
+                    rgba(6,182,212,.14),
+                    transparent 35%
+                ),
+
                 linear-gradient(
                     135deg,
-                    #f8fafc,
-                    #eef2ff
+                    #dbe5f0,
+                    #f8fafc
                 );
-
-            color: var(--text);
         }
-
-        button,
-        input {
-            font: inherit;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
 
         /* =====================================================
-           HEADER
+           BACKGROUND MOTION
            ===================================================== */
 
-        header {
-            height: 72px;
+        body::before {
+
+            content: "";
+
+            position: fixed;
+
+            width: 450px;
+            height: 450px;
+
+            border-radius: 50%;
 
             background:
-                rgba(10, 37, 64, 0.96);
+                rgba(
+                    37,
+                    99,
+                    235,
+                    .06
+                );
 
-            color: white;
+            filter: blur(2px);
 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            top: -180px;
+            left: -180px;
 
-            padding: 0 28px;
-
-            box-shadow:
-                0 8px 30px
-                rgba(15, 23, 42, 0.18);
-
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            animation:
+                floatBlob 9s ease-in-out infinite;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        body::after {
 
-        .brand img {
-            width: 42px;
-            height: 42px;
-            object-fit: contain;
-            background: white;
+            content: "";
+
+            position: fixed;
+
+            width: 420px;
+            height: 420px;
+
             border-radius: 50%;
-            padding: 4px;
+
+            background:
+                rgba(
+                    6,
+                    182,
+                    212,
+                    .06
+                );
+
+            bottom: -180px;
+            right: -180px;
+
+            animation:
+                floatBlob2 11s ease-in-out infinite;
         }
 
-        .brand-title {
-            font-size: 17px;
-            font-weight: 800;
+        @keyframes floatBlob {
+
+            0%,100% {
+                transform:
+                    translate(0,0)
+                    scale(1);
+            }
+
+            50% {
+                transform:
+                    translate(50px,40px)
+                    scale(1.12);
+            }
         }
 
-        .brand-subtitle {
-            font-size: 11px;
-            opacity: 0.7;
-            margin-top: 2px;
-        }
+        @keyframes floatBlob2 {
 
+            0%,100% {
+                transform:
+                    translate(0,0)
+                    scale(1);
+            }
+
+            50% {
+                transform:
+                    translate(-40px,-50px)
+                    scale(1.1);
+            }
+        }
 
         /* =====================================================
-           MAIN
+           APP
            ===================================================== */
 
-        main {
-            width: min(1100px, 94%);
-            margin: 40px auto;
+        .app {
+
+            width: 100%;
+
+            max-width: 430px;
+
+            position: relative;
+
+            z-index: 5;
         }
 
         .view {
+
             display: none;
+
+            animation:
+                pageIn .45s ease;
         }
 
         .view.active {
             display: block;
         }
 
+        @keyframes pageIn {
 
-        /* =====================================================
-           AUTH CARD
-           ===================================================== */
+            from {
+                opacity: 0;
+                transform:
+                    translateY(16px)
+                    scale(.98);
+            }
 
-        .auth-wrapper {
-            min-height:
-                calc(100vh - 160px);
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            to {
+                opacity: 1;
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
         }
 
-        .auth-card {
-            width: min(470px, 100%);
+        /* =====================================================
+           PANEL
+           ===================================================== */
 
-            background: white;
+        .panel {
+
+            background:
+                rgba(255,255,255,.94);
+
+            backdrop-filter:
+                blur(18px);
+
+            -webkit-backdrop-filter:
+                blur(18px);
+
+            border-radius: 26px;
+
+            padding: 30px 24px;
 
             border:
                 1px solid
                 rgba(255,255,255,.8);
 
-            border-radius: 26px;
-
-            padding: 34px;
-
             box-shadow:
                 0 25px 70px
-                rgba(15,23,42,.12);
+                rgba(15,23,42,.13);
         }
 
-        .auth-logo {
-            width: 76px;
-            height: 76px;
+        /* =====================================================
+           HEADER
+           ===================================================== */
+
+        .header {
+
+            text-align: center;
+
+            margin-bottom: 24px;
+        }
+
+        .logo {
+
+            width: 72px;
+            height: 72px;
+
+            object-fit: contain;
+
             display: block;
-            margin: 0 auto 18px;
-        }
 
-        .auth-card h1 {
-            text-align: center;
-            color: var(--navy);
-            font-size: 26px;
-        }
-
-        .auth-description {
-            text-align: center;
-            color: var(--muted);
-            font-size: 14px;
             margin:
-                9px 0 25px;
-            line-height: 1.5;
+                0 auto 13px;
+
+            filter:
+                drop-shadow(
+                    0 8px 12px
+                    rgba(15,23,42,.12)
+                );
         }
+
+        .title {
+
+            font-size: 25px;
+
+            font-weight: 900;
+
+            color:
+                var(--navy);
+        }
+
+        .subtitle {
+
+            font-size: 12px;
+
+            color:
+                var(--muted);
+
+            margin-top: 5px;
+
+            letter-spacing:
+                .3px;
+        }
+
+        /* =====================================================
+           INPUTS
+           ===================================================== */
 
         .field {
-            margin-bottom: 16px;
+
+            margin-top: 15px;
         }
 
         .field label {
+
             display: block;
+
             font-size: 12px;
+
             font-weight: 800;
-            color: #475569;
+
+            color:
+                #334155;
+
             margin-bottom: 7px;
         }
 
-        .field input {
+        .input {
+
             width: 100%;
+
+            height: 50px;
 
             border:
                 1px solid
-                var(--border);
+                #dbe2ea;
 
-            border-radius: 13px;
+            border-radius: 14px;
 
-            padding: 13px 14px;
+            padding:
+                0 15px;
 
             outline: none;
 
-            transition:
-                .2s ease;
+            background:
+                #f8fafc;
 
-            background: #fbfdff;
+            color:
+                var(--text);
+
+            font-size: 14px;
+
+            transition:
+                .25s ease;
         }
 
-        .field input:focus {
+        .input:focus {
+
+            background:
+                white;
+
             border-color:
                 var(--blue);
 
             box-shadow:
                 0 0 0 4px
-                rgba(37,99,235,.1);
-
-            background: white;
+                rgba(
+                    37,
+                    99,
+                    235,
+                    .10
+                );
         }
 
-        .primary-btn {
+        /* =====================================================
+           BUTTONS
+           ===================================================== */
+
+        .button {
+
             width: 100%;
 
             border: none;
 
+            min-height: 50px;
+
             border-radius: 14px;
 
-            padding: 14px;
+            margin-top: 18px;
+
+            font-weight: 800;
+
+            font-size: 14px;
+
+            cursor: pointer;
+
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                opacity .18s ease;
+
+            position: relative;
+
+            overflow: hidden;
+        }
+
+        .button:hover {
+
+            transform:
+                translateY(-2px);
+        }
+
+        .button:active {
+
+            transform:
+                translateY(1px)
+                scale(.99);
+        }
+
+        .button:disabled {
+
+            cursor:
+                not-allowed;
+
+            opacity:
+                .55;
+
+            transform:
+                none;
+        }
+
+        .primary {
 
             color: white;
 
             background:
                 linear-gradient(
                     135deg,
-                    var(--blue),
+                    #2563eb,
                     #1d4ed8
                 );
 
-            font-weight: 800;
-
             box-shadow:
                 0 10px 25px
-                rgba(37,99,235,.22);
-
-            transition:
-                transform .18s,
-                box-shadow .18s;
+                rgba(
+                    37,
+                    99,
+                    235,
+                    .25
+                );
         }
 
-        .primary-btn:hover {
-            transform:
-                translateY(-2px);
+        .secondary {
 
-            box-shadow:
-                0 15px 30px
-                rgba(37,99,235,.28);
+            background:
+                #eef2f7;
+
+            color:
+                #334155;
         }
 
-        .primary-btn:disabled {
-            opacity: .55;
-            cursor: not-allowed;
-            transform: none;
+        .danger {
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ef4444,
+                    #dc2626
+                );
         }
 
-        .secondary-btn {
-            width: 100%;
+        .small-link {
 
-            border:
-                1px solid
-                var(--border);
+            border: none;
 
-            background: white;
+            background: none;
 
-            color: var(--navy);
+            color:
+                var(--blue);
 
-            border-radius: 14px;
-
-            padding: 12px;
-
-            margin-top: 10px;
+            font-size: 13px;
 
             font-weight: 700;
-        }
 
-        .switch-text {
-            text-align: center;
-            margin-top: 20px;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .link-btn {
-            border: none;
-            background: none;
-            color: var(--blue);
-            font-weight: 800;
             cursor: pointer;
-        }
 
+            margin-top: 15px;
+        }
 
         /* =====================================================
            OTP
            ===================================================== */
 
         .otp-input {
+
             text-align: center;
 
             letter-spacing:
-                9px;
+                8px;
 
-            font-size: 25px;
+            font-size: 23px;
 
             font-weight: 800;
         }
 
-        .otp-email {
+        .otp-info {
+
             background:
                 #eff6ff;
-
-            border-radius: 13px;
-
-            padding: 12px;
-
-            color:
-                #1e40af;
-
-            text-align: center;
-
-            font-size: 13px;
-
-            margin-bottom: 20px;
-        }
-
-        .resend {
-            text-align: center;
-
-            color:
-                var(--muted);
-
-            font-size: 13px;
-
-            margin-top: 15px;
-        }
-
-
-        /* =====================================================
-           STUDENT CARD
-           ===================================================== */
-
-        .student-container {
-            max-width: 900px;
-            margin: auto;
-        }
-
-        .identity-card {
-            overflow: hidden;
-
-            background: white;
-
-            border-radius: 30px;
-
-            box-shadow:
-                0 30px 80px
-                rgba(15,23,42,.15);
-        }
-
-        .card-top {
-            background:
-                linear-gradient(
-                    135deg,
-                    #071d35,
-                    #0a3963
-                );
-
-            color: white;
-
-            padding: 30px;
-
-            position: relative;
-        }
-
-        .card-top::after {
-            content: "";
-
-            position: absolute;
-
-            width: 180px;
-            height: 180px;
-
-            right: -70px;
-            top: -70px;
-
-            border-radius: 50%;
-
-            background:
-                rgba(255,255,255,.07);
-        }
-
-        .card-heading {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            z-index: 2;
-        }
-
-        .college-name {
-            font-size: 20px;
-            font-weight: 900;
-        }
-
-        .college-subtitle {
-            opacity: .72;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        .verified-tag {
-            padding: 7px 12px;
-            border-radius: 999px;
-
-            background:
-                rgba(16,185,129,.15);
-
-            border:
-                1px solid
-                rgba(52,211,153,.4);
-
-            color:
-                #6ee7b7;
-
-            font-size: 11px;
-            font-weight: 900;
-        }
-
-        .identity-body {
-            display: grid;
-
-            grid-template-columns:
-                160px 1fr;
-
-            gap: 28px;
-
-            padding: 30px;
-        }
-
-        .photo-wrap {
-            width: 160px;
-            height: 190px;
-
-            border-radius: 20px;
-
-            overflow: hidden;
-
-            background:
-                #e2e8f0;
-
-            border:
-                5px solid
-                #f8fafc;
-
-            box-shadow:
-                0 10px 25px
-                rgba(15,23,42,.12);
-        }
-
-        .photo-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .student-name {
-            font-size: 29px;
-            font-weight: 900;
-            color: var(--navy);
-        }
-
-        .student-info {
-            display: grid;
-
-            grid-template-columns:
-                repeat(2, 1fr);
-
-            gap: 12px;
-
-            margin-top: 18px;
-        }
-
-        .info-box {
-            background:
-                #f8fafc;
-
-            border:
-                1px solid
-                #e8edf3;
-
-            padding: 13px;
-
-            border-radius: 14px;
-        }
-
-        .info-label {
-            font-size: 10px;
-            color: var(--muted);
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-
-        .info-value {
-            margin-top: 4px;
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-
-        /* =====================================================
-           LIVE MEAL PANEL
-           ===================================================== */
-
-        .meal-panel {
-            margin:
-                0 30px 30px;
-
-            border-radius: 24px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #eff6ff,
-                    #f8fafc
-                );
 
             border:
                 1px solid
                 #dbeafe;
 
-            padding: 25px;
-
-            position: relative;
-
-            overflow: hidden;
-        }
-
-        .meal-panel::before {
-            content: "";
-
-            position: absolute;
-
-            width: 220px;
-            height: 220px;
-
-            right: -100px;
-            bottom: -120px;
-
-            border-radius: 50%;
-
-            background:
-                rgba(37,99,235,.08);
-        }
-
-        .live-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            position: relative;
-        }
-
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
             color:
-                var(--green);
+                #1e40af;
 
-            font-size: 11px;
+            border-radius:
+                14px;
 
-            font-weight: 900;
+            padding:
+                13px;
 
-            letter-spacing: 1px;
+            margin-top:
+                16px;
+
+            font-size:
+                12px;
+
+            line-height:
+                1.55;
+
+            text-align:
+                center;
         }
 
-        .live-dot {
-            width: 9px;
-            height: 9px;
+        .countdown {
 
-            background:
-                #10b981;
-
-            border-radius: 50%;
-
-            animation:
-                livePulse 1.3s
-                infinite;
-        }
-
-        @keyframes livePulse {
-            0%,100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            50% {
-                transform: scale(1.65);
-                opacity: .45;
-            }
-        }
-
-        .clock {
-            font-size: 13px;
-            font-weight: 800;
-            color: #475569;
-        }
-
-        .meal-title {
-            margin-top: 20px;
-
-            font-size: 13px;
-            color: var(--muted);
-            font-weight: 700;
-        }
-
-        .meal-name {
-            font-size: 34px;
-            font-weight: 950;
-            color: var(--navy);
-            margin-top: 4px;
-        }
-
-        .meal-status {
-            margin-top: 8px;
-
-            color: var(--muted);
-
-            font-size: 13px;
-        }
-
-        .claim-btn {
-            position: relative;
-
-            width: 100%;
-
-            border: none;
-
-            margin-top: 22px;
-
-            padding: 18px;
-
-            border-radius: 17px;
-
-            color: white;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #059669,
-                    #047857
-                );
-
-            font-size: 16px;
-
-            font-weight: 950;
-
-            letter-spacing: .5px;
-
-            box-shadow:
-                0 14px 30px
-                rgba(5,150,105,.22);
-
-            overflow: hidden;
-
-            transition:
-                transform .18s,
-                box-shadow .18s;
-        }
-
-        .claim-btn::before {
-            content: "";
-
-            position: absolute;
-
-            top: 0;
-            left: -100%;
-
-            width: 70%;
-            height: 100%;
-
-            background:
-                linear-gradient(
-                    90deg,
-                    transparent,
-                    rgba(255,255,255,.25),
-                    transparent
-                );
-
-            animation:
-                buttonShine 2.5s
-                infinite;
-        }
-
-        @keyframes buttonShine {
-            0% {
-                left: -100%;
-            }
-
-            55%,100% {
-                left: 140%;
-            }
-        }
-
-        .claim-btn:hover {
-            transform:
-                translateY(-2px);
-
-            box-shadow:
-                0 18px 35px
-                rgba(5,150,105,.3);
-        }
-
-        .claim-btn:disabled {
-            cursor: not-allowed;
-            transform: none;
-            opacity: .7;
-        }
-
-        .claim-success {
-            margin-top: 20px;
-
-            border-radius: 18px;
-
-            padding: 18px;
-
-            background:
-                #ecfdf5;
-
-            border:
-                1px solid
-                #a7f3d0;
-
-            color:
-                #065f46;
+            margin-top: 10px;
 
             text-align: center;
 
-            animation:
-                successPop .4s ease;
-        }
-
-        @keyframes successPop {
-            from {
-                transform:
-                    scale(.9);
-                opacity: 0;
-            }
-
-            to {
-                transform:
-                    scale(1);
-                opacity: 1;
-            }
-        }
-
-        .success-icon {
-            width: 54px;
-            height: 54px;
-
-            margin:
-                0 auto 9px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 50%;
-
-            background:
-                #10b981;
-
-            color: white;
-
-            font-size: 28px;
-
-            font-weight: 900;
-        }
-
-        .success-title {
-            font-size: 19px;
-            font-weight: 950;
-        }
-
-        .success-subtitle {
             font-size: 12px;
-            margin-top: 5px;
-            opacity: .75;
-        }
-
-        .logout-btn {
-            margin:
-                0 30px 30px;
-
-            width:
-                calc(100% - 60px);
-
-            border:
-                1px solid
-                #e2e8f0;
-
-            background:
-                white;
-
-            padding: 12px;
-
-            border-radius: 13px;
 
             color:
-                #475569;
-
-            font-weight: 800;
+                var(--muted);
         }
-
 
         /* =====================================================
-           STAFF
+           PHOTO
            ===================================================== */
 
-        .staff-card {
-            max-width: 600px;
-            margin: 80px auto;
-
-            background: white;
-
-            border-radius: 26px;
-
-            padding: 30px;
-
-            box-shadow:
-                0 25px 70px
-                rgba(15,23,42,.12);
-        }
-
-        .staff-card h2 {
-            color: var(--navy);
-            margin-bottom: 8px;
-        }
-
-        .staff-description {
-            color: var(--muted);
-            font-size: 13px;
-            margin-bottom: 25px;
-        }
-
-        .reset-section {
-            padding: 20px;
-
-            background:
-                #f8fafc;
-
-            border:
-                1px solid
-                #e2e8f0;
-
-            border-radius: 18px;
-
-            margin-bottom: 15px;
-        }
-
-        .reset-section h3 {
-            font-size: 15px;
-            margin-bottom: 13px;
-        }
-
-        .danger-btn {
-            width: 100%;
-
-            border: none;
-
-            background:
-                #dc2626;
-
-            color: white;
-
-            padding: 13px;
-
-            border-radius: 13px;
-
-            font-weight: 900;
-
-            margin-top: 10px;
-        }
-
-        .staff-logout {
-            width: 100%;
-
-            border:
-                1px solid
-                var(--border);
-
-            background: white;
-
-            padding: 12px;
-
-            border-radius: 13px;
-
-            font-weight: 800;
-
-            margin-top: 5px;
-        }
-
-
-        /* =====================================================
-           TOAST
-           ===================================================== */
-
-        #toast-container {
-            position: fixed;
-
-            top: 88px;
-            right: 20px;
-
-            z-index: 9999;
+        .photo-input {
 
             display: flex;
 
             flex-direction: column;
 
+            align-items: center;
+
             gap: 10px;
         }
 
+        .photo-preview {
+
+            width: 92px;
+            height: 92px;
+
+            border-radius: 22px;
+
+            object-fit: cover;
+
+            border:
+                3px solid
+                #dbeafe;
+
+            display: none;
+        }
+
+        /* =====================================================
+           STUDENT CARD
+           ===================================================== */
+
+        .student-card {
+
+            position: relative;
+
+            overflow: hidden;
+
+            border-radius: 28px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #06152c,
+                    #0b2548
+                );
+
+            box-shadow:
+                0 30px 70px
+                rgba(
+                    7,
+                    26,
+                    53,
+                    .30
+                );
+
+            min-height:
+                650px;
+        }
+
+        .student-card::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 240px;
+            height: 240px;
+
+            border-radius: 50%;
+
+            right: -100px;
+            top: -90px;
+
+            background:
+                rgba(
+                    96,
+                    165,
+                    250,
+                    .13
+                );
+
+            animation:
+                cardOrb 8s
+                ease-in-out infinite;
+        }
+
+        .student-card::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 190px;
+            height: 190px;
+
+            border-radius: 50%;
+
+            left: -100px;
+            bottom: -80px;
+
+            background:
+                rgba(
+                    6,
+                    182,
+                    212,
+                    .10
+                );
+
+            animation:
+                cardOrb2 10s
+                ease-in-out infinite;
+        }
+
+        @keyframes cardOrb {
+
+            0%,100% {
+                transform:
+                    translate(0,0);
+            }
+
+            50% {
+                transform:
+                    translate(-35px,30px);
+            }
+        }
+
+        @keyframes cardOrb2 {
+
+            0%,100% {
+                transform:
+                    translate(0,0);
+            }
+
+            50% {
+                transform:
+                    translate(30px,-25px);
+            }
+        }
+
+        .card-content {
+
+            position: relative;
+
+            z-index: 2;
+
+            padding: 25px;
+        }
+
+        /* =====================================================
+           CARD TOP
+           ===================================================== */
+
+        .card-top {
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                flex-start;
+        }
+
+        .brand {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .brand img {
+
+            width: 43px;
+            height: 43px;
+
+            object-fit: contain;
+        }
+
+        .brand-name {
+
+            font-size: 11px;
+
+            font-weight: 800;
+
+            letter-spacing:
+                .7px;
+
+            opacity:
+                .85;
+        }
+
+        .brand-main {
+
+            font-size: 15px;
+
+            font-weight: 900;
+        }
+
+        .live {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing:
+                .8px;
+
+            color:
+                #86efac;
+        }
+
+        .live-dot {
+
+            width: 8px;
+            height: 8px;
+
+            border-radius: 50%;
+
+            background:
+                #22c55e;
+
+            box-shadow:
+                0 0 0 0
+                rgba(
+                    34,
+                    197,
+                    94,
+                    .6
+                );
+
+            animation:
+                livePulse 1.5s
+                infinite;
+        }
+
+        @keyframes livePulse {
+
+            0% {
+                box-shadow:
+                    0 0 0 0
+                    rgba(
+                        34,
+                        197,
+                        94,
+                        .65
+                    );
+            }
+
+            70% {
+                box-shadow:
+                    0 0 0 8px
+                    rgba(
+                        34,
+                        197,
+                        94,
+                        0
+                    );
+            }
+
+            100% {
+                box-shadow:
+                    0 0 0 0
+                    rgba(
+                        34,
+                        197,
+                        94,
+                        0
+                    );
+            }
+        }
+
+        /* =====================================================
+           PROFILE
+           ===================================================== */
+
+        .profile {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 16px;
+
+            margin-top: 27px;
+
+            padding:
+                15px;
+
+            border-radius:
+                20px;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .07
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .09
+                );
+        }
+
+        .profile-photo {
+
+            width: 75px;
+            height: 75px;
+
+            border-radius:
+                20px;
+
+            object-fit: cover;
+
+            border:
+                2px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .25
+                );
+
+            box-shadow:
+                0 10px 25px
+                rgba(0,0,0,.18);
+        }
+
+        .profile-name {
+
+            font-size: 20px;
+
+            font-weight: 900;
+
+            line-height:
+                1.1;
+        }
+
+        .profile-id {
+
+            margin-top: 6px;
+
+            font-size: 11px;
+
+            color:
+                #93c5fd;
+        }
+
+        .profile-room {
+
+            margin-top: 4px;
+
+            font-size: 11px;
+
+            color:
+                #cbd5e1;
+        }
+
+        /* =====================================================
+           LIVE TIME
+           ===================================================== */
+
+        .time-panel {
+
+            margin-top: 18px;
+
+            padding:
+                14px 16px;
+
+            border-radius:
+                17px;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .055
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .08
+                );
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                center;
+        }
+
+        .time-label {
+
+            font-size: 9px;
+
+            color:
+                #94a3b8;
+
+            font-weight:
+                800;
+
+            letter-spacing:
+                1px;
+        }
+
+        .clock {
+
+            font-size: 17px;
+
+            font-weight: 800;
+
+            letter-spacing:
+                .5px;
+
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        /* =====================================================
+           CLAIM AREA
+           ===================================================== */
+
+        .claim-panel {
+
+            margin-top: 20px;
+
+            padding:
+                20px;
+
+            border-radius:
+                23px;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .08
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .10
+                );
+
+            text-align:
+                center;
+        }
+
+        .claim-eyebrow {
+
+            font-size: 9px;
+
+            font-weight: 900;
+
+            letter-spacing:
+                1.5px;
+
+            color:
+                #93c5fd;
+        }
+
+        .claim-title {
+
+            margin-top: 5px;
+
+            font-size: 20px;
+
+            font-weight: 900;
+        }
+
+        .claim-subtitle {
+
+            margin-top: 6px;
+
+            font-size: 11px;
+
+            color:
+                #cbd5e1;
+
+            line-height:
+                1.5;
+        }
+
+        /* =====================================================
+           LIVE BUTTON
+           ===================================================== */
+
+        .claim-button {
+
+            position: relative;
+
+            width: 100%;
+
+            min-height: 75px;
+
+            margin-top: 18px;
+
+            border: none;
+
+            border-radius: 21px;
+
+            cursor: pointer;
+
+            color: white;
+
+            font-size: 18px;
+
+            font-weight: 900;
+
+            letter-spacing:
+                .7px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #10b981,
+                    #059669
+                );
+
+            box-shadow:
+                0 15px 35px
+                rgba(
+                    16,
+                    185,
+                    129,
+                    .27
+                );
+
+            overflow: hidden;
+
+            animation:
+                claimFloat 3s
+                ease-in-out infinite;
+
+            transition:
+                .2s ease;
+        }
+
+        .claim-button::before {
+
+            content: "";
+
+            position: absolute;
+
+            top: 0;
+            left: -120%;
+
+            width: 70%;
+
+            height: 100%;
+
+            transform:
+                skewX(-20deg);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(
+                        255,
+                        255,
+                        255,
+                        .27
+                    ),
+                    transparent
+                );
+
+            animation:
+                shine 3.4s
+                infinite;
+        }
+
+        .claim-button::after {
+
+            content: "";
+
+            position: absolute;
+
+            inset: -5px;
+
+            border-radius:
+                25px;
+
+            border:
+                2px solid
+                rgba(
+                    110,
+                    231,
+                    183,
+                    .45
+                );
+
+            animation:
+                buttonRing 2s
+                infinite;
+        }
+
+        @keyframes claimFloat {
+
+            0%,100% {
+                transform:
+                    translateY(0);
+            }
+
+            50% {
+                transform:
+                    translateY(-3px);
+            }
+        }
+
+        @keyframes shine {
+
+            0% {
+                left: -120%;
+            }
+
+            55%,100% {
+                left: 150%;
+            }
+        }
+
+        @keyframes buttonRing {
+
+            0% {
+                opacity: .8;
+                transform:
+                    scale(1);
+            }
+
+            70% {
+                opacity: 0;
+                transform:
+                    scale(1.035);
+            }
+
+            100% {
+                opacity: 0;
+                transform:
+                    scale(1);
+            }
+        }
+
+        .claim-button:hover {
+
+            transform:
+                translateY(-3px)
+                scale(1.01);
+
+            box-shadow:
+                0 20px 40px
+                rgba(
+                    16,
+                    185,
+                    129,
+                    .34
+                );
+        }
+
+        .claim-button:active {
+
+            transform:
+                scale(.98);
+        }
+
+        .claim-button.loading {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #1d4ed8
+                );
+
+            animation:
+                none;
+        }
+
+        .claim-button.received {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #334155,
+                    #1e293b
+                );
+
+            animation:
+                none;
+
+            cursor:
+                default;
+        }
+
+        .claim-button.received::before,
+        .claim-button.received::after {
+
+            display:
+                none;
+        }
+
+        .spinner {
+
+            width: 20px;
+            height: 20px;
+
+            border:
+                3px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .3
+                );
+
+            border-top-color:
+                white;
+
+            border-radius: 50%;
+
+            display:
+                inline-block;
+
+            vertical-align:
+                middle;
+
+            margin-right:
+                8px;
+
+            animation:
+                spin .7s
+                linear infinite;
+        }
+
+        @keyframes spin {
+
+            to {
+                transform:
+                    rotate(360deg);
+            }
+        }
+
+        /* =====================================================
+           RECEIVED STATE
+           ===================================================== */
+
+        .received-box {
+
+            display: none;
+
+            margin-top: 16px;
+
+            padding:
+                15px;
+
+            border-radius:
+                17px;
+
+            background:
+                rgba(
+                    16,
+                    185,
+                    129,
+                    .12
+                );
+
+            border:
+                1px solid
+                rgba(
+                    110,
+                    231,
+                    183,
+                    .18
+                );
+
+            animation:
+                receivedIn .5s
+                ease;
+        }
+
+        @keyframes receivedIn {
+
+            from {
+                opacity: 0;
+                transform:
+                    scale(.94);
+            }
+
+            to {
+                opacity: 1;
+                transform:
+                    scale(1);
+            }
+        }
+
+        .received-icon {
+
+            width: 40px;
+            height: 40px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            justify-content:
+                center;
+
+            align-items:
+                center;
+
+            margin: 0 auto 8px;
+
+            background:
+                #10b981;
+
+            font-size: 21px;
+
+            animation:
+                checkPop .5s
+                cubic-bezier(
+                    .2,
+                    1.5,
+                    .4,
+                    1
+                );
+        }
+
+        @keyframes checkPop {
+
+            from {
+                transform:
+                    scale(0);
+            }
+
+            to {
+                transform:
+                    scale(1);
+            }
+        }
+
+        .received-title {
+
+            font-size: 14px;
+
+            font-weight: 900;
+        }
+
+        .received-time {
+
+            margin-top: 4px;
+
+            color:
+                #a7f3d0;
+
+            font-size: 10px;
+        }
+
+        .cooldown {
+
+            margin-top: 11px;
+
+            font-size: 10px;
+
+            color:
+                #cbd5e1;
+        }
+
+        .cooldown strong {
+
+            color:
+                #93c5fd;
+
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        /* =====================================================
+           CARD FOOTER
+           ===================================================== */
+
+        .card-footer {
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                center;
+
+            margin-top: 20px;
+
+            font-size: 9px;
+
+            color:
+                #94a3b8;
+        }
+
+        .session-live {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+        }
+
+        .session-live i {
+
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            background:
+                #22c55e;
+
+            animation:
+                tinyPulse 1s infinite;
+        }
+
+        @keyframes tinyPulse {
+
+            50% {
+                opacity: .35;
+            }
+        }
+
+        .logout {
+
+            border: none;
+
+            background:
+                transparent;
+
+            color:
+                #94a3b8;
+
+            font-size: 10px;
+
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            color: white;
+        }
+
+        /* =====================================================
+           TOAST
+           ===================================================== */
+
         .toast {
-            min-width: 270px;
-            max-width: 390px;
 
-            padding: 14px 17px;
+            position: fixed;
 
-            border-radius: 14px;
+            left: 50%;
+
+            bottom: 22px;
+
+            transform:
+                translate(-50%, 120px);
+
+            z-index: 9999;
+
+            max-width:
+                calc(100% - 30px);
+
+            padding:
+                13px 17px;
+
+            border-radius:
+                13px;
 
             background:
                 #0f172a;
 
             color: white;
 
+            font-size: 12px;
+
+            font-weight: 700;
+
             box-shadow:
                 0 15px 40px
                 rgba(0,0,0,.2);
 
-            font-size: 13px;
+            transition:
+                .3s ease;
 
-            font-weight: 700;
+            text-align:
+                center;
+        }
 
-            animation:
-                toastIn .25s ease;
+        .toast.show {
+
+            transform:
+                translate(-50%, 0);
         }
 
         .toast.success {
@@ -991,78 +1596,56 @@
                 #b91c1c;
         }
 
-        @keyframes toastIn {
-            from {
-                transform:
-                    translateX(30px);
-                opacity: 0;
-            }
+        /* =====================================================
+           ADMIN
+           ===================================================== */
 
-            to {
-                transform:
-                    translateX(0);
-                opacity: 1;
-            }
+        .admin-note {
+
+            margin-top: 14px;
+
+            padding: 13px;
+
+            border-radius: 13px;
+
+            background:
+                #fff7ed;
+
+            border:
+                1px solid
+                #fed7aa;
+
+            color:
+                #9a3412;
+
+            font-size:
+                12px;
+
+            line-height:
+                1.5;
         }
-
 
         /* =====================================================
            RESPONSIVE
            ===================================================== */
 
-        @media(max-width:700px) {
+        @media (max-width: 450px) {
 
-            header {
-                padding: 0 15px;
+            body {
+                padding: 10px;
             }
 
-            main {
-                width: 94%;
-                margin: 25px auto;
+            .student-card {
+                min-height:
+                    620px;
             }
 
-            .auth-card {
-                padding: 25px 20px;
+            .card-content {
+                padding: 21px;
             }
 
-            .identity-body {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .photo-wrap {
-                margin: auto;
-            }
-
-            .student-info {
-                grid-template-columns: 1fr;
-            }
-
-            .card-heading {
-                gap: 10px;
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .student-name {
-                font-size: 25px;
-            }
-
-            .meal-name {
-                font-size: 28px;
-            }
-
-            .meal-panel {
-                margin:
-                    0 15px 20px;
-            }
-
-            .logout-btn {
-                margin:
-                    0 15px 20px;
-
-                width:
-                    calc(100% - 30px);
+            .profile-name {
+                font-size: 18px;
             }
         }
 
@@ -1073,34 +1656,7 @@
 
 <body>
 
-<header>
-
-    <div class="brand">
-
-        <img
-            src="/manit-logo.png"
-            alt="MANIT"
-        >
-
-        <div>
-
-            <div class="brand-title">
-                MANIT Digital Mess Card
-            </div>
-
-            <div class="brand-subtitle">
-                National Institute of Technology, Bhopal
-            </div>
-
-        </div>
-
-    </div>
-
-</header>
-
-
-<main>
-
+<div class="app">
 
     <!-- =====================================================
          LOGIN
@@ -1111,100 +1667,79 @@
         class="view active"
     >
 
-        <div class="auth-wrapper">
+        <div class="panel">
 
-            <div class="auth-card">
+            <div class="header">
 
                 <img
-                    class="auth-logo"
                     src="/manit-logo.png"
+                    class="logo"
                     alt="MANIT"
                 >
 
-                <h1>
-                    Student Login
-                </h1>
-
-                <p class="auth-description">
-                    Login to access your digital
-                    mess identity card.
-                </p>
-
-
-                <div class="field">
-
-                    <label>
-                        SCHOLAR NUMBER
-                    </label>
-
-                    <input
-                        id="login-id"
-                        type="text"
-                        placeholder="Enter scholar number"
-                        autocomplete="username"
-                    >
-
+                <div class="title">
+                    MANIT Digital Mess Card
                 </div>
 
-
-                <div class="field">
-
-                    <label>
-                        PASSWORD
-                    </label>
-
-                    <input
-                        id="login-pass"
-                        type="password"
-                        placeholder="Enter password"
-                        autocomplete="current-password"
-                    >
-
-                </div>
-
-
-                <button
-                    id="btn-login"
-                    class="primary-btn"
-                    onclick="handleLogin()"
-                >
-                    Display Identity Card
-                </button>
-
-
-                <div class="switch-text">
-
-                    Don't have an account?
-
-                    <button
-                        class="link-btn"
-                        onclick="showRegistration()"
-                    >
-                        Register
-                    </button>
-
-                </div>
-
-
-                <div class="switch-text">
-
-                    Mess Staff?
-
-                    <button
-                        class="link-btn"
-                        onclick="showStaffLogin()"
-                    >
-                        Staff Login
-                    </button>
-
+                <div class="subtitle">
+                    Secure student meal identity system
                 </div>
 
             </div>
 
+
+            <div class="field">
+
+                <label>
+                    Scholar Number
+                </label>
+
+                <input
+                    id="login-scholar"
+                    class="input"
+                    type="text"
+                    placeholder="Enter scholar number"
+                    autocomplete="username"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    id="login-pass"
+                    class="input"
+                    type="password"
+                    placeholder="Enter password"
+                    autocomplete="current-password"
+                >
+
+            </div>
+
+
+            <button
+                class="button primary"
+                onclick="handleLogin()"
+            >
+                LOGIN
+            </button>
+
+
+            <button
+                class="small-link"
+                onclick="showRegister()"
+            >
+                New student? Create an account
+            </button>
+
         </div>
 
     </section>
-
 
 
     <!-- =====================================================
@@ -1212,40 +1747,44 @@
          ===================================================== -->
 
     <section
-        id="view-registration"
+        id="view-register"
         class="view"
     >
 
-        <div class="auth-wrapper">
+        <div class="panel">
 
-            <div class="auth-card">
+            <div class="header">
 
                 <img
-                    class="auth-logo"
                     src="/manit-logo.png"
+                    class="logo"
                     alt="MANIT"
                 >
 
-                <h1>
+                <div class="title">
                     Student Registration
-                </h1>
+                </div>
 
-                <p class="auth-description">
-                    Your OTP will be sent to your
-                    official MANIT student email.
-                </p>
+                <div class="subtitle">
+                    Verify your MANIT email using OTP
+                </div>
 
+            </div>
+
+
+            <div id="registration-form">
 
                 <div class="field">
 
                     <label>
-                        SCHOLAR NUMBER
+                        Scholar Number
                     </label>
 
                     <input
-                        id="reg-id"
+                        id="reg-scholar"
+                        class="input"
                         type="text"
-                        placeholder="Enter scholar number"
+                        placeholder="Scholar number"
                     >
 
                 </div>
@@ -1254,13 +1793,14 @@
                 <div class="field">
 
                     <label>
-                        FULL NAME
+                        Full Name
                     </label>
 
                     <input
                         id="reg-name"
+                        class="input"
                         type="text"
-                        placeholder="Enter your name"
+                        placeholder="Your full name"
                     >
 
                 </div>
@@ -1269,13 +1809,14 @@
                 <div class="field">
 
                     <label>
-                        ROOM NUMBER
+                        Room Number
                     </label>
 
                     <input
                         id="reg-room"
+                        class="input"
                         type="text"
-                        placeholder="Enter hostel room"
+                        placeholder="Hostel / room number"
                     >
 
                 </div>
@@ -1284,11 +1825,12 @@
                 <div class="field">
 
                     <label>
-                        PASSWORD
+                        Password
                     </label>
 
                     <input
-                        id="reg-pass"
+                        id="reg-password"
+                        class="input"
                         type="password"
                         placeholder="Minimum 6 characters"
                     >
@@ -1296,94 +1838,82 @@
                 </div>
 
 
-                <div class="field">
+                <div class="field photo-input">
 
                     <label>
-                        PROFILE PHOTO
+                        Student Photo
                     </label>
+
+                    <img
+                        id="photo-preview"
+                        class="photo-preview"
+                        alt="Photo preview"
+                    >
 
                     <input
                         id="reg-photo"
+                        class="input"
                         type="file"
                         accept="image/*"
+                        onchange="previewPhoto(event)"
                     >
 
                 </div>
 
 
                 <button
-                    id="btn-register"
-                    class="primary-btn"
-                    onclick="handleRegistration()"
+                    class="button primary"
+                    onclick="startRegistration()"
                 >
-                    Send Verification OTP
+                    SEND OTP
                 </button>
 
 
                 <button
-                    class="secondary-btn"
+                    class="small-link"
                     onclick="showLogin()"
                 >
-                    Back to Login
+                    Already registered? Login
                 </button>
 
             </div>
 
-        </div>
 
-    </section>
+            <!-- OTP -->
 
+            <div
+                id="otp-form"
+                style="display:none"
+            >
 
+                <div class="otp-info">
 
-    <!-- =====================================================
-         OTP
-         ===================================================== -->
+                    OTP sent to
 
-    <section
-        id="view-otp"
-        class="view"
-    >
+                    <strong
+                        id="otp-email"
+                    >
+                    </strong>
 
-        <div class="auth-wrapper">
+                    <br>
 
-            <div class="auth-card">
+                    Check your MANIT email inbox.
 
-                <img
-                    class="auth-logo"
-                    src="/manit-logo.png"
-                    alt="MANIT"
-                >
-
-                <h1>
-                    Verify Email
-                </h1>
-
-                <p class="auth-description">
-                    Enter the OTP sent to your
-                    official MANIT student email.
-                </p>
-
-
-                <div
-                    id="otp-email"
-                    class="otp-email"
-                >
-                    OTP sent to your MANIT email.
                 </div>
 
 
                 <div class="field">
 
                     <label>
-                        6-DIGIT OTP
+                        Verification OTP
                     </label>
 
                     <input
                         id="reg-otp"
-                        class="otp-input"
+                        class="input otp-input"
                         type="text"
-                        inputmode="numeric"
                         maxlength="6"
+                        inputmode="numeric"
                         placeholder="000000"
                     >
 
@@ -1391,39 +1921,34 @@
 
 
                 <button
-                    id="btn-verify"
-                    class="primary-btn"
-                    onclick="handleOTPVerification()"
+                    class="button primary"
+                    onclick="verifyOTP()"
                 >
-                    Verify OTP
+                    VERIFY EMAIL
                 </button>
-
-
-                <div
-                    id="resend-text"
-                    class="resend"
-                >
-                    You can resend OTP in
-                    <b id="resend-countdown">60</b>
-                    seconds.
-                </div>
 
 
                 <button
                     id="btn-resend"
-                    class="secondary-btn"
-                    disabled
+                    class="button secondary"
                     onclick="resendOTP()"
                 >
-                    Resend OTP
+                    RESEND OTP
                 </button>
 
 
+                <div
+                    id="resend-countdown"
+                    class="countdown"
+                >
+                </div>
+
+
                 <button
-                    class="secondary-btn"
+                    class="small-link"
                     onclick="backToRegistration()"
                 >
-                    Back to Registration
+                    Back to registration
                 </button>
 
             </div>
@@ -1431,7 +1956,6 @@
         </div>
 
     </section>
-
 
 
     <!-- =====================================================
@@ -1443,125 +1967,81 @@
         class="view"
     >
 
-        <div class="student-container">
+        <div class="student-card">
 
-            <div class="identity-card">
+            <div class="card-content">
 
+
+                <!-- TOP -->
 
                 <div class="card-top">
 
-                    <div class="card-heading">
+                    <div class="brand">
+
+                        <img
+                            src="/manit-logo.png"
+                            alt="MANIT"
+                        >
 
                         <div>
 
-                            <div class="college-name">
-                                MANIT
+                            <div class="brand-name">
+                                MAULANA AZAD NATIONAL INSTITUTE OF TECHNOLOGY
                             </div>
 
-                            <div class="college-subtitle">
-                                Digital Mess Identity Card
+                            <div class="brand-main">
+                                DIGITAL MESS CARD
                             </div>
 
                         </div>
 
+                    </div>
 
-                        <div class="verified-tag">
-                            ✓ EMAIL VERIFIED
-                        </div>
+
+                    <div class="live">
+
+                        <span
+                            class="live-dot"
+                        ></span>
+
+                        LIVE
 
                     </div>
 
                 </div>
 
 
-                <div class="identity-body">
+                <!-- PROFILE -->
 
+                <div class="profile">
 
-                    <div class="photo-wrap">
-
-                        <img
-                            id="card-photo"
-                            alt="Student Photo"
-                        >
-
-                    </div>
-
+                    <img
+                        id="student-photo"
+                        class="profile-photo"
+                        alt="Student"
+                    >
 
                     <div>
 
                         <div
-                            id="card-name"
-                            class="student-name"
+                            id="student-name"
+                            class="profile-name"
                         >
                             Student
                         </div>
 
+                        <div
+                            id="student-scholar"
+                            class="profile-id"
+                        >
+                            Scholar
+                        </div>
 
-                        <div class="student-info">
-
-
-                            <div class="info-box">
-
-                                <div class="info-label">
-                                    Scholar Number
-                                </div>
-
-                                <div
-                                    id="card-id"
-                                    class="info-value"
-                                >
-                                    —
-                                </div>
-
-                            </div>
-
-
-                            <div class="info-box">
-
-                                <div class="info-label">
-                                    Room
-                                </div>
-
-                                <div
-                                    id="card-room"
-                                    class="info-value"
-                                >
-                                    —
-                                </div>
-
-                            </div>
-
-
-                            <div class="info-box">
-
-                                <div class="info-label">
-                                    Email
-                                </div>
-
-                                <div
-                                    id="card-email"
-                                    class="info-value"
-                                >
-                                    —
-                                </div>
-
-                            </div>
-
-
-                            <div class="info-box">
-
-                                <div class="info-label">
-                                    Card Status
-                                </div>
-
-                                <div
-                                    class="info-value"
-                                >
-                                    Active
-                                </div>
-
-                            </div>
-
+                        <div
+                            id="student-room"
+                            class="profile-room"
+                        >
+                            Room
                         </div>
 
                     </div>
@@ -1569,22 +2049,15 @@
                 </div>
 
 
+                <!-- CLOCK -->
 
-                <!-- LIVE MEAL -->
+                <div class="time-panel">
 
-                <div class="meal-panel">
+                    <div>
 
-
-                    <div class="live-header">
-
-                        <div class="live-indicator">
-
-                            <span class="live-dot"></span>
-
-                            LIVE MESS STATUS
-
+                        <div class="time-label">
+                            LIVE SYSTEM TIME
                         </div>
-
 
                         <div
                             id="live-clock"
@@ -1596,54 +2069,82 @@
                     </div>
 
 
-                    <div class="meal-title">
-                        CURRENT MEAL
+                    <div
+                        id="live-date"
+                        class="time-label"
+                    >
+                        --
                     </div>
 
+                </div>
 
-                    <div
-                        id="current-meal"
-                        class="meal-name"
-                    >
-                        Checking...
+
+                <!-- CLAIM -->
+
+                <div class="claim-panel">
+
+                    <div class="claim-eyebrow">
+                        LIVE MEAL ACCESS
                     </div>
 
+                    <div
+                        id="claim-title"
+                        class="claim-title"
+                    >
+                        Meal Access Ready
+                    </div>
 
                     <div
-                        id="meal-status"
-                        class="meal-status"
+                        id="claim-subtitle"
+                        class="claim-subtitle"
                     >
-                        Connecting to live mess service...
+                        Tap the button below when receiving your meal.
                     </div>
 
 
                     <button
                         id="claim-button"
-                        class="claim-btn"
+                        class="claim-button"
                         onclick="claimMeal()"
                     >
                         CLAIM MEAL
                     </button>
 
 
+                    <!-- RECEIVED -->
+
                     <div
-                        id="claim-success"
-                        class="claim-success hidden"
+                        id="received-box"
+                        class="received-box"
                     >
 
-                        <div class="success-icon">
+                        <div
+                            class="received-icon"
+                        >
                             ✓
                         </div>
 
-                        <div class="success-title">
+                        <div class="received-title">
                             MEAL RECEIVED
                         </div>
 
                         <div
-                            id="claim-success-text"
-                            class="success-subtitle"
+                            id="received-time"
+                            class="received-time"
                         >
-                            Your meal has been recorded.
+                            Confirmed
+                        </div>
+
+                        <div class="cooldown">
+
+                            Next claim available in
+
+                            <strong
+                                id="cooldown-text"
+                            >
+                                02:00:00
+                            </strong>
+
                         </div>
 
                     </div>
@@ -1651,81 +2152,27 @@
                 </div>
 
 
+                <!-- FOOTER -->
 
-                <button
-                    class="logout-btn"
-                    onclick="logout()"
-                >
-                    Logout
-                </button>
+                <div class="card-footer">
 
-            </div>
+                    <div class="session-live">
 
-        </div>
+                        <i></i>
 
-    </section>
+                        Secure live session
 
+                    </div>
 
-
-    <!-- =====================================================
-         STAFF LOGIN
-         ===================================================== -->
-
-    <section
-        id="view-staff-login"
-        class="view"
-    >
-
-        <div class="auth-wrapper">
-
-            <div class="auth-card">
-
-                <img
-                    class="auth-logo"
-                    src="/manit-logo.png"
-                    alt="MANIT"
-                >
-
-                <h1>
-                    Mess Staff
-                </h1>
-
-                <p class="auth-description">
-                    Staff controls are limited to
-                    resetting meal claims.
-                </p>
-
-
-                <div class="field">
-
-                    <label>
-                        STAFF PIN
-                    </label>
-
-                    <input
-                        id="staff-pass"
-                        type="password"
-                        placeholder="Enter staff PIN"
+                    <button
+                        class="logout"
+                        onclick="logout()"
                     >
+                        LOGOUT
+                    </button>
 
                 </div>
 
-
-                <button
-                    class="primary-btn"
-                    onclick="staffLogin()"
-                >
-                    Open Staff Controls
-                </button>
-
-
-                <button
-                    class="secondary-btn"
-                    onclick="showLogin()"
-                >
-                    Back to Student Login
-                </button>
-
             </div>
 
         </div>
@@ -1733,129 +2180,38 @@
     </section>
 
 
-
-    <!-- =====================================================
-         STAFF CONTROLS
-         ===================================================== -->
-
-    <section
-        id="view-staff"
-        class="view"
-    >
-
-        <div class="staff-card">
-
-            <h2>
-                Mess Staff Controls
-            </h2>
-
-            <p class="staff-description">
-                Reset meal claims when required.
-                There is no QR scanner or student
-                activation here.
-            </p>
+</div>
 
 
-            <div class="reset-section">
-
-                <h3>
-                    Reset One Student
-                </h3>
-
-                <div class="field">
-
-                    <label>
-                        SCHOLAR NUMBER
-                    </label>
-
-                    <input
-                        id="reset-id"
-                        type="text"
-                        placeholder="Enter scholar number"
-                    >
-
-                </div>
-
-
-                <button
-                    class="danger-btn"
-                    onclick="resetOne()"
-                >
-                    RESET STUDENT MEAL
-                </button>
-
-            </div>
-
-
-            <div class="reset-section">
-
-                <h3>
-                    Reset Everyone
-                </h3>
-
-                <p
-                    style="
-                        font-size:12px;
-                        color:#64748b;
-                        line-height:1.5;
-                    "
-                >
-                    This clears the current meal
-                    claim status for every registered
-                    student.
-                </p>
-
-
-                <button
-                    class="danger-btn"
-                    onclick="resetAll()"
-                >
-                    RESET ALL STUDENTS
-                </button>
-
-            </div>
-
-
-            <button
-                class="staff-logout"
-                onclick="staffLogout()"
-            >
-                Staff Logout
-            </button>
-
-        </div>
-
-    </section>
-
-</main>
-
-
-<div id="toast-container"></div>
+<div
+    id="toast"
+    class="toast"
+>
+</div>
 
 
 <script>
 
     const API_URL = "/api";
 
-
     let registrationScholarId = null;
 
-    let resendTimer = null;
+    let registrationTimer = null;
 
     let statusTimer = null;
 
     let clockTimer = null;
 
+    let cooldownTimer = null;
+
     let currentStudent = null;
 
-    let sessionToken = null;
-
-    let claiming = false;
+    let photoData = null;
 
 
-    // =========================================================
-    // VIEW MANAGEMENT
-    // =========================================================
+    /* =========================================================
+       VIEW CONTROL
+       ========================================================= */
 
     function switchView(id) {
 
@@ -1869,7 +2225,6 @@
 
             });
 
-
         const target =
             document.getElementById(id);
 
@@ -1881,14 +2236,12 @@
 
         }
 
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
     }
 
 
     function showLogin() {
+
+        stopStudentTimers();
 
         switchView(
             "view-login"
@@ -1897,162 +2250,137 @@
     }
 
 
-    function showRegistration() {
+    function showRegister() {
 
         switchView(
-            "view-registration"
+            "view-register"
         );
+
+        document
+            .getElementById(
+                "registration-form"
+            )
+            .style.display =
+            "block";
+
+        document
+            .getElementById(
+                "otp-form"
+            )
+            .style.display =
+            "none";
 
     }
 
 
-    function showStaffLogin() {
+    /* =========================================================
+       TOAST
+       ========================================================= */
 
-        switchView(
-            "view-staff-login"
-        );
+    let toastTimer = null;
 
-    }
-
-
-    // =========================================================
-    // TOAST
-    // =========================================================
 
     function showToast(
         message,
-        type = "normal"
+        type = ""
     ) {
 
-        const container =
-            document.getElementById(
-                "toast-container"
-            );
-
         const toast =
-            document.createElement(
-                "div"
+            document.getElementById(
+                "toast"
             );
-
-        toast.className =
-            `toast ${type}`;
 
         toast.innerText =
             message;
 
-        container.appendChild(
-            toast
+        toast.className =
+            "toast show " +
+            type;
+
+        clearTimeout(
+            toastTimer
         );
 
-        setTimeout(() => {
+        toastTimer =
+            setTimeout(
+                () => {
 
-            toast.style.opacity =
-                "0";
+                    toast.className =
+                        "toast";
 
-            toast.style.transform =
-                "translateX(30px)";
+                },
+                3200
+            );
 
-            setTimeout(() => {
-
-                toast.remove();
-
-            }, 250);
-
-        }, 3500);
     }
 
 
-    // =========================================================
-    // API RESPONSE
-    // =========================================================
+    /* =========================================================
+       PHOTO
+       ========================================================= */
 
-    async function parseResponse(
-        response
-    ) {
+    function previewPhoto(event) {
 
-        const text =
-            await response.text();
+        const file =
+            event.target.files[0];
 
-        try {
-
-            return JSON.parse(text);
-
-        } catch {
-
-            return {
-                success: false,
-                message:
-                    text ||
-                    "Unexpected server response."
-            };
-
+        if (!file) {
+            return;
         }
 
-    }
+        const reader =
+            new FileReader();
 
+        reader.onload = function(e) {
 
-    // =========================================================
-    // PHOTO TO BASE64
-    // =========================================================
+            photoData =
+                e.target.result;
 
-    function fileToBase64(file) {
-
-        return new Promise(
-            (resolve, reject) => {
-
-                const reader =
-                    new FileReader();
-
-                reader.onload = () =>
-                    resolve(
-                        reader.result
-                    );
-
-                reader.onerror = reject;
-
-                reader.readAsDataURL(
-                    file
+            const preview =
+                document.getElementById(
+                    "photo-preview"
                 );
 
-            }
+            preview.src =
+                photoData;
+
+            preview.style.display =
+                "block";
+
+        };
+
+        reader.readAsDataURL(
+            file
         );
 
     }
 
 
-    // =========================================================
-    // REGISTRATION
-    // =========================================================
+    /* =========================================================
+       REGISTRATION
+       ========================================================= */
 
-    async function handleRegistration() {
+    async function startRegistration() {
 
         const scholarId =
-            document
-                .getElementById("reg-id")
-                .value
-                .trim();
+            document.getElementById(
+                "reg-scholar"
+            ).value.trim();
 
         const name =
-            document
-                .getElementById("reg-name")
-                .value
-                .trim();
+            document.getElementById(
+                "reg-name"
+            ).value.trim();
 
         const room =
-            document
-                .getElementById("reg-room")
-                .value
-                .trim();
+            document.getElementById(
+                "reg-room"
+            ).value.trim();
 
         const password =
-            document
-                .getElementById("reg-pass")
-                .value;
-
-        const photoInput =
-            document
-                .getElementById("reg-photo");
-
+            document.getElementById(
+                "reg-password"
+            ).value;
 
         if (
             !scholarId ||
@@ -2067,13 +2395,9 @@
             );
 
             return;
-
         }
 
-
-        if (
-            password.length < 6
-        ) {
+        if (password.length < 6) {
 
             showToast(
                 "Password must contain at least 6 characters.",
@@ -2081,42 +2405,19 @@
             );
 
             return;
-
         }
 
-
-        if (
-            !photoInput.files.length
-        ) {
+        if (!photoData) {
 
             showToast(
-                "Please select a profile photo.",
+                "Please select your photo.",
                 "error"
             );
 
             return;
-
         }
 
-
-        const btn =
-            document.getElementById(
-                "btn-register"
-            );
-
-        btn.disabled = true;
-
-        btn.innerText =
-            "Sending OTP...";
-
-
         try {
-
-            const photo =
-                await fileToBase64(
-                    photoInput.files[0]
-                );
-
 
             const response =
                 await fetch(
@@ -2135,45 +2436,16 @@
                                 name,
                                 room,
                                 password,
-                                photo
+                                photo:
+                                    photoData
                             })
                     }
                 );
 
-
             const data =
-                await parseResponse(
-                    response
-                );
+                await response.json();
 
-
-            if (
-                response.ok &&
-                data.success
-            ) {
-
-                registrationScholarId =
-                    scholarId;
-
-                document
-                    .getElementById(
-                        "otp-email"
-                    )
-                    .innerText =
-                    `OTP sent to ${data.email}`;
-
-                switchView(
-                    "view-otp"
-                );
-
-                startResendTimer();
-
-                showToast(
-                    "OTP sent successfully.",
-                    "success"
-                );
-
-            } else {
+            if (!response.ok) {
 
                 showToast(
                     data.message ||
@@ -2181,7 +2453,40 @@
                     "error"
                 );
 
+                return;
             }
+
+            registrationScholarId =
+                scholarId;
+
+            document
+                .getElementById(
+                    "otp-email"
+                )
+                .innerText =
+                data.email ||
+                "your MANIT email";
+
+            document
+                .getElementById(
+                    "registration-form"
+                )
+                .style.display =
+                "none";
+
+            document
+                .getElementById(
+                    "otp-form"
+                )
+                .style.display =
+                "block";
+
+            showToast(
+                "OTP sent successfully.",
+                "success"
+            );
+
+            startResendCountdown();
 
         } catch (error) {
 
@@ -2192,32 +2497,21 @@
                 "error"
             );
 
-        } finally {
-
-            btn.disabled = false;
-
-            btn.innerText =
-                "Send Verification OTP";
-
         }
 
     }
 
 
-    // =========================================================
-    // OTP VERIFICATION
-    // =========================================================
+    /* =========================================================
+       VERIFY OTP
+       ========================================================= */
 
-    async function handleOTPVerification() {
+    async function verifyOTP() {
 
         const otp =
-            document
-                .getElementById(
-                    "reg-otp"
-                )
-                .value
-                .trim();
-
+            document.getElementById(
+                "reg-otp"
+            ).value.trim();
 
         if (
             !registrationScholarId ||
@@ -2230,34 +2524,7 @@
             );
 
             return;
-
         }
-
-
-        if (
-            !/^\d{6}$/.test(otp)
-        ) {
-
-            showToast(
-                "OTP must contain 6 digits.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        const btn =
-            document.getElementById(
-                "btn-verify"
-            );
-
-        btn.disabled = true;
-
-        btn.innerText =
-            "Verifying...";
-
 
         try {
 
@@ -2282,55 +2549,10 @@
                     }
                 );
 
-
             const data =
-                await parseResponse(
-                    response
-                );
+                await response.json();
 
-
-            if (
-                response.ok &&
-                data.success
-            ) {
-
-                showToast(
-                    "Email verified! Registration complete.",
-                    "success"
-                );
-
-                document
-                    .getElementById(
-                        "login-id"
-                    )
-                    .value =
-                    registrationScholarId;
-
-                document
-                    .getElementById(
-                        "reg-otp"
-                    )
-                    .value = "";
-
-                registrationScholarId =
-                    null;
-
-                if (resendTimer) {
-
-                    clearInterval(
-                        resendTimer
-                    );
-
-                    resendTimer =
-                        null;
-
-                }
-
-                switchView(
-                    "view-login"
-                );
-
-            } else {
+            if (!response.ok) {
 
                 showToast(
                     data.message ||
@@ -2338,7 +2560,31 @@
                     "error"
                 );
 
+                return;
             }
+
+            showToast(
+                "Email verified. Account created!",
+                "success"
+            );
+
+            clearInterval(
+                registrationTimer
+            );
+
+            registrationScholarId =
+                null;
+
+            document
+                .getElementById(
+                    "reg-otp"
+                )
+                .value = "";
+
+            setTimeout(
+                showLogin,
+                900
+            );
 
         } catch (error) {
 
@@ -2349,86 +2595,14 @@
                 "error"
             );
 
-        } finally {
-
-            btn.disabled = false;
-
-            btn.innerText =
-                "Verify OTP";
-
         }
 
     }
 
 
-    // =========================================================
-    // RESEND OTP TIMER
-    // =========================================================
-
-    function startResendTimer() {
-
-        if (resendTimer) {
-
-            clearInterval(
-                resendTimer
-            );
-
-        }
-
-
-        const button =
-            document.getElementById(
-                "btn-resend"
-            );
-
-        const counter =
-            document.getElementById(
-                "resend-countdown"
-            );
-
-        let seconds = 60;
-
-        button.disabled = true;
-
-        counter.innerText =
-            seconds;
-
-
-        resendTimer =
-            setInterval(() => {
-
-                seconds--;
-
-                counter.innerText =
-                    seconds;
-
-                if (
-                    seconds <= 0
-                ) {
-
-                    clearInterval(
-                        resendTimer
-                    );
-
-                    resendTimer =
-                        null;
-
-                    button.disabled =
-                        false;
-
-                    document
-                        .getElementById(
-                            "resend-text"
-                        )
-                        .innerHTML =
-                        "You can resend the OTP now.";
-
-                }
-
-            }, 1000);
-
-    }
-
+    /* =========================================================
+       RESEND OTP
+       ========================================================= */
 
     async function resendOTP() {
 
@@ -2436,17 +2610,13 @@
             return;
         }
 
-
         const button =
             document.getElementById(
                 "btn-resend"
             );
 
-        button.disabled = true;
-
-        button.innerText =
-            "Sending...";
-
+        button.disabled =
+            true;
 
         try {
 
@@ -2469,33 +2639,10 @@
                     }
                 );
 
-
             const data =
-                await parseResponse(
-                    response
-                );
+                await response.json();
 
-
-            if (
-                response.ok &&
-                data.success
-            ) {
-
-                document
-                    .getElementById(
-                        "otp-email"
-                    )
-                    .innerText =
-                    `New OTP sent to ${data.email}`;
-
-                showToast(
-                    "New OTP sent.",
-                    "success"
-                );
-
-                startResendTimer();
-
-            } else {
+            if (!response.ok) {
 
                 showToast(
                     data.message ||
@@ -2506,69 +2653,133 @@
                 button.disabled =
                     false;
 
+                return;
             }
 
+            showToast(
+                "New OTP sent.",
+                "success"
+            );
+
+            startResendCountdown();
+
         } catch (error) {
+
+            console.error(error);
+
+            button.disabled =
+                false;
 
             showToast(
                 "Could not connect to server.",
                 "error"
             );
 
-            button.disabled =
-                false;
-
-        } finally {
-
-            button.innerText =
-                "Resend OTP";
-
         }
+
+    }
+
+
+    function startResendCountdown() {
+
+        clearInterval(
+            registrationTimer
+        );
+
+        const button =
+            document.getElementById(
+                "btn-resend"
+            );
+
+        const label =
+            document.getElementById(
+                "resend-countdown"
+            );
+
+        let seconds = 60;
+
+        button.disabled =
+            true;
+
+        label.innerText =
+            `You can request another OTP in ${seconds}s.`;
+
+        registrationTimer =
+            setInterval(
+                () => {
+
+                    seconds--;
+
+                    if (seconds <= 0) {
+
+                        clearInterval(
+                            registrationTimer
+                        );
+
+                        registrationTimer =
+                            null;
+
+                        button.disabled =
+                            false;
+
+                        label.innerText =
+                            "You can resend the OTP now.";
+
+                        return;
+
+                    }
+
+                    label.innerText =
+                        `You can request another OTP in ${seconds}s.`;
+
+                },
+                1000
+            );
 
     }
 
 
     function backToRegistration() {
 
-        if (resendTimer) {
-
-            clearInterval(
-                resendTimer
-            );
-
-            resendTimer =
-                null;
-
-        }
-
-        switchView(
-            "view-registration"
+        clearInterval(
+            registrationTimer
         );
+
+        document
+            .getElementById(
+                "otp-form"
+            )
+            .style.display =
+            "none";
+
+        document
+            .getElementById(
+                "registration-form"
+            )
+            .style.display =
+            "block";
+
+        registrationScholarId =
+            null;
 
     }
 
 
-    // =========================================================
-    // LOGIN
-    // =========================================================
+    /* =========================================================
+       LOGIN
+       ========================================================= */
 
     async function handleLogin() {
 
         const scholarId =
-            document
-                .getElementById(
-                    "login-id"
-                )
-                .value
-                .trim();
+            document.getElementById(
+                "login-scholar"
+            ).value.trim();
 
         const password =
-            document
-                .getElementById(
-                    "login-pass"
-                )
-                .value;
-
+            document.getElementById(
+                "login-pass"
+            ).value;
 
         if (
             !scholarId ||
@@ -2576,25 +2787,12 @@
         ) {
 
             showToast(
-                "Enter Scholar Number and Password.",
+                "Enter scholar number and password.",
                 "error"
             );
 
             return;
-
         }
-
-
-        const btn =
-            document.getElementById(
-                "btn-login"
-            );
-
-        btn.disabled = true;
-
-        btn.innerText =
-            "Verifying...";
-
 
         try {
 
@@ -2617,52 +2815,38 @@
                     }
                 );
 
-
             const data =
-                await parseResponse(
-                    response
-                );
+                await response.json();
 
-
-            if (
-                response.ok &&
-                data.success
-            ) {
-
-                sessionToken =
-                    data.token;
-
-                currentStudent =
-                    data.student;
-
-                localStorage.setItem(
-                    "manit_session_token",
-                    sessionToken
-                );
-
-                localStorage.setItem(
-                    "manit_active_student",
-                    JSON.stringify(
-                        currentStudent
-                    )
-                );
-
-                renderStudentCard();
-
-                showToast(
-                    `Welcome, ${currentStudent.name}!`,
-                    "success"
-                );
-
-            } else {
+            if (!response.ok) {
 
                 showToast(
                     data.message ||
-                    "Invalid credentials.",
+                    "Login failed.",
                     "error"
                 );
 
+                return;
             }
+
+            currentStudent =
+                data.student;
+
+            localStorage.setItem(
+                "manit_active_student",
+                JSON.stringify(
+                    currentStudent
+                )
+            );
+
+            renderStudentCard(
+                currentStudent
+            );
+
+            showToast(
+                "Secure session started.",
+                "success"
+            );
 
         } catch (error) {
 
@@ -2673,169 +2857,164 @@
                 "error"
             );
 
-        } finally {
-
-            btn.disabled = false;
-
-            btn.innerText =
-                "Display Identity Card";
-
         }
 
     }
 
 
-    // =========================================================
-    // RENDER STUDENT CARD
-    // =========================================================
+    /* =========================================================
+       RENDER CARD
+       ========================================================= */
 
-    function renderStudentCard() {
+    function renderStudentCard(student) {
 
-        if (!currentStudent) {
-            return;
-        }
-
+        currentStudent =
+            student;
 
         document
             .getElementById(
-                "card-name"
-            )
-            .innerText =
-            currentStudent.name;
-
-
-        document
-            .getElementById(
-                "card-id"
-            )
-            .innerText =
-            currentStudent.scholarId;
-
-
-        document
-            .getElementById(
-                "card-room"
-            )
-            .innerText =
-            currentStudent.room;
-
-
-        document
-            .getElementById(
-                "card-email"
-            )
-            .innerText =
-            currentStudent.collegeEmail;
-
-
-        document
-            .getElementById(
-                "card-photo"
+                "student-photo"
             )
             .src =
-            currentStudent.photo;
+            student.photo;
 
+        document
+            .getElementById(
+                "student-name"
+            )
+            .innerText =
+            student.name;
+
+        document
+            .getElementById(
+                "student-scholar"
+            )
+            .innerText =
+            `Scholar No. ${student.scholarId}`;
+
+        document
+            .getElementById(
+                "student-room"
+            )
+            .innerText =
+            `Room ${student.room}`;
 
         switchView(
             "view-student"
         );
 
+        startClock();
 
-        startLiveClock();
-
-        checkMealStatus();
-
-
-        if (statusTimer) {
-
-            clearInterval(
-                statusTimer
-            );
-
-        }
-
-
-        statusTimer =
-            setInterval(
-                checkMealStatus,
-                2500
-            );
+        startStatusPolling();
 
     }
 
 
-    // =========================================================
-    // LIVE CLOCK
-    // =========================================================
+    /* =========================================================
+       CLOCK
+       ========================================================= */
 
-    function startLiveClock() {
+    function startClock() {
 
-        if (clockTimer) {
+        clearInterval(
+            clockTimer
+        );
 
-            clearInterval(
-                clockTimer
-            );
-
-        }
-
-
-        function update() {
-
-            const now =
-                new Date();
-
-            const time =
-                now.toLocaleTimeString(
-                    "en-IN",
-                    {
-                        timeZone:
-                            "Asia/Kolkata",
-
-                        hour:
-                            "2-digit",
-
-                        minute:
-                            "2-digit",
-
-                        second:
-                            "2-digit",
-
-                        hour12: true
-                    }
-                );
-
-
-            document
-                .getElementById(
-                    "live-clock"
-                )
-                .innerText =
-                time;
-
-        }
-
-
-        update();
+        updateClock();
 
         clockTimer =
             setInterval(
-                update,
+                updateClock,
                 1000
             );
 
     }
 
 
-    // =========================================================
-    // LIVE MEAL STATUS
-    // =========================================================
+    function updateClock() {
 
-    async function checkMealStatus() {
+        const now =
+            new Date();
 
-        if (!sessionToken) {
+        const time =
+            now.toLocaleTimeString(
+                "en-IN",
+                {
+                    hour:
+                        "2-digit",
+
+                    minute:
+                        "2-digit",
+
+                    second:
+                        "2-digit",
+
+                    hour12:
+                        true
+                }
+            );
+
+        const date =
+            now.toLocaleDateString(
+                "en-IN",
+                {
+                    day:
+                        "2-digit",
+
+                    month:
+                        "short",
+
+                    year:
+                        "numeric"
+                }
+            );
+
+        document
+            .getElementById(
+                "live-clock"
+            )
+            .innerText =
+            time;
+
+        document
+            .getElementById(
+                "live-date"
+            )
+            .innerText =
+            date;
+
+    }
+
+
+    /* =========================================================
+       STATUS POLLING
+       ========================================================= */
+
+    function startStatusPolling() {
+
+        clearInterval(
+            statusTimer
+        );
+
+        checkStatus();
+
+        statusTimer =
+            setInterval(
+                checkStatus,
+                3000
+            );
+
+    }
+
+
+    async function checkStatus() {
+
+        if (
+            !currentStudent ||
+            !currentStudent.sessionToken
+        ) {
             return;
         }
-
 
         try {
 
@@ -2845,17 +3024,13 @@
                     {
                         headers: {
                             Authorization:
-                                `Bearer ${sessionToken}`
+                                `Bearer ${currentStudent.sessionToken}`
                         }
                     }
                 );
 
-
             const data =
-                await parseResponse(
-                    response
-                );
-
+                await response.json();
 
             if (
                 response.status === 401
@@ -2866,143 +3041,15 @@
                 );
 
                 return;
-
             }
 
-
-            if (
-                !response.ok ||
-                !data.success
-            ) {
+            if (!response.ok) {
                 return;
             }
 
-
-            currentStudent =
-                data.student;
-
-
-            localStorage.setItem(
-                "manit_active_student",
-                JSON.stringify(
-                    currentStudent
-                )
+            updateClaimState(
+                data
             );
-
-
-            document
-                .getElementById(
-                    "current-meal"
-                )
-                .innerText =
-                data.activeSlot;
-
-
-            const status =
-                document.getElementById(
-                    "meal-status"
-                );
-
-            const button =
-                document.getElementById(
-                    "claim-button"
-                );
-
-            const success =
-                document.getElementById(
-                    "claim-success"
-                );
-
-
-            if (
-                data.activeSlot ===
-                "Mess Closed"
-            ) {
-
-                status.innerText =
-                    "Mess service is currently closed.";
-
-                button.disabled = true;
-
-                button.innerText =
-                    "MESS CLOSED";
-
-                success.classList.add(
-                    "hidden"
-                );
-
-                return;
-
-            }
-
-
-            if (
-                data.claimed
-            ) {
-
-                button.disabled = true;
-
-                button.innerText =
-                    "✓ MEAL ALREADY RECEIVED";
-
-                status.innerText =
-                    `${data.claimedMeal} has already been recorded for today.`;
-
-                success.classList.remove(
-                    "hidden"
-                );
-
-                const time =
-                    data.claimedAt
-                        ? new Date(
-                            data.claimedAt
-                        ).toLocaleTimeString(
-                            "en-IN",
-                            {
-                                timeZone:
-                                    "Asia/Kolkata",
-
-                                hour:
-                                    "2-digit",
-
-                                minute:
-                                    "2-digit",
-
-                                second:
-                                    "2-digit",
-
-                                hour12: true
-                            }
-                        )
-                        : "";
-
-                document
-                    .getElementById(
-                        "claim-success-text"
-                    )
-                    .innerText =
-                    `${data.claimedMeal} received at ${time}.`;
-
-            } else {
-
-                success.classList.add(
-                    "hidden"
-                );
-
-                if (!claiming) {
-
-                    button.disabled =
-                        false;
-
-                    button.innerText =
-                        `CLAIM ${data.activeSlot.toUpperCase()}`;
-
-                }
-
-                status.innerText =
-                    "Live claim available. Tap the button when you receive your meal.";
-
-            }
 
         } catch (error) {
 
@@ -3016,34 +3063,142 @@
     }
 
 
-    // =========================================================
-    // CLAIM MEAL
-    // =========================================================
+    /* =========================================================
+       UPDATE CLAIM STATE
+       ========================================================= */
 
-    async function claimMeal() {
-
-        if (
-            claiming ||
-            !sessionToken
-        ) {
-            return;
-        }
-
-
-        claiming = true;
-
+    function updateClaimState(data) {
 
         const button =
             document.getElementById(
                 "claim-button"
             );
 
+        const receivedBox =
+            document.getElementById(
+                "received-box"
+            );
 
-        button.disabled = true;
+        const title =
+            document.getElementById(
+                "claim-title"
+            );
 
-        button.innerText =
-            "VERIFYING LIVE CLAIM...";
+        const subtitle =
+            document.getElementById(
+                "claim-subtitle"
+            );
 
+        const receivedTime =
+            document.getElementById(
+                "received-time"
+            );
+
+        if (
+            data.claimAvailable
+        ) {
+
+            button.disabled =
+                false;
+
+            button.className =
+                "claim-button";
+
+            button.innerHTML =
+                "CLAIM MEAL";
+
+            receivedBox.style.display =
+                "none";
+
+            title.innerText =
+                "Meal Access Ready";
+
+            subtitle.innerText =
+                "Tap the button below when receiving your meal.";
+
+            stopCooldownTimer();
+
+            return;
+
+        }
+
+
+        // =====================================================
+        // COOLDOWN STATE
+        // =====================================================
+
+        button.disabled =
+            true;
+
+        button.className =
+            "claim-button received";
+
+        button.innerHTML =
+            "MEAL RECEIVED";
+
+        receivedBox.style.display =
+            "block";
+
+        title.innerText =
+            "Meal Already Received";
+
+        subtitle.innerText =
+            "Your meal claim has been securely recorded.";
+
+        if (data.lastClaimedAt) {
+
+            receivedTime.innerText =
+                `Confirmed ${formatDateTime(
+                    data.lastClaimedAt
+                )}`;
+
+        }
+
+        startCooldown(
+            data.cooldownEndsAt
+        );
+
+    }
+
+
+    /* =========================================================
+       CLAIM MEAL
+       ========================================================= */
+
+    async function claimMeal() {
+
+        if (
+            !currentStudent ||
+            !currentStudent.sessionToken
+        ) {
+
+            showToast(
+                "Please login again.",
+                "error"
+            );
+
+            return;
+        }
+
+        const button =
+            document.getElementById(
+                "claim-button"
+            );
+
+        if (
+            button.disabled
+        ) {
+            return;
+        }
+
+        button.disabled =
+            true;
+
+        button.className =
+            "claim-button loading";
+
+        button.innerHTML =
+            `<span class="spinner"></span>VERIFYING LIVE...`;
 
         try {
 
@@ -3054,11 +3209,11 @@
                         method: "POST",
 
                         headers: {
-                            Authorization:
-                                `Bearer ${sessionToken}`,
-
                             "Content-Type":
-                                "application/json"
+                                "application/json",
+
+                            Authorization:
+                                `Bearer ${currentStudent.sessionToken}`
                         },
 
                         body:
@@ -3066,11 +3221,97 @@
                     }
                 );
 
-
             const data =
-                await parseResponse(
-                    response
+                await response.json();
+
+            if (response.ok) {
+
+                playClaimSound();
+
+                vibrateDevice();
+
+                button.className =
+                    "claim-button received";
+
+                button.innerHTML =
+                    "✓ MEAL RECEIVED";
+
+                button.disabled =
+                    true;
+
+                const receivedBox =
+                    document.getElementById(
+                        "received-box"
+                    );
+
+                receivedBox.style.display =
+                    "block";
+
+                document
+                    .getElementById(
+                        "claim-title"
+                    )
+                    .innerText =
+                    "Meal Successfully Received";
+
+                document
+                    .getElementById(
+                        "claim-subtitle"
+                    )
+                    .innerText =
+                    "Your live meal claim has been securely recorded.";
+
+                document
+                    .getElementById(
+                        "received-time"
+                    )
+                    .innerText =
+                    `Confirmed ${formatDateTime(
+                        data.claimedAt
+                    )}`;
+
+                startCooldown(
+                    data.cooldownEndsAt
                 );
+
+                showToast(
+                    "Meal received successfully!",
+                    "success"
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // COOLDOWN RESPONSE
+            // =================================================
+
+            if (
+                response.status === 429
+            ) {
+
+                updateClaimState({
+                    claimAvailable:
+                        false,
+
+                    lastClaimedAt:
+                        data.lastClaimedAt,
+
+                    cooldownEndsAt:
+                        data.cooldownEndsAt,
+
+                    lastClaimedMeal:
+                        data.lastClaimedMeal
+                });
+
+                showToast(
+                    "Meal already received. Please wait for the 2-hour cooldown.",
+                    "error"
+                );
+
+                return;
+            }
 
 
             if (
@@ -3082,205 +3323,479 @@
                 );
 
                 return;
-
             }
 
-
-            if (
-                response.ok &&
-                data.success
-            ) {
-
-                button.innerText =
-                    "✓ MEAL RECEIVED";
-
-
-                document
-                    .getElementById(
-                        "meal-status"
-                    )
-                    .innerText =
-                    `${data.meal} successfully recorded on the server.`;
-
-
-                document
-                    .getElementById(
-                        "claim-success"
-                    )
-                    .classList.remove(
-                        "hidden"
-                    );
-
-
-                const time =
-                    data.claimedAt
-                        ? new Date(
-                            data.claimedAt
-                        ).toLocaleTimeString(
-                            "en-IN",
-                            {
-                                timeZone:
-                                    "Asia/Kolkata",
-
-                                hour:
-                                    "2-digit",
-
-                                minute:
-                                    "2-digit",
-
-                                second:
-                                    "2-digit",
-
-                                hour12: true
-                            }
-                        )
-                        : "";
-
-
-                document
-                    .getElementById(
-                        "claim-success-text"
-                    )
-                    .innerText =
-                    `${data.meal} received at ${time}.`;
-
-
-                showToast(
-                    `${data.meal} received successfully!`,
-                    "success"
-                );
-
-
-                await checkMealStatus();
-
-            } else {
-
-                showToast(
-                    data.message ||
-                    "Meal could not be claimed.",
-                    "error"
-                );
-
-
-                if (
-                    data.alreadyClaimed
-                ) {
-
-                    await checkMealStatus();
-
-                } else {
-
-                    button.disabled =
-                        false;
-
-                    button.innerText =
-                        "CLAIM MEAL";
-
-                }
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Claim error:",
-                error
-            );
-
-            showToast(
-                "Could not reach the server.",
-                "error"
-            );
 
             button.disabled =
                 false;
 
-            button.innerText =
+            button.className =
+                "claim-button";
+
+            button.innerHTML =
                 "CLAIM MEAL";
 
-        } finally {
+            showToast(
+                data.message ||
+                "Could not claim meal.",
+                "error"
+            );
 
-            claiming = false;
+        } catch (error) {
+
+            console.error(error);
+
+            button.disabled =
+                false;
+
+            button.className =
+                "claim-button";
+
+            button.innerHTML =
+                "CLAIM MEAL";
+
+            showToast(
+                "Network error. Please try again.",
+                "error"
+            );
 
         }
 
     }
 
 
-    // =========================================================
-    // STUDENT LOGOUT
-    // =========================================================
+    /* =========================================================
+       COOLDOWN
+       ========================================================= */
 
-    async function logout() {
+    function startCooldown(
+        endTime
+    ) {
+
+        stopCooldownTimer();
+
+        if (!endTime) {
+            return;
+        }
+
+        const end =
+            new Date(
+                endTime
+            ).getTime();
+
+        updateCooldown(
+            end
+        );
+
+        cooldownTimer =
+            setInterval(
+                () => {
+
+                    updateCooldown(
+                        end
+                    );
+
+                },
+                1000
+            );
+
+    }
+
+
+    function updateCooldown(
+        end
+    ) {
+
+        const remaining =
+            Math.max(
+                0,
+                end -
+                Date.now()
+            );
+
+        const text =
+            document.getElementById(
+                "cooldown-text"
+            );
+
+        if (remaining <= 0) {
+
+            stopCooldownTimer();
+
+            text.innerText =
+                "READY";
+
+            const button =
+                document.getElementById(
+                    "claim-button"
+                );
+
+            button.disabled =
+                false;
+
+            button.className =
+                "claim-button";
+
+            button.innerHTML =
+                "CLAIM MEAL";
+
+            document
+                .getElementById(
+                    "received-box"
+                )
+                .style.display =
+                "none";
+
+            document
+                .getElementById(
+                    "claim-title"
+                )
+                .innerText =
+                "Meal Access Ready";
+
+            document
+                .getElementById(
+                    "claim-subtitle"
+                )
+                .innerText =
+                "Tap the button below when receiving your meal.";
+
+            playReadySound();
+
+            return;
+        }
+
+        text.innerText =
+            formatDuration(
+                remaining
+            );
+
+    }
+
+
+    function stopCooldownTimer() {
+
+        if (
+            cooldownTimer
+        ) {
+
+            clearInterval(
+                cooldownTimer
+            );
+
+            cooldownTimer =
+                null;
+
+        }
+
+    }
+
+
+    function formatDuration(
+        milliseconds
+    ) {
+
+        let seconds =
+            Math.floor(
+                milliseconds / 1000
+            );
+
+        const hours =
+            Math.floor(
+                seconds / 3600
+            );
+
+        seconds %=
+            3600;
+
+        const minutes =
+            Math.floor(
+                seconds / 60
+            );
+
+        seconds %=
+            60;
+
+        return [
+            hours,
+            minutes,
+            seconds
+        ]
+            .map(
+                value =>
+                    String(value)
+                        .padStart(
+                            2,
+                            "0"
+                        )
+            )
+            .join(":");
+
+    }
+
+
+    function formatDateTime(
+        value
+    ) {
+
+        const date =
+            new Date(
+                value
+            );
+
+        return date.toLocaleString(
+            "en-IN",
+            {
+                day:
+                    "2-digit",
+
+                month:
+                    "short",
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit",
+
+                second:
+                    "2-digit",
+
+                hour12:
+                    true
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       SOUND
+       ========================================================= */
+
+    function playClaimSound() {
 
         try {
 
-            if (sessionToken) {
+            const AudioContext =
+                window.AudioContext ||
+                window.webkitAudioContext;
+
+            if (!AudioContext) {
+                return;
+            }
+
+            const context =
+                new AudioContext();
+
+            const now =
+                context.currentTime;
+
+            const oscillator =
+                context.createOscillator();
+
+            const gain =
+                context.createGain();
+
+            oscillator.type =
+                "sine";
+
+            oscillator.frequency
+                .setValueAtTime(
+                    520,
+                    now
+                );
+
+            oscillator.frequency
+                .exponentialRampToValueAtTime(
+                    880,
+                    now + .16
+                );
+
+            oscillator.frequency
+                .exponentialRampToValueAtTime(
+                    1040,
+                    now + .28
+                );
+
+            gain.gain
+                .setValueAtTime(
+                    0,
+                    now
+                );
+
+            gain.gain
+                .linearRampToValueAtTime(
+                    .16,
+                    now + .025
+                );
+
+            gain.gain
+                .exponentialRampToValueAtTime(
+                    .001,
+                    now + .45
+                );
+
+            oscillator.connect(
+                gain
+            );
+
+            gain.connect(
+                context.destination
+            );
+
+            oscillator.start(
+                now
+            );
+
+            oscillator.stop(
+                now + .45
+            );
+
+        } catch (error) {
+
+            console.log(
+                "Audio unavailable:",
+                error
+            );
+
+        }
+
+    }
+
+
+    function playReadySound() {
+
+        try {
+
+            const AudioContext =
+                window.AudioContext ||
+                window.webkitAudioContext;
+
+            if (!AudioContext) {
+                return;
+            }
+
+            const context =
+                new AudioContext();
+
+            const oscillator =
+                context.createOscillator();
+
+            const gain =
+                context.createGain();
+
+            oscillator.type =
+                "sine";
+
+            oscillator.frequency.value =
+                720;
+
+            gain.gain.value =
+                .06;
+
+            oscillator.connect(
+                gain
+            );
+
+            gain.connect(
+                context.destination
+            );
+
+            oscillator.start();
+
+            gain.gain.exponentialRampToValueAtTime(
+                .001,
+                context.currentTime + .22
+            );
+
+            oscillator.stop(
+                context.currentTime + .22
+            );
+
+        } catch (error) {}
+
+    }
+
+
+    function vibrateDevice() {
+
+        try {
+
+            if (
+                navigator.vibrate
+            ) {
+
+                navigator.vibrate([
+                    60,
+                    40,
+                    100
+                ]);
+
+            }
+
+        } catch (error) {}
+
+    }
+
+
+    /* =========================================================
+       LOGOUT
+       ========================================================= */
+
+    async function logout() {
+
+        if (
+            currentStudent &&
+            currentStudent.sessionToken
+        ) {
+
+            try {
 
                 await fetch(
                     `${API_URL}/logout`,
                     {
-                        method: "POST",
+                        method:
+                            "POST",
 
                         headers: {
                             Authorization:
-                                `Bearer ${sessionToken}`
+                                `Bearer ${currentStudent.sessionToken}`
                         }
                     }
                 );
 
-            }
+            } catch (error) {}
 
-        } catch (error) {
-            console.error(error);
         }
-
 
         forceLogout();
 
     }
 
 
-    function forceLogout(message) {
+    function forceLogout(
+        message = null
+    ) {
 
-        if (statusTimer) {
-
-            clearInterval(
-                statusTimer
-            );
-
-            statusTimer =
-                null;
-
-        }
-
-
-        if (clockTimer) {
-
-            clearInterval(
-                clockTimer
-            );
-
-            clockTimer =
-                null;
-
-        }
-
+        stopStudentTimers();
 
         currentStudent =
             null;
-
-        sessionToken =
-            null;
-
-        localStorage.removeItem(
-            "manit_session_token"
-        );
 
         localStorage.removeItem(
             "manit_active_student"
         );
 
+        document
+            .getElementById(
+                "login-pass"
+            )
+            .value = "";
+
+        switchView(
+            "view-login"
+        );
 
         if (message) {
 
@@ -3291,370 +3806,79 @@
 
         }
 
+    }
 
-        switchView(
-            "view-login"
+
+    function stopStudentTimers() {
+
+        clearInterval(
+            statusTimer
         );
+
+        clearInterval(
+            clockTimer
+        );
+
+        clearInterval(
+            cooldownTimer
+        );
+
+        statusTimer =
+            null;
+
+        clockTimer =
+            null;
+
+        cooldownTimer =
+            null;
 
     }
 
 
-    // =========================================================
-    // STAFF LOGIN
-    // =========================================================
-
-    function staffLogin() {
-
-        const pin =
-            document
-                .getElementById(
-                    "staff-pass"
-                )
-                .value;
-
-
-        if (!pin) {
-
-            showToast(
-                "Enter staff PIN.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        /*
-         * We don't verify the PIN here.
-         * It is verified by the SERVER when
-         * reset operations are performed.
-         *
-         * This avoids putting the real staff
-         * PIN into frontend JavaScript.
-         */
-
-        sessionStorage.setItem(
-            "manit_staff_pin",
-            pin
-        );
-
-
-        switchView(
-            "view-staff"
-        );
-
-    }
-
-
-    // =========================================================
-    // STAFF RESET ONE
-    // =========================================================
-
-    async function resetOne() {
-
-        const scholarId =
-            document
-                .getElementById(
-                    "reset-id"
-                )
-                .value
-                .trim();
-
-
-        const staffPin =
-            sessionStorage.getItem(
-                "manit_staff_pin"
-            );
-
-
-        if (!staffPin) {
-
-            showStaffLogin();
-
-            return;
-
-        }
-
-
-        if (!scholarId) {
-
-            showToast(
-                "Enter Scholar Number.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/reset-one`,
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body:
-                            JSON.stringify({
-                                scholarId,
-                                staffPin
-                            })
-                    }
-                );
-
-
-            const data =
-                await parseResponse(
-                    response
-                );
-
-
-            if (
-                response.ok &&
-                data.success
-            ) {
-
-                showToast(
-                    data.message,
-                    "success"
-                );
-
-                document
-                    .getElementById(
-                        "reset-id"
-                    )
-                    .value = "";
-
-            } else {
-
-                showToast(
-                    data.message ||
-                    "Reset failed.",
-                    "error"
-                );
-
-            }
-
-        } catch (error) {
-
-            showToast(
-                "Could not connect to server.",
-                "error"
-            );
-
-        }
-
-    }
-
-
-    // =========================================================
-    // STAFF RESET ALL
-    // =========================================================
-
-    async function resetAll() {
-
-        const confirmed =
-            confirm(
-                "Are you sure you want to reset ALL student meal claims?"
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
-        const staffPin =
-            sessionStorage.getItem(
-                "manit_staff_pin"
-            );
-
-
-        if (!staffPin) {
-
-            showStaffLogin();
-
-            return;
-
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/reset-all`,
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body:
-                            JSON.stringify({
-                                staffPin
-                            })
-                    }
-                );
-
-
-            const data =
-                await parseResponse(
-                    response
-                );
-
-
-            if (
-                response.ok &&
-                data.success
-            ) {
-
-                showToast(
-                    data.message,
-                    "success"
-                );
-
-            } else {
-
-                showToast(
-                    data.message ||
-                    "Reset failed.",
-                    "error"
-                );
-
-            }
-
-        } catch (error) {
-
-            showToast(
-                "Could not connect to server.",
-                "error"
-            );
-
-        }
-
-    }
-
-
-    // =========================================================
-    // STAFF LOGOUT
-    // =========================================================
-
-    function staffLogout() {
-
-        sessionStorage.removeItem(
-            "manit_staff_pin"
-        );
-
-        document
-            .getElementById(
-                "staff-pass"
-            )
-            .value = "";
-
-        switchView(
-            "view-login"
-        );
-
-    }
-
-
-    // =========================================================
-    // RESTORE SESSION
-    // =========================================================
+    /* =========================================================
+       RESTORE SESSION
+       ========================================================= */
 
     window.addEventListener(
         "DOMContentLoaded",
-        async () => {
-
-            const token =
-                localStorage.getItem(
-                    "manit_session_token"
-                );
-
+        () => {
 
             const cached =
                 localStorage.getItem(
                     "manit_active_student"
                 );
 
-
-            if (
-                token &&
-                cached
-            ) {
-
-                try {
-
-                    sessionToken =
-                        token;
-
-                    currentStudent =
-                        JSON.parse(
-                            cached
-                        );
-
-                    renderStudentCard();
-
-
-                    // Server decides whether
-                    // the session is actually valid.
-                    await checkMealStatus();
-
-                } catch (error) {
-
-                    console.error(
-                        error
-                    );
-
-                    forceLogout();
-
-                }
-
-            }
-
-        }
-    );
-
-
-    // =========================================================
-    // ENTER KEY SUPPORT
-    // =========================================================
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key !==
-                "Enter"
-            ) {
+            if (!cached) {
                 return;
             }
 
+            try {
 
-            const activeView =
-                document.querySelector(
-                    ".view.active"
+                const student =
+                    JSON.parse(
+                        cached
+                    );
+
+                if (
+                    !student.sessionToken
+                ) {
+
+                    localStorage.removeItem(
+                        "manit_active_student"
+                    );
+
+                    return;
+                }
+
+                renderStudentCard(
+                    student
                 );
 
+            } catch (error) {
 
-            if (
-                activeView?.id ===
-                "view-login"
-            ) {
-
-                handleLogin();
+                localStorage.removeItem(
+                    "manit_active_student"
+                );
 
             }
 
