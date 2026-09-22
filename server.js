@@ -54,14 +54,21 @@ const PASS_2 = process.env.PASS_2;
 
 let transporter = null;
 
-if (EMAIL_USER && EMAIL_PASS) {
+let transporter = null;
+
+if (EMAIL_1 && PASS_1) {
     transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: EMAIL_USER,
-            pass: EMAIL_PASS
+            user: EMAIL_1,
+            pass: PASS_1
         }
     });
+
+    console.log(`📧 Email service configured with ${EMAIL_1}`);
+} else {
+    console.log("⚠️ EMAIL_1 / PASS_1 not configured.");
+}
 
     transporter.verify((error) => {
         if (error) {
