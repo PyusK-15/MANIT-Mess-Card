@@ -1,1827 +1,1794 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>MANIT Digital Mess Card</title>
+    <meta charset="UTF-8">
 
-<style>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-}
+    <title>
+        MANIT Digital Mess Card
+    </title>
 
-:root{
-    --bg:#070b14;
-    --card:rgba(17,24,39,.78);
-    --card2:rgba(25,34,54,.75);
-    --border:rgba(255,255,255,.12);
-    --text:#f8fafc;
-    --muted:#94a3b8;
-    --accent:#60a5fa;
-    --green:#34d399;
-    --danger:#fb7185;
-}
+    <link
+        rel="icon"
+        type="image/png"
+        href="/manit-logo.png"
+    >
 
-body{
-    min-height:100vh;
-    font-family:
-        Inter,
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    <style>
 
-    color:var(--text);
-
-    background:
-        radial-gradient(
-            circle at 10% 10%,
-            rgba(59,130,246,.18),
-            transparent 28%
-        ),
-        radial-gradient(
-            circle at 90% 20%,
-            rgba(16,185,129,.13),
-            transparent 28%
-        ),
-        radial-gradient(
-            circle at 50% 100%,
-            rgba(139,92,246,.12),
-            transparent 32%
-        ),
-        var(--bg);
-
-    overflow-x:hidden;
-}
-
-body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-
-    background-image:
-        linear-gradient(
-            rgba(255,255,255,.015) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            rgba(255,255,255,.015) 1px,
-            transparent 1px
+        @import url(
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'
         );
 
-    background-size:45px 45px;
-
-    mask-image:linear-gradient(
-        to bottom,
-        black,
-        transparent
-    );
-}
-
-button,
-input{
-    font:inherit;
-}
-
-button{
-    cursor:pointer;
-}
-
-.hidden{
-    display:none !important;
-}
-
-/* =========================================================
-   APP
-========================================================= */
-
-.app{
-    width:min(100%,1100px);
-    margin:auto;
-    padding:28px 18px 60px;
-}
-
-.topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
-    margin-bottom:28px;
-}
-
-.brand{
-    display:flex;
-    align-items:center;
-    gap:14px;
-}
-
-.brand img{
-    width:52px;
-    height:52px;
-    object-fit:contain;
-    border-radius:14px;
-    background:white;
-    padding:5px;
-}
-
-.brand-title{
-    font-size:20px;
-    font-weight:800;
-}
-
-.brand-sub{
-    color:var(--muted);
-    font-size:12px;
-    margin-top:3px;
-}
-
-.live-indicator{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:12px;
-    color:#a7f3d0;
-    white-space:nowrap;
-}
-
-.live-dot{
-    width:8px;
-    height:8px;
-    border-radius:50%;
-    background:var(--green);
-    box-shadow:
-        0 0 0 0 rgba(52,211,153,.5);
-    animation:livePulse 1.8s infinite;
-}
-
-@keyframes livePulse{
-    0%{
-        box-shadow:
-            0 0 0 0 rgba(52,211,153,.5);
-    }
-    70%{
-        box-shadow:
-            0 0 0 9px rgba(52,211,153,0);
-    }
-    100%{
-        box-shadow:
-            0 0 0 0 rgba(52,211,153,0);
-    }
-}
-
-/* =========================================================
-   PANELS
-========================================================= */
-
-.panel{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:28px;
-    backdrop-filter:blur(22px);
-    box-shadow:
-        0 30px 80px rgba(0,0,0,.32);
-    overflow:hidden;
-}
-
-.panel-inner{
-    padding:30px;
-}
-
-.tabs{
-    display:flex;
-    gap:8px;
-    margin-bottom:26px;
-}
-
-.tab{
-    flex:1;
-    border:1px solid var(--border);
-    background:rgba(255,255,255,.035);
-    color:var(--muted);
-    border-radius:14px;
-    padding:13px;
-    font-weight:700;
-    transition:.25s;
-}
-
-.tab.active{
-    background:rgba(96,165,250,.14);
-    color:white;
-    border-color:rgba(96,165,250,.38);
-}
-
-/* =========================================================
-   FORMS
-========================================================= */
-
-.form{
-    display:grid;
-    gap:15px;
-}
-
-.form h1{
-    font-size:30px;
-    margin-bottom:4px;
-}
-
-.form p{
-    color:var(--muted);
-    line-height:1.6;
-    margin-bottom:8px;
-}
-
-.field{
-    display:grid;
-    gap:7px;
-}
-
-.field label{
-    color:#cbd5e1;
-    font-size:13px;
-    font-weight:650;
-}
-
-.field input{
-    width:100%;
-    padding:14px 15px;
-    border-radius:13px;
-    border:1px solid var(--border);
-    background:rgba(255,255,255,.045);
-    color:white;
-    outline:none;
-    transition:.2s;
-}
-
-.field input:focus{
-    border-color:rgba(96,165,250,.7);
-    box-shadow:
-        0 0 0 4px rgba(96,165,250,.1);
-}
-
-.primary-btn,
-.secondary-btn,
-.danger-btn{
-    border:0;
-    border-radius:14px;
-    padding:14px 18px;
-    font-weight:800;
-    transition:
-        transform .2s,
-        box-shadow .2s,
-        opacity .2s;
-}
-
-.primary-btn{
-    color:white;
-    background:
-        linear-gradient(
-            110deg,
-            #2563eb,
-            #7c3aed,
-            #0891b2
-        );
-    background-size:220% 100%;
-    animation:gradientMove 5s linear infinite;
-    box-shadow:
-        0 10px 35px rgba(37,99,235,.22);
-}
-
-@keyframes gradientMove{
-    0%{background-position:0%}
-    100%{background-position:220%}
-}
-
-.primary-btn:hover{
-    transform:translateY(-2px);
-    box-shadow:
-        0 15px 45px rgba(37,99,235,.32);
-}
-
-.secondary-btn{
-    color:#e2e8f0;
-    background:rgba(255,255,255,.07);
-    border:1px solid var(--border);
-}
-
-.danger-btn{
-    color:white;
-    background:rgba(239,68,68,.18);
-    border:1px solid rgba(239,68,68,.3);
-}
-
-button:disabled{
-    opacity:.55;
-    cursor:not-allowed;
-    transform:none !important;
-}
-
-.message{
-    min-height:22px;
-    color:#fda4af;
-    font-size:13px;
-}
-
-.success-message{
-    color:#6ee7b7;
-}
-
-/* =========================================================
-   STUDENT CARD
-========================================================= */
-
-.student-card{
-    position:relative;
-}
-
-.student-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:20px;
-    padding:28px 30px;
-    border-bottom:1px solid var(--border);
-}
-
-.student-profile{
-    display:flex;
-    align-items:center;
-    gap:17px;
-}
-
-.student-photo{
-    width:70px;
-    height:70px;
-    border-radius:20px;
-    object-fit:cover;
-    border:1px solid rgba(255,255,255,.16);
-    background:#111827;
-}
-
-.student-name{
-    font-size:23px;
-    font-weight:850;
-}
-
-.student-id{
-    color:var(--muted);
-    font-size:13px;
-    margin-top:5px;
-}
-
-.verified-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    margin-top:9px;
-    padding:5px 9px;
-    border-radius:999px;
-    color:#a7f3d0;
-    background:rgba(16,185,129,.1);
-    border:1px solid rgba(52,211,153,.2);
-    font-size:11px;
-    font-weight:800;
-}
-
-.student-body{
-    padding:30px;
-}
-
-.info-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:12px;
-    margin-bottom:24px;
-}
-
-.info-box{
-    padding:15px;
-    border-radius:16px;
-    background:rgba(255,255,255,.035);
-    border:1px solid var(--border);
-}
-
-.info-label{
-    color:var(--muted);
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:.1em;
-}
-
-.info-value{
-    font-size:15px;
-    font-weight:750;
-    margin-top:6px;
-}
-
-/* =========================================================
-   LIVE ACCESS PANEL
-========================================================= */
-
-.access-panel{
-    position:relative;
-    padding:28px;
-    border-radius:24px;
-    overflow:hidden;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(30,41,59,.8),
-            rgba(15,23,42,.7)
-        );
-
-    border:1px solid rgba(96,165,250,.16);
-}
-
-.access-panel::before{
-    content:"";
-    position:absolute;
-    width:280px;
-    height:280px;
-    border-radius:50%;
-    top:-150px;
-    right:-80px;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(96,165,250,.13),
-            transparent 65%
-        );
-
-    animation:orbFloat 7s ease-in-out infinite;
-}
-
-@keyframes orbFloat{
-    0%,100%{
-        transform:translate(0,0);
-    }
-    50%{
-        transform:translate(-30px,25px);
-    }
-}
-
-.access-top{
-    position:relative;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:15px;
-    margin-bottom:25px;
-}
-
-.access-title{
-    font-size:12px;
-    letter-spacing:.16em;
-    color:#93c5fd;
-    font-weight:850;
-}
-
-.live-id{
-    color:#64748b;
-    font-family:monospace;
-    font-size:11px;
-}
-
-.clock{
-    position:relative;
-    text-align:center;
-    font-size:36px;
-    font-weight:900;
-    letter-spacing:.06em;
-    font-variant-numeric:tabular-nums;
-}
-
-.date-display{
-    position:relative;
-    text-align:center;
-    color:var(--muted);
-    margin-top:5px;
-    font-size:12px;
-}
-
-.claim-area{
-    position:relative;
-    margin-top:28px;
-    display:grid;
-    place-items:center;
-}
-
-.claim-btn{
-    position:relative;
-    width:min(100%,430px);
-    min-height:82px;
-
-    border:0;
-    border-radius:22px;
-
-    color:white;
-    font-size:17px;
-    font-weight:900;
-    letter-spacing:.08em;
-
-    background:
-        linear-gradient(
-            110deg,
-            #2563eb,
-            #7c3aed,
-            #0891b2,
-            #2563eb
-        );
-
-    background-size:300% 100%;
-    animation:
-        gradientMove 5s linear infinite,
-        buttonFloat 3s ease-in-out infinite;
-
-    box-shadow:
-        0 18px 55px rgba(37,99,235,.25);
-
-    overflow:hidden;
-}
-
-@keyframes buttonFloat{
-    0%,100%{
-        transform:translateY(0);
-    }
-    50%{
-        transform:translateY(-3px);
-    }
-}
-
-.claim-btn::before{
-    content:"";
-    position:absolute;
-    top:0;
-    left:-100%;
-    width:60%;
-    height:100%;
-
-    background:
-        linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,.35),
-            transparent
-        );
-
-    transform:skewX(-20deg);
-    animation:buttonShine 3.5s infinite;
-}
-
-@keyframes buttonShine{
-    0%{left:-100%}
-    45%{left:140%}
-    100%{left:140%}
-}
-
-.claim-btn span{
-    position:relative;
-    z-index:2;
-}
-
-.received-state{
-    display:grid;
-    gap:14px;
-    text-align:center;
-    place-items:center;
-    padding:20px 0 5px;
-}
-
-.received-icon{
-    width:76px;
-    height:76px;
-    border-radius:50%;
-    display:grid;
-    place-items:center;
-
-    font-size:32px;
-    font-weight:900;
-
-    color:#a7f3d0;
-    border:2px solid rgba(52,211,153,.4);
-    background:rgba(16,185,129,.1);
-
-    animation:
-        receivedPop .65s cubic-bezier(.17,.89,.32,1.49);
-}
-
-@keyframes receivedPop{
-    0%{
-        transform:scale(.2) rotate(-20deg);
-        opacity:0;
-    }
-    70%{
-        transform:scale(1.12) rotate(5deg);
-    }
-    100%{
-        transform:scale(1) rotate(0);
-        opacity:1;
-    }
-}
-
-.received-title{
-    font-size:23px;
-    font-weight:900;
-    letter-spacing:.04em;
-}
-
-.received-sub{
-    color:var(--muted);
-    font-size:13px;
-}
-
-.countdown{
-    font-size:27px;
-    font-weight:900;
-    font-variant-numeric:tabular-nums;
-    letter-spacing:.08em;
-}
-
-.refresh-btn{
-    margin-top:8px;
-    padding:12px 18px;
-    border-radius:13px;
-    border:1px solid rgba(96,165,250,.35);
-    color:#bfdbfe;
-    background:rgba(59,130,246,.09);
-    font-weight:800;
-}
-
-/* =========================================================
-   CLAIM ANIMATION OVERLAY
-========================================================= */
-
-.serving-overlay{
-    position:fixed;
-    inset:0;
-    z-index:1000;
-
-    display:grid;
-    place-items:center;
-
-    background:
-        radial-gradient(
-            circle at center,
-            rgba(30,41,59,.96),
-            rgba(2,6,23,.985)
-        );
-
-    backdrop-filter:blur(14px);
-
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .35s ease;
-}
-
-.serving-overlay.active{
-    opacity:1;
-    pointer-events:auto;
-}
-
-.serving-stage{
-    position:relative;
-    width:min(92vw,620px);
-    height:560px;
-    display:grid;
-    place-items:center;
-    perspective:1200px;
-}
-
-.stage-glow{
-    position:absolute;
-    width:430px;
-    height:430px;
-    border-radius:50%;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(59,130,246,.15),
-            rgba(124,58,237,.08) 40%,
-            transparent 70%
-        );
-
-    animation:
-        stageGlow 2.6s ease-in-out infinite;
-}
-
-@keyframes stageGlow{
-    0%,100%{
-        transform:scale(.88);
-        opacity:.5;
-    }
-    50%{
-        transform:scale(1.08);
-        opacity:1;
-    }
-}
-
-.serving-content{
-    position:relative;
-    width:100%;
-    height:100%;
-}
-
-.serving-status{
-    position:absolute;
-    top:35px;
-    left:0;
-    right:0;
-    text-align:center;
-
-    font-size:13px;
-    font-weight:900;
-    letter-spacing:.22em;
-    color:#93c5fd;
-
-    transition:
-        opacity .35s,
-        transform .35s;
-}
-
-.serving-status.success{
-    color:#6ee7b7;
-}
-
-.serving-object{
-    position:absolute;
-    left:50%;
-    top:51%;
-    width:390px;
-    height:300px;
-
-    transform:
-        translate(-50%,-50%)
-        scale(.82);
-
-    transform-style:preserve-3d;
-}
-
-.plate-shadow{
-    position:absolute;
-    width:330px;
-    height:75px;
-    left:30px;
-    bottom:25px;
-
-    border-radius:50%;
-
-    background:rgba(0,0,0,.5);
-    filter:blur(18px);
-
-    transform:rotateX(70deg);
-
-    opacity:0;
-
-    transition:opacity .4s;
-}
-
-.plate{
-    position:absolute;
-    width:285px;
-    height:285px;
-
-    left:52px;
-    top:25px;
-
-    border-radius:50%;
-
-    background:
-        radial-gradient(
-            circle,
-            #f8fafc 0 36%,
-            #e2e8f0 37% 62%,
-            #cbd5e1 63% 67%,
-            #f8fafc 68%
-        );
-
-    box-shadow:
-        0 35px 50px rgba(0,0,0,.45),
-        inset 0 0 20px rgba(15,23,42,.14);
-
-    transform:
-        rotateX(68deg)
-        rotateZ(-20deg)
-        translateY(170px)
-        scale(.55);
-
-    opacity:0;
-
-    transform-style:preserve-3d;
-}
-
-.plate-rim{
-    position:absolute;
-    inset:28px;
-    border-radius:50%;
-    border:3px solid rgba(100,116,139,.35);
-}
-
-.plate-center{
-    position:absolute;
-    inset:62px;
-    border-radius:50%;
-    background:
-        radial-gradient(
-            circle at 35% 30%,
-            #ffffff,
-            #e2e8f0
-        );
-}
-
-.food{
-    position:absolute;
-    left:50%;
-    top:120px;
-
-    font-size:72px;
-
-    opacity:0;
-
-    transform:
-        translate(-50%,-180px)
-        translateZ(120px)
-        rotate(-35deg)
-        scale(.25);
-
-    filter:
-        drop-shadow(0 20px 20px rgba(0,0,0,.4));
-
-    z-index:5;
-}
-
-.food-two{
-    font-size:52px;
-    top:105px;
-    transform:
-        translate(-50%,-210px)
-        translateX(-95px)
-        rotate(40deg)
-        scale(.2);
-}
-
-.food-three{
-    font-size:50px;
-    top:115px;
-    transform:
-        translate(-50%,-220px)
-        translateX(105px)
-        rotate(-50deg)
-        scale(.2);
-}
-
-.cloche{
-    position:absolute;
-    left:50%;
-    top:78px;
-
-    width:245px;
-    height:180px;
-
-    transform:
-        translate(-50%,-180px)
-        rotateX(0)
-        scale(.7);
-
-    opacity:0;
-
-    z-index:10;
-}
-
-.cloche-body{
-    position:absolute;
-    left:20px;
-    bottom:0;
-
-    width:205px;
-    height:150px;
-
-    border-radius:
-        120px 120px 28px 28px;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(226,232,240,.55),
-            rgba(100,116,139,.18)
-        );
-
-    border:2px solid rgba(226,232,240,.4);
-
-    backdrop-filter:blur(8px);
-
-    box-shadow:
-        inset 15px 10px 25px rgba(255,255,255,.12),
-        0 25px 30px rgba(0,0,0,.35);
-}
-
-.cloche-handle{
-    position:absolute;
-    left:50%;
-    top:0;
-
-    width:48px;
-    height:28px;
-
-    transform:translateX(-50%);
-
-    border-radius:50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #e2e8f0,
-            #64748b
-        );
-
-    box-shadow:
-        0 8px 15px rgba(0,0,0,.25);
-}
-
-.steam{
-    position:absolute;
-    left:50%;
-    top:70px;
-
-    width:8px;
-    height:8px;
-
-    border-radius:50%;
-    background:rgba(255,255,255,.5);
-
-    opacity:0;
-
-    filter:blur(2px);
-}
-
-.steam.s1{
-    margin-left:-35px;
-}
-
-.steam.s2{
-    margin-left:0;
-}
-
-.steam.s3{
-    margin-left:35px;
-}
-
-.spark{
-    position:absolute;
-    left:50%;
-    top:50%;
-
-    width:7px;
-    height:7px;
-
-    border-radius:50%;
-
-    background:#93c5fd;
-
-    opacity:0;
-}
-
-.success-ring{
-    position:absolute;
-    left:50%;
-    top:50%;
-
-    width:330px;
-    height:330px;
-
-    border-radius:50%;
-
-    transform:
-        translate(-50%,-50%)
-        scale(.2);
-
-    border:2px solid rgba(52,211,153,.8);
-
-    opacity:0;
-}
-
-.success-check{
-    position:absolute;
-    left:50%;
-    top:50%;
-
-    width:120px;
-    height:120px;
-
-    transform:
-        translate(-50%,-50%)
-        scale(.2);
-
-    border-radius:50%;
-
-    display:grid;
-    place-items:center;
-
-    font-size:55px;
-    font-weight:900;
-
-    color:#6ee7b7;
-
-    border:3px solid rgba(52,211,153,.8);
-    background:rgba(16,185,129,.12);
-
-    opacity:0;
-}
-
-.serving-overlay.play .serving-object{
-    animation:
-        objectEntrance .8s .1s cubic-bezier(.16,1,.3,1) forwards;
-}
-
-.serving-overlay.play .plate{
-    animation:
-        plateEntrance .9s .45s cubic-bezier(.16,1,.3,1) forwards,
-        plateServeSpin 1.8s 1.25s cubic-bezier(.2,.8,.2,1) forwards;
-}
-
-.serving-overlay.play .plate-shadow{
-    animation:
-        shadowAppear .5s .65s forwards;
-}
-
-.serving-overlay.play .cloche{
-    animation:
-        clocheEntrance .75s .8s cubic-bezier(.16,1,.3,1) forwards,
-        clocheLift 1s 2.15s cubic-bezier(.2,.8,.2,1) forwards;
-}
-
-.serving-overlay.play .food{
-    animation:
-        foodServeMain 1.15s 2.15s cubic-bezier(.16,1,.3,1) forwards;
-}
-
-.serving-overlay.play .food-two{
-    animation:
-        foodServeSide 1s 2.35s cubic-bezier(.16,1,.3,1) forwards;
-}
-
-.serving-overlay.play .food-three{
-    animation:
-        foodServeSide2 1s 2.5s cubic-bezier(.16,1,.3,1) forwards;
-}
-
-.serving-overlay.play .steam{
-    animation:
-        steamRise 1.7s 3.05s ease-out infinite;
-}
-
-.serving-overlay.play .s2{
-    animation-delay:3.25s;
-}
-
-.serving-overlay.play .s3{
-    animation-delay:3.45s;
-}
-
-.serving-overlay.play .success-ring{
-    animation:
-        successRing 1s 3.65s cubic-bezier(.16,1,.3,1) forwards;
-}
-
-.serving-overlay.play .success-check{
-    animation:
-        successCheck .7s 3.85s cubic-bezier(.16,1,.3,1) forwards;
-}
-
-@keyframes objectEntrance{
-    from{
-        transform:
-            translate(-50%,-50%)
-            scale(.2)
-            rotateY(-70deg);
-        opacity:0;
-    }
-    to{
-        transform:
-            translate(-50%,-50%)
-            scale(1)
-            rotateY(0);
-        opacity:1;
-    }
-}
-
-@keyframes plateEntrance{
-    from{
-        transform:
-            rotateX(68deg)
-            rotateZ(-40deg)
-            translateY(180px)
-            scale(.45);
-        opacity:0;
-    }
-    to{
-        transform:
-            rotateX(68deg)
-            rotateZ(-20deg)
-            translateY(0)
-            scale(1);
-        opacity:1;
-    }
-}
-
-@keyframes plateServeSpin{
-    0%{
-        transform:
-            rotateX(68deg)
-            rotateZ(-20deg)
-            translateY(0)
-            scale(1);
-    }
-    35%{
-        transform:
-            rotateX(62deg)
-            rotateZ(170deg)
-            translateY(-12px)
-            scale(1.05);
-    }
-    70%{
-        transform:
-            rotateX(68deg)
-            rotateZ(355deg)
-            translateY(3px)
-            scale(.98);
-    }
-    100%{
-        transform:
-            rotateX(68deg)
-            rotateZ(360deg)
-            translateY(0)
-            scale(1);
-    }
-}
-
-@keyframes shadowAppear{
-    from{opacity:0}
-    to{opacity:.65}
-}
-
-@keyframes clocheEntrance{
-    from{
-        transform:
-            translate(-50%,-220px)
-            scale(.55)
-            rotateX(-30deg);
-        opacity:0;
-    }
-    to{
-        transform:
-            translate(-50%,0)
-            scale(1)
-            rotateX(0);
-        opacity:1;
-    }
-}
-
-@keyframes clocheLift{
-    from{
-        transform:
-            translate(-50%,0)
-            scale(1);
-        opacity:1;
-    }
-    to{
-        transform:
-            translate(-50%,-230px)
-            scale(.72)
-            rotateX(25deg);
-        opacity:0;
-    }
-}
-
-@keyframes foodServeMain{
-    0%{
-        opacity:0;
-        transform:
-            translate(-50%,-200px)
-            translateZ(130px)
-            rotate(-40deg)
-            scale(.2);
-    }
-    18%{
-        opacity:1;
-    }
-    55%{
-        opacity:1;
-        transform:
-            translate(-50%,20px)
-            translateZ(70px)
-            rotate(20deg)
-            scale(1.1);
-    }
-    78%{
-        transform:
-            translate(-50%,48px)
-            translateZ(15px)
-            rotate(-7deg)
-            scale(.94);
-    }
-    100%{
-        opacity:1;
-        transform:
-            translate(-50%,45px)
-            translateZ(0)
-            rotate(0)
-            scale(1);
-    }
-}
-
-@keyframes foodServeSide{
-    0%{
-        opacity:0;
-        transform:
-            translate(-50%,-220px)
-            translateX(-100px)
-            rotate(45deg)
-            scale(.2);
-    }
-    20%{
-        opacity:1;
-    }
-    70%{
-        transform:
-            translate(-50%,45px)
-            translateX(-55px)
-            rotate(-8deg)
-            scale(1);
-    }
-    100%{
-        opacity:1;
-        transform:
-            translate(-50%,45px)
-            translateX(-55px)
-            rotate(0)
-            scale(1);
-    }
-}
-
-@keyframes foodServeSide2{
-    0%{
-        opacity:0;
-        transform:
-            translate(-50%,-220px)
-            translateX(100px)
-            rotate(-45deg)
-            scale(.2);
-    }
-    20%{
-        opacity:1;
-    }
-    70%{
-        transform:
-            translate(-50%,48px)
-            translateX(58px)
-            rotate(8deg)
-            scale(1);
-    }
-    100%{
-        opacity:1;
-        transform:
-            translate(-50%,48px)
-            translateX(58px)
-            rotate(0)
-            scale(1);
-    }
-}
-
-@keyframes steamRise{
-    0%{
-        opacity:0;
-        transform:
-            translate(-50%,0)
-            translateY(35px)
-            scale(.5);
-    }
-    25%{
-        opacity:.7;
-    }
-    100%{
-        opacity:0;
-        transform:
-            translate(-50%,0)
-            translateY(-80px)
-            translateX(18px)
-            scale(1.6);
-    }
-}
-
-@keyframes successRing{
-    0%{
-        opacity:0;
-        transform:
-            translate(-50%,-50%)
-            scale(.2);
-    }
-    45%{
-        opacity:1;
-    }
-    100%{
-        opacity:0;
-        transform:
-            translate(-50%,-50%)
-            scale(1.45);
-    }
-}
-
-@keyframes successCheck{
-    0%{
-        opacity:0;
-        transform:
-            translate(-50%,-50%)
-            scale(.15)
-            rotate(-25deg);
-    }
-    65%{
-        opacity:1;
-        transform:
-            translate(-50%,-50%)
-            scale(1.13)
-            rotate(5deg);
-    }
-    100%{
-        opacity:1;
-        transform:
-            translate(-50%,-50%)
-            scale(1)
-            rotate(0);
-    }
-}
-
-/* =========================================================
-   CONFIRMATION MODAL
-========================================================= */
-
-.modal{
-    position:fixed;
-    inset:0;
-    z-index:900;
-
-    display:grid;
-    place-items:center;
-
-    padding:20px;
-
-    background:rgba(2,6,23,.72);
-    backdrop-filter:blur(15px);
-
-    opacity:0;
-    pointer-events:none;
-
-    transition:
-        opacity .25s ease;
-}
-
-.modal.active{
-    opacity:1;
-    pointer-events:auto;
-}
-
-.modal-card{
-    width:min(100%,440px);
-
-    padding:28px;
-
-    border-radius:26px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(30,41,59,.96),
-            rgba(15,23,42,.96)
-        );
-
-    border:1px solid rgba(255,255,255,.13);
-
-    box-shadow:
-        0 35px 100px rgba(0,0,0,.55);
-
-    transform:
-        translateY(20px)
-        scale(.94);
-
-    transition:
-        transform .3s cubic-bezier(.16,1,.3,1);
-}
-
-.modal.active .modal-card{
-    transform:
-        translateY(0)
-        scale(1);
-}
-
-.modal-icon{
-    width:64px;
-    height:64px;
-    display:grid;
-    place-items:center;
-
-    border-radius:20px;
-
-    font-size:30px;
-
-    background:
-        linear-gradient(
-            135deg,
-            rgba(59,130,246,.2),
-            rgba(124,58,237,.2)
-        );
-
-    border:1px solid rgba(96,165,250,.25);
-
-    margin-bottom:20px;
-}
-
-.modal-card h2{
-    font-size:25px;
-    margin-bottom:8px;
-}
-
-.modal-card p{
-    color:var(--muted);
-    line-height:1.6;
-    font-size:14px;
-}
-
-.modal-warning{
-    margin-top:18px;
-    padding:13px 14px;
-
-    border-radius:13px;
-
-    background:rgba(251,191,36,.07);
-    border:1px solid rgba(251,191,36,.16);
-
-    color:#fde68a;
-
-    font-size:12px;
-    line-height:1.5;
-}
-
-.modal-actions{
-    display:grid;
-    grid-template-columns:1fr 1.4fr;
-    gap:10px;
-    margin-top:22px;
-}
-
-.confirm-btn{
-    border:0;
-    border-radius:14px;
-    padding:14px;
-    font-weight:850;
-
-    color:white;
-
-    background:
-        linear-gradient(
-            110deg,
-            #2563eb,
-            #7c3aed
-        );
-}
-
-/* =========================================================
-   STAFF
-========================================================= */
-
-.staff-panel{
-    margin-top:20px;
-}
-
-.staff-controls{
-    display:grid;
-    gap:14px;
-}
-
-.staff-title{
-    font-size:24px;
-    font-weight:850;
-    margin-bottom:6px;
-}
-
-.staff-subtitle{
-    color:var(--muted);
-    font-size:13px;
-    margin-bottom:20px;
-}
-
-.staff-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-}
-
-.staff-reset-all{
-    grid-column:1/-1;
-}
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-.toast{
-    position:fixed;
-    right:20px;
-    bottom:20px;
-    z-index:2000;
-
-    max-width:340px;
-
-    padding:14px 17px;
-
-    border-radius:15px;
-
-    background:
-        rgba(15,23,42,.95);
-
-    border:1px solid var(--border);
-
-    box-shadow:
-        0 20px 50px rgba(0,0,0,.35);
-
-    transform:
-        translateY(20px)
-        scale(.95);
-
-    opacity:0;
-
-    pointer-events:none;
-
-    transition:.3s;
-}
-
-.toast.show{
-    transform:
-        translateY(0)
-        scale(1);
-
-    opacity:1;
-}
-
-.toast.success{
-    border-color:rgba(52,211,153,.3);
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media(max-width:700px){
-
-    .app{
-        padding:18px 12px 40px;
-    }
-
-    .topbar{
-        align-items:flex-start;
-    }
-
-    .student-header{
-        align-items:flex-start;
-        flex-direction:column;
-        padding:22px;
-    }
-
-    .student-body{
-        padding:20px;
-    }
-
-    .info-grid{
-        grid-template-columns:1fr;
-    }
-
-    .access-panel{
-        padding:20px;
-    }
-
-    .clock{
-        font-size:29px;
-    }
-
-    .serving-stage{
-        height:500px;
-    }
-
-    .serving-object{
-        transform:
-            translate(-50%,-50%)
-            scale(.75);
-    }
-
-    .serving-overlay.play .serving-object{
-        animation:
-            objectEntranceMobile
-            .8s .1s
-            cubic-bezier(.16,1,.3,1)
-            forwards;
-    }
-
-    .modal-actions{
-        grid-template-columns:1fr;
-    }
-
-    .staff-actions{
-        grid-template-columns:1fr;
-    }
-}
-
-@keyframes objectEntranceMobile{
-    from{
-        transform:
-            translate(-50%,-50%)
-            scale(.2)
-            rotateY(-70deg);
-        opacity:0;
-    }
-    to{
-        transform:
-            translate(-50%,-50%)
-            scale(.75)
-            rotateY(0);
-        opacity:1;
-    }
-}
-
-@media(prefers-reduced-motion:reduce){
-
-    *,
-    *::before,
-    *::after{
-        animation-duration:.001ms !important;
-        animation-iteration-count:1 !important;
-        scroll-behavior:auto !important;
-    }
-}
-
-</style>
+        :root {
+
+            --navy: #071a35;
+            --navy-2: #0b2548;
+
+            --blue: #2563eb;
+            --blue-light: #60a5fa;
+
+            --cyan: #06b6d4;
+
+            --green: #10b981;
+            --green-dark: #047857;
+
+            --red: #ef4444;
+
+            --gold: #f59e0b;
+
+            --white: #ffffff;
+
+            --text: #0f172a;
+
+            --muted: #64748b;
+
+            --background:
+                #eef2f7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family:
+                'Inter',
+                sans-serif;
+        }
+
+        body {
+
+            min-height: 100vh;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            padding: 22px 12px;
+
+            color: var(--text);
+
+            overflow-x: hidden;
+
+            background:
+                radial-gradient(
+                    circle at 10% 10%,
+                    rgba(37,99,235,.16),
+                    transparent 35%
+                ),
+
+                radial-gradient(
+                    circle at 90% 90%,
+                    rgba(6,182,212,.14),
+                    transparent 35%
+                ),
+
+                linear-gradient(
+                    135deg,
+                    #dbe5f0,
+                    #f8fafc
+                );
+        }
+
+        /* =====================================================
+           BACKGROUND MOTION
+           ===================================================== */
+
+        body::before {
+
+            content: "";
+
+            position: fixed;
+
+            width: 450px;
+            height: 450px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(
+                    37,
+                    99,
+                    235,
+                    .06
+                );
+
+            filter: blur(2px);
+
+            top: -180px;
+            left: -180px;
+
+            animation:
+                floatBlob 9s ease-in-out infinite;
+        }
+
+        body::after {
+
+            content: "";
+
+            position: fixed;
+
+            width: 420px;
+            height: 420px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(
+                    6,
+                    182,
+                    212,
+                    .06
+                );
+
+            bottom: -180px;
+            right: -180px;
+
+            animation:
+                floatBlob2 11s ease-in-out infinite;
+        }
+
+        @keyframes floatBlob {
+
+            0%,100% {
+                transform:
+                    translate(0,0)
+                    scale(1);
+            }
+
+            50% {
+                transform:
+                    translate(50px,40px)
+                    scale(1.12);
+            }
+        }
+
+        @keyframes floatBlob2 {
+
+            0%,100% {
+                transform:
+                    translate(0,0)
+                    scale(1);
+            }
+
+            50% {
+                transform:
+                    translate(-40px,-50px)
+                    scale(1.1);
+            }
+        }
+
+        /* =====================================================
+           APP
+           ===================================================== */
+
+        .app {
+
+            width: 100%;
+
+            max-width: 430px;
+
+            position: relative;
+
+            z-index: 5;
+        }
+
+        .view {
+
+            display: none;
+
+            animation:
+                pageIn .45s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes pageIn {
+
+            from {
+                opacity: 0;
+                transform:
+                    translateY(16px)
+                    scale(.98);
+            }
+
+            to {
+                opacity: 1;
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
+        }
+
+        /* =====================================================
+           PANEL
+           ===================================================== */
+
+        .panel {
+
+            background:
+                rgba(255,255,255,.94);
+
+            backdrop-filter:
+                blur(18px);
+
+            -webkit-backdrop-filter:
+                blur(18px);
+
+            border-radius: 26px;
+
+            padding: 30px 24px;
+
+            border:
+                1px solid
+                rgba(255,255,255,.8);
+
+            box-shadow:
+                0 25px 70px
+                rgba(15,23,42,.13);
+        }
+
+        /* =====================================================
+           HEADER
+           ===================================================== */
+
+        .header {
+
+            text-align: center;
+
+            margin-bottom: 24px;
+        }
+
+        .logo {
+
+            width: 72px;
+            height: 72px;
+
+            object-fit: contain;
+
+            display: block;
+
+            margin:
+                0 auto 13px;
+
+            filter:
+                drop-shadow(
+                    0 8px 12px
+                    rgba(15,23,42,.12)
+                );
+        }
+
+        .title {
+
+            font-size: 25px;
+
+            font-weight: 900;
+
+            color:
+                var(--navy);
+        }
+
+        .subtitle {
+
+            font-size: 12px;
+
+            color:
+                var(--muted);
+
+            margin-top: 5px;
+
+            letter-spacing:
+                .3px;
+        }
+
+        /* =====================================================
+           INPUTS
+           ===================================================== */
+
+        .field {
+
+            margin-top: 15px;
+        }
+
+        .field label {
+
+            display: block;
+
+            font-size: 12px;
+
+            font-weight: 800;
+
+            color:
+                #334155;
+
+            margin-bottom: 7px;
+        }
+
+        .input {
+
+            width: 100%;
+
+            height: 50px;
+
+            border:
+                1px solid
+                #dbe2ea;
+
+            border-radius: 14px;
+
+            padding:
+                0 15px;
+
+            outline: none;
+
+            background:
+                #f8fafc;
+
+            color:
+                var(--text);
+
+            font-size: 14px;
+
+            transition:
+                .25s ease;
+        }
+
+        .input:focus {
+
+            background:
+                white;
+
+            border-color:
+                var(--blue);
+
+            box-shadow:
+                0 0 0 4px
+                rgba(
+                    37,
+                    99,
+                    235,
+                    .10
+                );
+        }
+
+        /* =====================================================
+           BUTTONS
+           ===================================================== */
+
+        .button {
+
+            width: 100%;
+
+            border: none;
+
+            min-height: 50px;
+
+            border-radius: 14px;
+
+            margin-top: 18px;
+
+            font-weight: 800;
+
+            font-size: 14px;
+
+            cursor: pointer;
+
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                opacity .18s ease;
+
+            position: relative;
+
+            overflow: hidden;
+        }
+
+        .button:hover {
+
+            transform:
+                translateY(-2px);
+        }
+
+        .button:active {
+
+            transform:
+                translateY(1px)
+                scale(.99);
+        }
+
+        .button:disabled {
+
+            cursor:
+                not-allowed;
+
+            opacity:
+                .55;
+
+            transform:
+                none;
+        }
+
+        .primary {
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #1d4ed8
+                );
+
+            box-shadow:
+                0 10px 25px
+                rgba(
+                    37,
+                    99,
+                    235,
+                    .25
+                );
+        }
+
+        .secondary {
+
+            background:
+                #eef2f7;
+
+            color:
+                #334155;
+        }
+
+        .danger {
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ef4444,
+                    #dc2626
+                );
+        }
+
+        .small-link {
+
+            border: none;
+
+            background: none;
+
+            color:
+                var(--blue);
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            margin-top: 15px;
+        }
+
+        /* =====================================================
+           OTP
+           ===================================================== */
+
+        .otp-input {
+
+            text-align: center;
+
+            letter-spacing:
+                8px;
+
+            font-size: 23px;
+
+            font-weight: 800;
+        }
+
+        .otp-info {
+
+            background:
+                #eff6ff;
+
+            border:
+                1px solid
+                #dbeafe;
+
+            color:
+                #1e40af;
+
+            border-radius:
+                14px;
+
+            padding:
+                13px;
+
+            margin-top:
+                16px;
+
+            font-size:
+                12px;
+
+            line-height:
+                1.55;
+
+            text-align:
+                center;
+        }
+
+        .countdown {
+
+            margin-top: 10px;
+
+            text-align: center;
+
+            font-size: 12px;
+
+            color:
+                var(--muted);
+        }
+
+        /* =====================================================
+           PHOTO
+           ===================================================== */
+
+        .photo-input {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .photo-preview {
+
+            width: 92px;
+            height: 92px;
+
+            border-radius: 22px;
+
+            object-fit: cover;
+
+            border:
+                3px solid
+                #dbeafe;
+
+            display: none;
+        }
+
+        /* =====================================================
+           STUDENT CARD
+           ===================================================== */
+
+        .student-card {
+
+            position: relative;
+
+            overflow: hidden;
+
+            border-radius: 28px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #06152c,
+                    #0b2548
+                );
+
+            box-shadow:
+                0 30px 70px
+                rgba(
+                    7,
+                    26,
+                    53,
+                    .30
+                );
+
+            min-height:
+                650px;
+        }
+
+        .student-card::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 240px;
+            height: 240px;
+
+            border-radius: 50%;
+
+            right: -100px;
+            top: -90px;
+
+            background:
+                rgba(
+                    96,
+                    165,
+                    250,
+                    .13
+                );
+
+            animation:
+                cardOrb 8s
+                ease-in-out infinite;
+        }
+
+        .student-card::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 190px;
+            height: 190px;
+
+            border-radius: 50%;
+
+            left: -100px;
+            bottom: -80px;
+
+            background:
+                rgba(
+                    6,
+                    182,
+                    212,
+                    .10
+                );
+
+            animation:
+                cardOrb2 10s
+                ease-in-out infinite;
+        }
+
+        @keyframes cardOrb {
+
+            0%,100% {
+                transform:
+                    translate(0,0);
+            }
+
+            50% {
+                transform:
+                    translate(-35px,30px);
+            }
+        }
+
+        @keyframes cardOrb2 {
+
+            0%,100% {
+                transform:
+                    translate(0,0);
+            }
+
+            50% {
+                transform:
+                    translate(30px,-25px);
+            }
+        }
+
+        .card-content {
+
+            position: relative;
+
+            z-index: 2;
+
+            padding: 25px;
+        }
+
+        /* =====================================================
+           CARD TOP
+           ===================================================== */
+
+        .card-top {
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                flex-start;
+        }
+
+        .brand {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .brand img {
+
+            width: 43px;
+            height: 43px;
+
+            object-fit: contain;
+        }
+
+        .brand-name {
+
+            font-size: 11px;
+
+            font-weight: 800;
+
+            letter-spacing:
+                .7px;
+
+            opacity:
+                .85;
+        }
+
+        .brand-main {
+
+            font-size: 15px;
+
+            font-weight: 900;
+        }
+
+        .live {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing:
+                .8px;
+
+            color:
+                #86efac;
+        }
+
+        .live-dot {
+
+            width: 8px;
+            height: 8px;
+
+            border-radius: 50%;
+
+            background:
+                #22c55e;
+
+            box-shadow:
+                0 0 0 0
+                rgba(
+                    34,
+                    197,
+                    94,
+                    .6
+                );
+
+            animation:
+                livePulse 1.5s
+                infinite;
+        }
+
+        @keyframes livePulse {
+
+            0% {
+                box-shadow:
+                    0 0 0 0
+                    rgba(
+                        34,
+                        197,
+                        94,
+                        .65
+                    );
+            }
+
+            70% {
+                box-shadow:
+                    0 0 0 8px
+                    rgba(
+                        34,
+                        197,
+                        94,
+                        0
+                    );
+            }
+
+            100% {
+                box-shadow:
+                    0 0 0 0
+                    rgba(
+                        34,
+                        197,
+                        94,
+                        0
+                    );
+            }
+        }
+
+        /* =====================================================
+           PROFILE
+           ===================================================== */
+
+        .profile {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 16px;
+
+            margin-top: 27px;
+
+            padding:
+                15px;
+
+            border-radius:
+                20px;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .07
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .09
+                );
+        }
+
+        .profile-photo {
+
+            width: 75px;
+            height: 75px;
+
+            border-radius:
+                20px;
+
+            object-fit: cover;
+
+            border:
+                2px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .25
+                );
+
+            box-shadow:
+                0 10px 25px
+                rgba(0,0,0,.18);
+        }
+
+        .profile-name {
+
+            font-size: 20px;
+
+            font-weight: 900;
+
+            line-height:
+                1.1;
+        }
+
+        .profile-id {
+
+            margin-top: 6px;
+
+            font-size: 11px;
+
+            color:
+                #93c5fd;
+        }
+
+        .profile-room {
+
+            margin-top: 4px;
+
+            font-size: 11px;
+
+            color:
+                #cbd5e1;
+        }
+
+        /* =====================================================
+           LIVE TIME
+           ===================================================== */
+
+        .time-panel {
+
+            margin-top: 18px;
+
+            padding:
+                14px 16px;
+
+            border-radius:
+                17px;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .055
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .08
+                );
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                center;
+        }
+
+        .time-label {
+
+            font-size: 9px;
+
+            color:
+                #94a3b8;
+
+            font-weight:
+                800;
+
+            letter-spacing:
+                1px;
+        }
+
+        .clock {
+
+            font-size: 17px;
+
+            font-weight: 800;
+
+            letter-spacing:
+                .5px;
+
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        /* =====================================================
+           CLAIM AREA
+           ===================================================== */
+
+        .claim-panel {
+
+            margin-top: 20px;
+
+            padding:
+                20px;
+
+            border-radius:
+                23px;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .08
+                );
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .10
+                );
+
+            text-align:
+                center;
+        }
+
+        .claim-eyebrow {
+
+            font-size: 9px;
+
+            font-weight: 900;
+
+            letter-spacing:
+                1.5px;
+
+            color:
+                #93c5fd;
+        }
+
+        .claim-title {
+
+            margin-top: 5px;
+
+            font-size: 20px;
+
+            font-weight: 900;
+        }
+
+        .claim-subtitle {
+
+            margin-top: 6px;
+
+            font-size: 11px;
+
+            color:
+                #cbd5e1;
+
+            line-height:
+                1.5;
+        }
+
+        /* =====================================================
+           LIVE BUTTON
+           ===================================================== */
+
+        .claim-button {
+
+            position: relative;
+
+            width: 100%;
+
+            min-height: 75px;
+
+            margin-top: 18px;
+
+            border: none;
+
+            border-radius: 21px;
+
+            cursor: pointer;
+
+            color: white;
+
+            font-size: 18px;
+
+            font-weight: 900;
+
+            letter-spacing:
+                .7px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #10b981,
+                    #059669
+                );
+
+            box-shadow:
+                0 15px 35px
+                rgba(
+                    16,
+                    185,
+                    129,
+                    .27
+                );
+
+            overflow: hidden;
+
+            animation:
+                claimFloat 3s
+                ease-in-out infinite;
+
+            transition:
+                .2s ease;
+        }
+
+        .claim-button::before {
+
+            content: "";
+
+            position: absolute;
+
+            top: 0;
+            left: -120%;
+
+            width: 70%;
+
+            height: 100%;
+
+            transform:
+                skewX(-20deg);
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(
+                        255,
+                        255,
+                        255,
+                        .27
+                    ),
+                    transparent
+                );
+
+            animation:
+                shine 3.4s
+                infinite;
+        }
+
+        .claim-button::after {
+
+            content: "";
+
+            position: absolute;
+
+            inset: -5px;
+
+            border-radius:
+                25px;
+
+            border:
+                2px solid
+                rgba(
+                    110,
+                    231,
+                    183,
+                    .45
+                );
+
+            animation:
+                buttonRing 2s
+                infinite;
+        }
+
+        @keyframes claimFloat {
+
+            0%,100% {
+                transform:
+                    translateY(0);
+            }
+
+            50% {
+                transform:
+                    translateY(-3px);
+            }
+        }
+
+        @keyframes shine {
+
+            0% {
+                left: -120%;
+            }
+
+            55%,100% {
+                left: 150%;
+            }
+        }
+
+        @keyframes buttonRing {
+
+            0% {
+                opacity: .8;
+                transform:
+                    scale(1);
+            }
+
+            70% {
+                opacity: 0;
+                transform:
+                    scale(1.035);
+            }
+
+            100% {
+                opacity: 0;
+                transform:
+                    scale(1);
+            }
+        }
+
+        .claim-button:hover {
+
+            transform:
+                translateY(-3px)
+                scale(1.01);
+
+            box-shadow:
+                0 20px 40px
+                rgba(
+                    16,
+                    185,
+                    129,
+                    .34
+                );
+        }
+
+        .claim-button:active {
+
+            transform:
+                scale(.98);
+        }
+
+        .claim-button.loading {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #1d4ed8
+                );
+
+            animation:
+                none;
+        }
+
+        .claim-button.received {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #334155,
+                    #1e293b
+                );
+
+            animation:
+                none;
+
+            cursor:
+                default;
+        }
+
+        .claim-button.received::before,
+        .claim-button.received::after {
+
+            display:
+                none;
+        }
+
+        .spinner {
+
+            width: 20px;
+            height: 20px;
+
+            border:
+                3px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    .3
+                );
+
+            border-top-color:
+                white;
+
+            border-radius: 50%;
+
+            display:
+                inline-block;
+
+            vertical-align:
+                middle;
+
+            margin-right:
+                8px;
+
+            animation:
+                spin .7s
+                linear infinite;
+        }
+
+        @keyframes spin {
+
+            to {
+                transform:
+                    rotate(360deg);
+            }
+        }
+
+        /* =====================================================
+           RECEIVED STATE
+           ===================================================== */
+
+        .received-box {
+
+            display: none;
+
+            margin-top: 16px;
+
+            padding:
+                15px;
+
+            border-radius:
+                17px;
+
+            background:
+                rgba(
+                    16,
+                    185,
+                    129,
+                    .12
+                );
+
+            border:
+                1px solid
+                rgba(
+                    110,
+                    231,
+                    183,
+                    .18
+                );
+
+            animation:
+                receivedIn .5s
+                ease;
+        }
+
+        @keyframes receivedIn {
+
+            from {
+                opacity: 0;
+                transform:
+                    scale(.94);
+            }
+
+            to {
+                opacity: 1;
+                transform:
+                    scale(1);
+            }
+        }
+
+        .received-icon {
+
+            width: 40px;
+            height: 40px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            justify-content:
+                center;
+
+            align-items:
+                center;
+
+            margin: 0 auto 8px;
+
+            background:
+                #10b981;
+
+            font-size: 21px;
+
+            animation:
+                checkPop .5s
+                cubic-bezier(
+                    .2,
+                    1.5,
+                    .4,
+                    1
+                );
+        }
+
+        @keyframes checkPop {
+
+            from {
+                transform:
+                    scale(0);
+            }
+
+            to {
+                transform:
+                    scale(1);
+            }
+        }
+
+        .received-title {
+
+            font-size: 14px;
+
+            font-weight: 900;
+        }
+
+        .received-time {
+
+            margin-top: 4px;
+
+            color:
+                #a7f3d0;
+
+            font-size: 10px;
+        }
+
+        .cooldown {
+
+            margin-top: 11px;
+
+            font-size: 10px;
+
+            color:
+                #cbd5e1;
+        }
+
+        .cooldown strong {
+
+            color:
+                #93c5fd;
+
+            font-variant-numeric:
+                tabular-nums;
+        }
+
+        /* =====================================================
+           CARD FOOTER
+           ===================================================== */
+
+        .card-footer {
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                center;
+
+            margin-top: 20px;
+
+            font-size: 9px;
+
+            color:
+                #94a3b8;
+        }
+
+        .session-live {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+        }
+
+        .session-live i {
+
+            width: 6px;
+            height: 6px;
+
+            border-radius: 50%;
+
+            background:
+                #22c55e;
+
+            animation:
+                tinyPulse 1s infinite;
+        }
+
+        @keyframes tinyPulse {
+
+            50% {
+                opacity: .35;
+            }
+        }
+
+        .logout {
+
+            border: none;
+
+            background:
+                transparent;
+
+            color:
+                #94a3b8;
+
+            font-size: 10px;
+
+            cursor: pointer;
+        }
+
+        .logout:hover {
+            color: white;
+        }
+
+        /* =====================================================
+           TOAST
+           ===================================================== */
+
+        .toast {
+
+            position: fixed;
+
+            left: 50%;
+
+            bottom: 22px;
+
+            transform:
+                translate(-50%, 120px);
+
+            z-index: 9999;
+
+            max-width:
+                calc(100% - 30px);
+
+            padding:
+                13px 17px;
+
+            border-radius:
+                13px;
+
+            background:
+                #0f172a;
+
+            color: white;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            box-shadow:
+                0 15px 40px
+                rgba(0,0,0,.2);
+
+            transition:
+                .3s ease;
+
+            text-align:
+                center;
+        }
+
+        .toast.show {
+
+            transform:
+                translate(-50%, 0);
+        }
+
+        .toast.success {
+            background:
+                #047857;
+        }
+
+        .toast.error {
+            background:
+                #b91c1c;
+        }
+
+        /* =====================================================
+           ADMIN
+           ===================================================== */
+
+        .admin-note {
+
+            margin-top: 14px;
+
+            padding: 13px;
+
+            border-radius: 13px;
+
+            background:
+                #fff7ed;
+
+            border:
+                1px solid
+                #fed7aa;
+
+            color:
+                #9a3412;
+
+            font-size:
+                12px;
+
+            line-height:
+                1.5;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
+
+        @media (max-width: 450px) {
+
+            body {
+                padding: 10px;
+            }
+
+            .student-card {
+                min-height:
+                    620px;
+            }
+
+            .card-content {
+                padding: 21px;
+            }
+
+            .profile-name {
+                font-size: 18px;
+            }
+        }
+
+    </style>
+
 </head>
+
 
 <body>
 
 <div class="app">
 
     <!-- =====================================================
-         TOP BAR
-    ====================================================== -->
+         LOGIN
+         ===================================================== -->
 
-    <div class="topbar">
+    <section
+        id="view-login"
+        class="view active"
+    >
 
-        <div class="brand">
+        <div class="panel">
 
-            <img
-                src="/manit-logo.png"
-                alt="MANIT logo"
-            >
+            <div class="header">
 
-            <div>
-                <div class="brand-title">
+                <img
+                    src="/manit-logo.png"
+                    class="logo"
+                    alt="MANIT"
+                >
+
+                <div class="title">
                     MANIT Digital Mess Card
                 </div>
 
-                <div class="brand-sub">
-                    Smart • Secure • Digital
+                <div class="subtitle">
+                    Secure student meal identity system
                 </div>
+
             </div>
 
+
+            <div class="field">
+
+                <label>
+                    Scholar Number
+                </label>
+
+                <input
+                    id="login-scholar"
+                    class="input"
+                    type="text"
+                    placeholder="Enter scholar number"
+                    autocomplete="username"
+                >
+
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    id="login-pass"
+                    class="input"
+                    type="password"
+                    placeholder="Enter password"
+                    autocomplete="current-password"
+                >
+
+            </div>
+
+
+            <button
+                class="button primary"
+                onclick="handleLogin()"
+            >
+                LOGIN
+            </button>
+
+
+            <button
+                class="small-link"
+                onclick="showRegister()"
+            >
+                New student? Create an account
+            </button>
+
         </div>
 
-        <div class="live-indicator">
-            <span class="live-dot"></span>
-            LIVE SYSTEM
-        </div>
-
-    </div>
+    </section>
 
 
     <!-- =====================================================
-         AUTH PANEL
-    ====================================================== -->
+         REGISTRATION
+         ===================================================== -->
 
     <section
-        id="authPanel"
-        class="panel"
+        id="view-register"
+        class="view"
     >
 
-        <div class="panel-inner">
+        <div class="panel">
 
-            <div class="tabs">
+            <div class="header">
 
-                <button
-                    id="loginTab"
-                    class="tab active"
-                    type="button"
+                <img
+                    src="/manit-logo.png"
+                    class="logo"
+                    alt="MANIT"
                 >
-                    Student Login
-                </button>
 
-                <button
-                    id="registerTab"
-                    class="tab"
-                    type="button"
-                >
-                    Register
-                </button>
+                <div class="title">
+                    Student Registration
+                </div>
 
-                <button
-                    id="staffTab"
-                    class="tab"
-                    type="button"
-                >
-                    Staff
-                </button>
+                <div class="subtitle">
+                    Verify your MANIT email using OTP
+                </div>
 
             </div>
 
 
-            <!-- LOGIN -->
-
-            <form
-                id="loginForm"
-                class="form"
-            >
-
-                <div>
-                    <h1>Welcome back</h1>
-
-                    <p>
-                        Login to access your digital mess card.
-                    </p>
-                </div>
+            <div id="registration-form">
 
                 <div class="field">
 
                     <label>
-                        Scholar ID
+                        Scholar Number
                     </label>
 
                     <input
-                        id="loginScholarId"
+                        id="reg-scholar"
+                        class="input"
                         type="text"
-                        autocomplete="username"
-                        required
-                        placeholder="Enter Scholar ID"
+                        placeholder="Scholar number"
                     >
 
                 </div>
 
-                <div class="field">
-
-                    <label>
-                        Password
-                    </label>
-
-                    <input
-                        id="loginPassword"
-                        type="password"
-                        autocomplete="current-password"
-                        required
-                        placeholder="Enter password"
-                    >
-
-                </div>
-
-                <div
-                    id="loginMessage"
-                    class="message"
-                ></div>
-
-                <button
-                    class="primary-btn"
-                    type="submit"
-                >
-                    LOGIN
-                </button>
-
-            </form>
-
-
-            <!-- REGISTER -->
-
-            <form
-                id="registerForm"
-                class="form hidden"
-            >
-
-                <div>
-                    <h1>Create your card</h1>
-
-                    <p>
-                        Your MANIT student email will be verified with OTP.
-                    </p>
-                </div>
 
                 <div class="field">
 
@@ -1830,43 +1797,30 @@ button:disabled{
                     </label>
 
                     <input
-                        id="registerName"
+                        id="reg-name"
+                        class="input"
                         type="text"
-                        required
                         placeholder="Your full name"
                     >
 
                 </div>
 
-                <div class="field">
-
-                    <label>
-                        Scholar ID
-                    </label>
-
-                    <input
-                        id="registerScholarId"
-                        type="text"
-                        required
-                        placeholder="Your Scholar ID"
-                    >
-
-                </div>
 
                 <div class="field">
 
                     <label>
-                        Room
+                        Room Number
                     </label>
 
                     <input
-                        id="registerRoom"
+                        id="reg-room"
+                        class="input"
                         type="text"
-                        required
-                        placeholder="Hostel / Room"
+                        placeholder="Hostel / room number"
                     >
 
                 </div>
+
 
                 <div class="field">
 
@@ -1875,117 +1829,78 @@ button:disabled{
                     </label>
 
                     <input
-                        id="registerPassword"
+                        id="reg-password"
+                        class="input"
                         type="password"
-                        minlength="6"
-                        required
                         placeholder="Minimum 6 characters"
                     >
 
                 </div>
 
-                <div class="field">
+
+                <div class="field photo-input">
 
                     <label>
                         Student Photo
                     </label>
 
+                    <img
+                        id="photo-preview"
+                        class="photo-preview"
+                        alt="Photo preview"
+                    >
+
                     <input
-                        id="registerPhoto"
+                        id="reg-photo"
+                        class="input"
                         type="file"
                         accept="image/*"
+                        onchange="previewPhoto(event)"
                     >
 
                 </div>
 
-                <div
-                    id="registerMessage"
-                    class="message"
-                ></div>
 
                 <button
-                    class="primary-btn"
-                    type="submit"
+                    class="button primary"
+                    onclick="startRegistration()"
                 >
                     SEND OTP
                 </button>
 
-            </form>
-
-
-            <!-- STAFF -->
-
-            <form
-                id="staffLoginForm"
-                class="form hidden"
-            >
-
-                <div>
-                    <h1>Staff Access</h1>
-
-                    <p>
-                        Reset individual or all meal claims.
-                    </p>
-                </div>
-
-                <div class="field">
-
-                    <label>
-                        Staff Password
-                    </label>
-
-                    <input
-                        id="staffPin"
-                        type="password"
-                        autocomplete="off"
-                        required
-                        placeholder="Enter staff password"
-                    >
-
-                </div>
-
-                <div
-                    id="staffLoginMessage"
-                    class="message"
-                ></div>
 
                 <button
-                    class="primary-btn"
-                    type="submit"
+                    class="small-link"
+                    onclick="showLogin()"
                 >
-                    STAFF LOGIN
+                    Already registered? Login
                 </button>
 
-            </form>
-
-        </div>
-
-    </section>
+            </div>
 
 
-    <!-- =====================================================
-         OTP PANEL
-    ====================================================== -->
+            <!-- OTP -->
 
-    <section
-        id="otpPanel"
-        class="panel hidden"
-    >
-
-        <div class="panel-inner">
-
-            <form
-                id="otpForm"
-                class="form"
+            <div
+                id="otp-form"
+                style="display:none"
             >
 
-                <div>
-                    <h1>Verify your email</h1>
+                <div class="otp-info">
 
-                    <p id="otpDescription">
-                        Enter the 6-digit OTP sent to your MANIT email.
-                    </p>
+                    OTP sent to
+
+                    <strong
+                        id="otp-email"
+                    >
+                    </strong>
+
+                    <br>
+
+                    Check your MANIT email inbox.
+
                 </div>
+
 
                 <div class="field">
 
@@ -1994,38 +1909,49 @@ button:disabled{
                     </label>
 
                     <input
-                        id="otpInput"
+                        id="reg-otp"
+                        class="input otp-input"
                         type="text"
-                        inputmode="numeric"
                         maxlength="6"
-                        autocomplete="one-time-code"
-                        required
+                        inputmode="numeric"
                         placeholder="000000"
                     >
 
                 </div>
 
-                <div
-                    id="otpMessage"
-                    class="message"
-                ></div>
 
                 <button
-                    class="primary-btn"
-                    type="submit"
+                    class="button primary"
+                    onclick="verifyOTP()"
                 >
-                    VERIFY OTP
+                    VERIFY EMAIL
                 </button>
 
+
                 <button
-                    id="resendOtpBtn"
-                    class="secondary-btn"
-                    type="button"
+                    id="btn-resend"
+                    class="button secondary"
+                    onclick="resendOTP()"
                 >
                     RESEND OTP
                 </button>
 
-            </form>
+
+                <div
+                    id="resend-countdown"
+                    class="countdown"
+                >
+                </div>
+
+
+                <button
+                    class="small-link"
+                    onclick="backToRegistration()"
+                >
+                    Back to registration
+                </button>
+
+            </div>
 
         </div>
 
@@ -2033,169 +1959,168 @@ button:disabled{
 
 
     <!-- =====================================================
-         STUDENT PORTAL
-    ====================================================== -->
+         STUDENT CARD
+         ===================================================== -->
 
     <section
-        id="studentPanel"
-        class="panel student-card hidden"
+        id="view-student"
+        class="view"
     >
 
-        <div class="student-header">
+        <div class="student-card">
 
-            <div class="student-profile">
+            <div class="card-content">
 
-                <img
-                    id="studentPhoto"
-                    class="student-photo"
-                    alt="Student photo"
-                >
 
-                <div>
+                <!-- TOP -->
 
-                    <div
-                        id="studentName"
-                        class="student-name"
-                    >
-                        Student
+                <div class="card-top">
+
+                    <div class="brand">
+
+                        <img
+                            src="/manit-logo.png"
+                            alt="MANIT"
+                        >
+
+                        <div>
+
+                            <div class="brand-name">
+                                MAULANA AZAD NATIONAL INSTITUTE OF TECHNOLOGY
+                            </div>
+
+                            <div class="brand-main">
+                                DIGITAL MESS CARD
+                            </div>
+
+                        </div>
+
                     </div>
 
-                    <div
-                        id="studentId"
-                        class="student-id"
-                    >
-                        Scholar ID
-                    </div>
 
-                    <div class="verified-badge">
-                        <span>✓</span>
-                        OTP VERIFIED
-                    </div>
+                    <div class="live">
 
-                </div>
+                        <span
+                            class="live-dot"
+                        ></span>
 
-            </div>
+                        LIVE
 
-            <button
-                id="logoutBtn"
-                class="secondary-btn"
-                type="button"
-            >
-                LOGOUT
-            </button>
-
-        </div>
-
-
-        <div class="student-body">
-
-            <div class="info-grid">
-
-                <div class="info-box">
-
-                    <div class="info-label">
-                        Room
-                    </div>
-
-                    <div
-                        id="studentRoom"
-                        class="info-value"
-                    >
-                        —
                     </div>
 
                 </div>
 
-                <div class="info-box">
 
-                    <div class="info-label">
-                        Email
+                <!-- PROFILE -->
+
+                <div class="profile">
+
+                    <img
+                        id="student-photo"
+                        class="profile-photo"
+                        alt="Student"
+                    >
+
+                    <div>
+
+                        <div
+                            id="student-name"
+                            class="profile-name"
+                        >
+                            Student
+                        </div>
+
+                        <div
+                            id="student-scholar"
+                            class="profile-id"
+                        >
+                            Scholar
+                        </div>
+
+                        <div
+                            id="student-room"
+                            class="profile-room"
+                        >
+                            Room
+                        </div>
+
                     </div>
+
+                </div>
+
+
+                <!-- CLOCK -->
+
+                <div class="time-panel">
+
+                    <div>
+
+                        <div class="time-label">
+                            LIVE SYSTEM TIME
+                        </div>
+
+                        <div
+                            id="live-clock"
+                            class="clock"
+                        >
+                            --:--:--
+                        </div>
+
+                    </div>
+
 
                     <div
-                        id="studentEmail"
-                        class="info-value"
+                        id="live-date"
+                        class="time-label"
                     >
-                        —
+                        --
                     </div>
 
                 </div>
 
-                <div class="info-box">
 
-                    <div class="info-label">
-                        System
-                    </div>
+                <!-- CLAIM -->
 
-                    <div class="info-value">
-                        ONLINE
-                    </div>
+                <div class="claim-panel">
 
-                </div>
-
-            </div>
-
-
-            <!-- LIVE ACCESS -->
-
-            <div class="access-panel">
-
-                <div class="access-top">
-
-                    <div class="access-title">
+                    <div class="claim-eyebrow">
                         LIVE MEAL ACCESS
                     </div>
 
                     <div
-                        id="liveDisplayId"
-                        class="live-id"
+                        id="claim-title"
+                        class="claim-title"
                     >
-                        LIVE-000000
+                        Meal Access Ready
                     </div>
 
-                </div>
-
-                <div
-                    id="liveClock"
-                    class="clock"
-                >
-                    00:00:00
-                </div>
-
-                <div
-                    id="liveDate"
-                    class="date-display"
-                >
-                    —
-                </div>
+                    <div
+                        id="claim-subtitle"
+                        class="claim-subtitle"
+                    >
+                        Tap the button below when receiving your meal.
+                    </div>
 
 
-                <div class="claim-area">
+                    <button
+                        id="claim-button"
+                        class="claim-button"
+                        onclick="claimMeal()"
+                    >
+                        CLAIM MEAL
+                    </button>
+
+
+                    <!-- RECEIVED -->
 
                     <div
-                        id="claimButtonWrap"
-                        style="width:100%;display:grid;place-items:center;"
+                        id="received-box"
+                        class="received-box"
                     >
 
-                        <button
-                            id="claimBtn"
-                            class="claim-btn"
-                            type="button"
+                        <div
+                            class="received-icon"
                         >
-                            <span>
-                                CLAIM MEAL
-                            </span>
-                        </button>
-
-                    </div>
-
-
-                    <div
-                        id="receivedState"
-                        class="received-state hidden"
-                    >
-
-                        <div class="received-icon">
                             ✓
                         </div>
 
@@ -2203,106 +2128,49 @@ button:disabled{
                             MEAL RECEIVED
                         </div>
 
-                        <div class="received-sub">
-                            Your meal has been successfully recorded.
-                        </div>
-
                         <div
-                            id="countdown"
-                            class="countdown"
+                            id="received-time"
+                            class="received-time"
                         >
-                            02:00:00
+                            Confirmed
                         </div>
 
-                        <div class="received-sub">
+                        <div class="cooldown">
+
                             Next claim available in
-                        </div>
 
-                        <button
-                            id="refreshClaimBtn"
-                            class="refresh-btn hidden"
-                            type="button"
-                        >
-                            ↻ REFRESH & CLAIM AGAIN
-                        </button>
+                            <strong
+                                id="cooldown-text"
+                            >
+                                02:00:00
+                            </strong>
+
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
 
-        </div>
+                <!-- FOOTER -->
 
-    </section>
+                <div class="card-footer">
 
+                    <div class="session-live">
 
-    <!-- =====================================================
-         STAFF CONTROL PANEL
-    ====================================================== -->
+                        <i></i>
 
-    <section
-        id="staffPanel"
-        class="panel staff-panel hidden"
-    >
+                        Secure live session
 
-        <div class="panel-inner">
-
-            <div class="staff-title">
-                Mess Control
-            </div>
-
-            <div class="staff-subtitle">
-                Reset meal claims when required.
-            </div>
-
-            <div class="staff-controls">
-
-                <div class="field">
-
-                    <label>
-                        Scholar ID
-                    </label>
-
-                    <input
-                        id="resetScholarId"
-                        type="text"
-                        placeholder="Enter Scholar ID"
-                    >
-
-                </div>
-
-                <div
-                    id="staffMessage"
-                    class="message"
-                ></div>
-
-                <div class="staff-actions">
+                    </div>
 
                     <button
-                        id="resetOneBtn"
-                        class="primary-btn"
-                        type="button"
-                    >
-                        RESET STUDENT
-                    </button>
-
-                    <button
-                        id="staffLogoutBtn"
-                        class="secondary-btn"
-                        type="button"
+                        class="logout"
+                        onclick="logout()"
                     >
                         LOGOUT
                     </button>
 
-                    <button
-                        id="resetAllBtn"
-                        class="danger-btn staff-reset-all"
-                        type="button"
-                    >
-                        RESET ALL MEAL CLAIMS
-                    </button>
-
                 </div>
 
             </div>
@@ -2311,607 +2179,266 @@ button:disabled{
 
     </section>
 
-</div>
-
-
-<!-- =========================================================
-     CONFIRMATION MODAL
-========================================================= -->
-
-<div
-    id="confirmModal"
-    class="modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="confirmTitle"
->
-
-    <div class="modal-card">
-
-        <div class="modal-icon">
-            🍽️
-        </div>
-
-        <h2 id="confirmTitle">
-            Confirm your meal
-        </h2>
-
-        <p>
-            Are you sure you want to receive your meal now?
-            Once confirmed, your meal will be recorded.
-        </p>
-
-        <div class="modal-warning">
-            ⚠️ This action starts a 2-hour cooldown.
-            You will not be able to claim another meal during this period.
-        </div>
-
-        <div class="modal-actions">
-
-            <button
-                id="cancelClaimBtn"
-                class="secondary-btn"
-                type="button"
-            >
-                CANCEL
-            </button>
-
-            <button
-                id="confirmClaimBtn"
-                class="confirm-btn"
-                type="button"
-            >
-                YES, SERVE MY MEAL
-            </button>
-
-        </div>
-
-    </div>
 
 </div>
 
-
-<!-- =========================================================
-     SERVING ANIMATION
-========================================================= -->
-
-<div
-    id="servingOverlay"
-    class="serving-overlay"
-    aria-live="polite"
->
-
-    <div class="serving-stage">
-
-        <div class="stage-glow"></div>
-
-        <div class="serving-content">
-
-            <div
-                id="servingStatus"
-                class="serving-status"
-            >
-                VERIFYING MEAL ACCESS
-            </div>
-
-            <div class="serving-object">
-
-                <div class="plate-shadow"></div>
-
-                <div class="plate">
-
-                    <div class="plate-rim"></div>
-
-                    <div class="plate-center"></div>
-
-                </div>
-
-                <div class="food">
-                    🍛
-                </div>
-
-                <div class="food food-two">
-                    🥗
-                </div>
-
-                <div class="food food-three">
-                    🍞
-                </div>
-
-                <div class="cloche">
-
-                    <div class="cloche-handle"></div>
-
-                    <div class="cloche-body"></div>
-
-                </div>
-
-                <div class="steam s1"></div>
-                <div class="steam s2"></div>
-                <div class="steam s3"></div>
-
-            </div>
-
-            <div class="success-ring"></div>
-
-            <div class="success-check">
-                ✓
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     TOAST
-========================================================= -->
 
 <div
     id="toast"
     class="toast"
-></div>
+>
+</div>
 
 
 <script>
 
-/* ============================================================
-   STATE
-============================================================ */
+    const API_URL = "/api";
 
-const API_URL = "/api";
+    let registrationScholarId = null;
 
-let studentToken =
-    localStorage.getItem(
-        "messStudentToken"
-    ) || "";
+    let registrationTimer = null;
 
-let studentData =
-    JSON.parse(
-        localStorage.getItem(
-            "messStudent"
-        ) || "null"
-    );
+    let statusTimer = null;
 
-let otpScholarId = "";
+    let clockTimer = null;
 
-let staffToken =
-    localStorage.getItem(
-        "messStaffToken"
-    ) || "";
+    let cooldownTimer = null;
 
-let statusInterval = null;
-let countdownInterval = null;
+    let currentStudent = null;
 
-let claimRequestRunning = false;
+    let photoData = null;
 
-let servingAnimationRunning = false;
 
-let liveDisplayInterval = null;
+    /* =========================================================
+       VIEW CONTROL
+       ========================================================= */
 
+    function switchView(id) {
 
-/* ============================================================
-   ELEMENTS
-============================================================ */
+        document
+            .querySelectorAll(".view")
+            .forEach(view => {
 
-const authPanel =
-    document.getElementById(
-        "authPanel"
-    );
-
-const otpPanel =
-    document.getElementById(
-        "otpPanel"
-    );
-
-const studentPanel =
-    document.getElementById(
-        "studentPanel"
-    );
-
-const staffPanel =
-    document.getElementById(
-        "staffPanel"
-    );
-
-const loginForm =
-    document.getElementById(
-        "loginForm"
-    );
-
-const registerForm =
-    document.getElementById(
-        "registerForm"
-    );
-
-const staffLoginForm =
-    document.getElementById(
-        "staffLoginForm"
-    );
-
-const otpForm =
-    document.getElementById(
-        "otpForm"
-    );
-
-const loginTab =
-    document.getElementById(
-        "loginTab"
-    );
-
-const registerTab =
-    document.getElementById(
-        "registerTab"
-    );
-
-const staffTab =
-    document.getElementById(
-        "staffTab"
-    );
-
-const confirmModal =
-    document.getElementById(
-        "confirmModal"
-    );
-
-const claimBtn =
-    document.getElementById(
-        "claimBtn"
-    );
-
-const cancelClaimBtn =
-    document.getElementById(
-        "cancelClaimBtn"
-    );
-
-const confirmClaimBtn =
-    document.getElementById(
-        "confirmClaimBtn"
-    );
-
-const servingOverlay =
-    document.getElementById(
-        "servingOverlay"
-    );
-
-const servingStatus =
-    document.getElementById(
-        "servingStatus"
-    );
-
-const claimButtonWrap =
-    document.getElementById(
-        "claimButtonWrap"
-    );
-
-const receivedState =
-    document.getElementById(
-        "receivedState"
-    );
-
-const countdown =
-    document.getElementById(
-        "countdown"
-    );
-
-const refreshClaimBtn =
-    document.getElementById(
-        "refreshClaimBtn"
-    );
-
-const toast =
-    document.getElementById(
-        "toast"
-    );
-
-
-/* ============================================================
-   UTILITY
-============================================================ */
-
-function showMessage(
-    element,
-    message,
-    success = false
-) {
-    element.textContent =
-        message || "";
-
-    element.classList.toggle(
-        "success-message",
-        success
-    );
-}
-
-function showToast(
-    message,
-    success = false
-) {
-    toast.textContent =
-        message;
-
-    toast.classList.toggle(
-        "success",
-        success
-    );
-
-    toast.classList.add(
-        "show"
-    );
-
-    setTimeout(() => {
-        toast.classList.remove(
-            "show"
-        );
-    }, 3500);
-}
-
-function formatDuration(ms) {
-
-    const totalSeconds =
-        Math.max(
-            0,
-            Math.ceil(ms / 1000)
-        );
-
-    const hours =
-        Math.floor(
-            totalSeconds / 3600
-        );
-
-    const minutes =
-        Math.floor(
-            (totalSeconds % 3600) /
-            60
-        );
-
-    const seconds =
-        totalSeconds % 60;
-
-    return [
-        hours,
-        minutes,
-        seconds,
-    ]
-        .map(
-            value =>
-                String(value)
-                    .padStart(2, "0")
-        )
-        .join(":");
-}
-
-function formatDateTime(date) {
-
-    try {
-        return new Intl.DateTimeFormat(
-            "en-IN",
-            {
-                dateStyle:"medium",
-                timeStyle:"medium",
-            }
-        ).format(
-            new Date(date)
-        );
-    } catch {
-        return new Date(date)
-            .toLocaleString();
-    }
-}
-
-
-/* ============================================================
-   TABS
-============================================================ */
-
-function setActiveTab(tab) {
-
-    [
-        loginTab,
-        registerTab,
-        staffTab,
-    ].forEach(
-        item =>
-            item.classList.remove(
-                "active"
-            )
-    );
-
-    tab.classList.add(
-        "active"
-    );
-}
-
-function showLogin() {
-
-    setActiveTab(
-        loginTab
-    );
-
-    loginForm.classList.remove(
-        "hidden"
-    );
-
-    registerForm.classList.add(
-        "hidden"
-    );
-
-    staffLoginForm.classList.add(
-        "hidden"
-    );
-
-    otpPanel.classList.add(
-        "hidden"
-    );
-}
-
-function showRegister() {
-
-    setActiveTab(
-        registerTab
-    );
-
-    loginForm.classList.add(
-        "hidden"
-    );
-
-    registerForm.classList.remove(
-        "hidden"
-    );
-
-    staffLoginForm.classList.add(
-        "hidden"
-    );
-
-    otpPanel.classList.add(
-        "hidden"
-    );
-}
-
-function showStaffLogin() {
-
-    setActiveTab(
-        staffTab
-    );
-
-    loginForm.classList.add(
-        "hidden"
-    );
-
-    registerForm.classList.add(
-        "hidden"
-    );
-
-    staffLoginForm.classList.remove(
-        "hidden"
-    );
-
-    otpPanel.classList.add(
-        "hidden"
-    );
-}
-
-loginTab.addEventListener(
-    "click",
-    showLogin
-);
-
-registerTab.addEventListener(
-    "click",
-    showRegister
-);
-
-staffTab.addEventListener(
-    "click",
-    showStaffLogin
-);
-
-
-/* ============================================================
-   PHOTO -> BASE64
-============================================================ */
-
-function readPhoto(file) {
-
-    return new Promise(
-        (resolve, reject) => {
-
-            if (!file) {
-                resolve("");
-                return;
-            }
-
-            const reader =
-                new FileReader();
-
-            reader.onload = () =>
-                resolve(
-                    reader.result
+                view.classList.remove(
+                    "active"
                 );
 
-            reader.onerror =
-                () =>
-                    reject(
-                        new Error(
-                            "Unable to read photo."
-                        )
-                    );
+            });
 
-            reader.readAsDataURL(
-                file
+        const target =
+            document.getElementById(id);
+
+        if (target) {
+
+            target.classList.add(
+                "active"
             );
+
         }
-    );
-}
+
+    }
 
 
-/* ============================================================
-   REGISTER
-============================================================ */
+    function showLogin() {
 
-registerForm.addEventListener(
-    "submit",
-    async event => {
+        stopStudentTimers();
 
-        event.preventDefault();
-
-        const message =
-            document.getElementById(
-                "registerMessage"
-            );
-
-        showMessage(
-            message,
-            "Sending OTP..."
+        switchView(
+            "view-login"
         );
 
-        const photoInput =
+    }
+
+
+    function showRegister() {
+
+        switchView(
+            "view-register"
+        );
+
+        document
+            .getElementById(
+                "registration-form"
+            )
+            .style.display =
+            "block";
+
+        document
+            .getElementById(
+                "otp-form"
+            )
+            .style.display =
+            "none";
+
+    }
+
+
+    /* =========================================================
+       TOAST
+       ========================================================= */
+
+    let toastTimer = null;
+
+
+    function showToast(
+        message,
+        type = ""
+    ) {
+
+        const toast =
             document.getElementById(
-                "registerPhoto"
+                "toast"
             );
+
+        toast.innerText =
+            message;
+
+        toast.className =
+            "toast show " +
+            type;
+
+        clearTimeout(
+            toastTimer
+        );
+
+        toastTimer =
+            setTimeout(
+                () => {
+
+                    toast.className =
+                        "toast";
+
+                },
+                3200
+            );
+
+    }
+
+
+    /* =========================================================
+       PHOTO
+       ========================================================= */
+
+    function previewPhoto(event) {
+
+        const file =
+            event.target.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        const reader =
+            new FileReader();
+
+        reader.onload = function(e) {
+
+            photoData =
+                e.target.result;
+
+            const preview =
+                document.getElementById(
+                    "photo-preview"
+                );
+
+            preview.src =
+                photoData;
+
+            preview.style.display =
+                "block";
+
+        };
+
+        reader.readAsDataURL(
+            file
+        );
+
+    }
+
+
+    /* =========================================================
+       REGISTRATION
+       ========================================================= */
+
+    async function startRegistration() {
+
+        const scholarId =
+            document.getElementById(
+                "reg-scholar"
+            ).value.trim();
+
+        const name =
+            document.getElementById(
+                "reg-name"
+            ).value.trim();
+
+        const room =
+            document.getElementById(
+                "reg-room"
+            ).value.trim();
+
+        const password =
+            document.getElementById(
+                "reg-password"
+            ).value;
+
+        if (
+            !scholarId ||
+            !name ||
+            !room ||
+            !password
+        ) {
+
+            showToast(
+                "Please fill all fields.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (password.length < 6) {
+
+            showToast(
+                "Password must contain at least 6 characters.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (!photoData) {
+
+            showToast(
+                "Please select your photo.",
+                "error"
+            );
+
+            return;
+        }
 
         try {
-
-            const photo =
-                await readPhoto(
-                    photoInput.files[0]
-                );
 
             const response =
                 await fetch(
                     `${API_URL}/register/start`,
                     {
-                        method:"POST",
-                        headers:{
+                        method: "POST",
+
+                        headers: {
                             "Content-Type":
-                                "application/json",
+                                "application/json"
                         },
+
                         body:
                             JSON.stringify({
-                                scholarId:
-                                    document.getElementById(
-                                        "registerScholarId"
-                                    ).value,
-
-                                name:
-                                    document.getElementById(
-                                        "registerName"
-                                    ).value,
-
-                                room:
-                                    document.getElementById(
-                                        "registerRoom"
-                                    ).value,
-
-                                password:
-                                    document.getElementById(
-                                        "registerPassword"
-                                    ).value,
-
-                                photo,
-                            }),
+                                scholarId,
+                                name,
+                                room,
+                                password,
+                                photo:
+                                    photoData
+                            })
                     }
                 );
 
@@ -2919,66 +2446,85 @@ registerForm.addEventListener(
                 await response.json();
 
             if (!response.ok) {
-                throw new Error(
+
+                showToast(
                     data.message ||
-                    "Registration failed."
+                    "Could not send OTP.",
+                    "error"
                 );
+
+                return;
             }
 
-            otpScholarId =
-                data.scholarId;
+            registrationScholarId =
+                scholarId;
 
-            authPanel.classList.add(
-                "hidden"
-            );
+            document
+                .getElementById(
+                    "otp-email"
+                )
+                .innerText =
+                data.email ||
+                "your MANIT email";
 
-            otpPanel.classList.remove(
-                "hidden"
-            );
+            document
+                .getElementById(
+                    "registration-form"
+                )
+                .style.display =
+                "none";
 
-            document.getElementById(
-                "otpDescription"
-            ).textContent =
-                `Enter the 6-digit OTP sent to ${data.email}.`;
+            document
+                .getElementById(
+                    "otp-form"
+                )
+                .style.display =
+                "block";
 
-            showMessage(
-                document.getElementById(
-                    "otpMessage"
-                ),
+            showToast(
                 "OTP sent successfully.",
-                true
+                "success"
             );
+
+            startResendCountdown();
 
         } catch (error) {
 
-            showMessage(
-                message,
-                error.message
+            console.error(error);
+
+            showToast(
+                "Could not connect to server.",
+                "error"
             );
+
         }
+
     }
-);
 
 
-/* ============================================================
-   OTP VERIFY
-============================================================ */
+    /* =========================================================
+       VERIFY OTP
+       ========================================================= */
 
-otpForm.addEventListener(
-    "submit",
-    async event => {
+    async function verifyOTP() {
 
-        event.preventDefault();
-
-        const message =
+        const otp =
             document.getElementById(
-                "otpMessage"
+                "reg-otp"
+            ).value.trim();
+
+        if (
+            !registrationScholarId ||
+            !otp
+        ) {
+
+            showToast(
+                "Enter the OTP.",
+                "error"
             );
 
-        showMessage(
-            message,
-            "Verifying..."
-        );
+            return;
+        }
 
         try {
 
@@ -2986,21 +2532,20 @@ otpForm.addEventListener(
                 await fetch(
                     `${API_URL}/register/verify`,
                     {
-                        method:"POST",
-                        headers:{
+                        method: "POST",
+
+                        headers: {
                             "Content-Type":
-                                "application/json",
+                                "application/json"
                         },
+
                         body:
                             JSON.stringify({
                                 scholarId:
-                                    otpScholarId,
+                                    registrationScholarId,
 
-                                otp:
-                                    document.getElementById(
-                                        "otpInput"
-                                    ).value,
-                            }),
+                                otp
+                            })
                     }
                 );
 
@@ -3008,72 +2553,70 @@ otpForm.addEventListener(
                 await response.json();
 
             if (!response.ok) {
-                throw new Error(
+
+                showToast(
                     data.message ||
-                    "OTP verification failed."
+                    "OTP verification failed.",
+                    "error"
                 );
+
+                return;
             }
 
-            showMessage(
-                message,
-                "Registration verified. You can now login.",
-                true
+            showToast(
+                "Email verified. Account created!",
+                "success"
             );
 
+            clearInterval(
+                registrationTimer
+            );
+
+            registrationScholarId =
+                null;
+
+            document
+                .getElementById(
+                    "reg-otp"
+                )
+                .value = "";
+
             setTimeout(
-                () => {
-
-                    otpPanel.classList.add(
-                        "hidden"
-                    );
-
-                    authPanel.classList.remove(
-                        "hidden"
-                    );
-
-                    showLogin();
-
-                    document.getElementById(
-                        "loginScholarId"
-                    ).value =
-                        otpScholarId;
-
-                },
+                showLogin,
                 900
             );
 
         } catch (error) {
 
-            showMessage(
-                message,
-                error.message
+            console.error(error);
+
+            showToast(
+                "Could not connect to server.",
+                "error"
             );
+
         }
+
     }
-);
 
 
-/* ============================================================
-   RESEND OTP
-============================================================ */
+    /* =========================================================
+       RESEND OTP
+       ========================================================= */
 
-document.getElementById(
-    "resendOtpBtn"
-).addEventListener(
-    "click",
-    async () => {
+    async function resendOTP() {
+
+        if (!registrationScholarId) {
+            return;
+        }
 
         const button =
             document.getElementById(
-                "resendOtpBtn"
+                "btn-resend"
             );
 
-        const message =
-            document.getElementById(
-                "otpMessage"
-            );
-
-        button.disabled = true;
+        button.disabled =
+            true;
 
         try {
 
@@ -3081,16 +2624,18 @@ document.getElementById(
                 await fetch(
                     `${API_URL}/register/resend`,
                     {
-                        method:"POST",
-                        headers:{
+                        method: "POST",
+
+                        headers: {
                             "Content-Type":
-                                "application/json",
+                                "application/json"
                         },
+
                         body:
                             JSON.stringify({
                                 scholarId:
-                                    otpScholarId,
-                            }),
+                                    registrationScholarId
+                            })
                     }
                 );
 
@@ -3098,57 +2643,156 @@ document.getElementById(
                 await response.json();
 
             if (!response.ok) {
-                throw new Error(
-                    data.message
+
+                showToast(
+                    data.message ||
+                    "Could not resend OTP.",
+                    "error"
                 );
+
+                button.disabled =
+                    false;
+
+                return;
             }
 
-            showMessage(
-                message,
+            showToast(
                 "New OTP sent.",
-                true
+                "success"
             );
+
+            startResendCountdown();
 
         } catch (error) {
 
-            showMessage(
-                message,
-                error.message
+            console.error(error);
+
+            button.disabled =
+                false;
+
+            showToast(
+                "Could not connect to server.",
+                "error"
             );
 
-        } finally {
-
-            setTimeout(
-                () => {
-                    button.disabled =
-                        false;
-                },
-                5000
-            );
         }
+
     }
-);
 
 
-/* ============================================================
-   LOGIN
-============================================================ */
+    function startResendCountdown() {
 
-loginForm.addEventListener(
-    "submit",
-    async event => {
+        clearInterval(
+            registrationTimer
+        );
 
-        event.preventDefault();
-
-        const message =
+        const button =
             document.getElementById(
-                "loginMessage"
+                "btn-resend"
             );
 
-        showMessage(
-            message,
-            "Logging in..."
+        const label =
+            document.getElementById(
+                "resend-countdown"
+            );
+
+        let seconds = 60;
+
+        button.disabled =
+            true;
+
+        label.innerText =
+            `You can request another OTP in ${seconds}s.`;
+
+        registrationTimer =
+            setInterval(
+                () => {
+
+                    seconds--;
+
+                    if (seconds <= 0) {
+
+                        clearInterval(
+                            registrationTimer
+                        );
+
+                        registrationTimer =
+                            null;
+
+                        button.disabled =
+                            false;
+
+                        label.innerText =
+                            "You can resend the OTP now.";
+
+                        return;
+
+                    }
+
+                    label.innerText =
+                        `You can request another OTP in ${seconds}s.`;
+
+                },
+                1000
+            );
+
+    }
+
+
+    function backToRegistration() {
+
+        clearInterval(
+            registrationTimer
         );
+
+        document
+            .getElementById(
+                "otp-form"
+            )
+            .style.display =
+            "none";
+
+        document
+            .getElementById(
+                "registration-form"
+            )
+            .style.display =
+            "block";
+
+        registrationScholarId =
+            null;
+
+    }
+
+
+    /* =========================================================
+       LOGIN
+       ========================================================= */
+
+    async function handleLogin() {
+
+        const scholarId =
+            document.getElementById(
+                "login-scholar"
+            ).value.trim();
+
+        const password =
+            document.getElementById(
+                "login-pass"
+            ).value;
+
+        if (
+            !scholarId ||
+            !password
+        ) {
+
+            showToast(
+                "Enter scholar number and password.",
+                "error"
+            );
+
+            return;
+        }
 
         try {
 
@@ -3156,23 +2800,18 @@ loginForm.addEventListener(
                 await fetch(
                     `${API_URL}/login`,
                     {
-                        method:"POST",
-                        headers:{
+                        method: "POST",
+
+                        headers: {
                             "Content-Type":
-                                "application/json",
+                                "application/json"
                         },
+
                         body:
                             JSON.stringify({
-                                scholarId:
-                                    document.getElementById(
-                                        "loginScholarId"
-                                    ).value,
-
-                                password:
-                                    document.getElementById(
-                                        "loginPassword"
-                                    ).value,
-                            }),
+                                scholarId,
+                                password
+                            })
                     }
                 );
 
@@ -3180,389 +2819,386 @@ loginForm.addEventListener(
                 await response.json();
 
             if (!response.ok) {
-                throw new Error(
+
+                showToast(
                     data.message ||
-                    "Login failed."
+                    "Login failed.",
+                    "error"
                 );
+
+                return;
             }
 
-            studentToken =
-                data.sessionToken;
-
-            studentData =
+            currentStudent =
                 data.student;
 
             localStorage.setItem(
-                "messStudentToken",
-                studentToken
-            );
-
-            localStorage.setItem(
-                "messStudent",
+                "manit_active_student",
                 JSON.stringify(
-                    studentData
+                    currentStudent
                 )
             );
 
-            authPanel.classList.add(
-                "hidden"
+            renderStudentCard(
+                currentStudent
             );
-
-            studentPanel.classList.remove(
-                "hidden"
-            );
-
-            renderStudent();
-
-            startLiveSystem();
 
             showToast(
-                "Welcome to your Digital Mess Card.",
-                true
+                "Secure session started.",
+                "success"
             );
 
         } catch (error) {
 
-            showMessage(
-                message,
-                error.message
+            console.error(error);
+
+            showToast(
+                "Could not connect to server.",
+                "error"
             );
+
         }
-    }
-);
 
-
-/* ============================================================
-   RENDER STUDENT
-============================================================ */
-
-function renderStudent() {
-
-    if (!studentData) {
-        return;
     }
 
-    document.getElementById(
-        "studentName"
-    ).textContent =
-        studentData.name ||
-        "Student";
 
-    document.getElementById(
-        "studentId"
-    ).textContent =
-        studentData.scholarId ||
-        "—";
+    /* =========================================================
+       RENDER CARD
+       ========================================================= */
 
-    document.getElementById(
-        "studentRoom"
-    ).textContent =
-        studentData.room ||
-        "—";
+    function renderStudentCard(student) {
 
-    document.getElementById(
-        "studentEmail"
-    ).textContent =
-        studentData.collegeEmail ||
-        "—";
+        currentStudent =
+            student;
 
-    const photo =
-        document.getElementById(
-            "studentPhoto"
+        document
+            .getElementById(
+                "student-photo"
+            )
+            .src =
+            student.photo;
+
+        document
+            .getElementById(
+                "student-name"
+            )
+            .innerText =
+            student.name;
+
+        document
+            .getElementById(
+                "student-scholar"
+            )
+            .innerText =
+            `Scholar No. ${student.scholarId}`;
+
+        document
+            .getElementById(
+                "student-room"
+            )
+            .innerText =
+            `Room ${student.room}`;
+
+        switchView(
+            "view-student"
         );
 
-    if (studentData.photo) {
+        startClock();
 
-        photo.src =
-            studentData.photo;
+        startStatusPolling();
 
-    } else {
-
-        photo.src =
-            "/manit-logo.png";
-    }
-}
-
-
-/* ============================================================
-   STATUS
-============================================================ */
-
-async function checkStatus() {
-
-    if (!studentToken) {
-        return;
     }
 
-    try {
 
-        const response =
-            await fetch(
-                `${API_URL}/status`,
+    /* =========================================================
+       CLOCK
+       ========================================================= */
+
+    function startClock() {
+
+        clearInterval(
+            clockTimer
+        );
+
+        updateClock();
+
+        clockTimer =
+            setInterval(
+                updateClock,
+                1000
+            );
+
+    }
+
+
+    function updateClock() {
+
+        const now =
+            new Date();
+
+        const time =
+            now.toLocaleTimeString(
+                "en-IN",
                 {
-                    headers:{
-                        Authorization:
-                            `Bearer ${studentToken}`,
-                    },
+                    hour:
+                        "2-digit",
+
+                    minute:
+                        "2-digit",
+
+                    second:
+                        "2-digit",
+
+                    hour12:
+                        true
                 }
             );
 
-        const data =
-            await response.json();
+        const date =
+            now.toLocaleDateString(
+                "en-IN",
+                {
+                    day:
+                        "2-digit",
 
-        if (
-            response.status === 401
-        ) {
+                    month:
+                        "short",
 
-            logoutStudent(
-                false
+                    year:
+                        "numeric"
+                }
             );
 
-            showToast(
-                "Your session expired. Please login again."
-            );
-
-            return;
-        }
-
-        if (!response.ok) {
-            return;
-        }
-
-        studentData =
-            data.student;
-
-        localStorage.setItem(
-            "messStudent",
-            JSON.stringify(
-                studentData
+        document
+            .getElementById(
+                "live-clock"
             )
-        );
+            .innerText =
+            time;
 
-        renderStudent();
+        document
+            .getElementById(
+                "live-date"
+            )
+            .innerText =
+            date;
 
-        updateClaimState(
-            data
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Status check failed:",
-            error
-        );
-    }
-}
-
-
-/* ============================================================
-   CLAIM STATE
-============================================================ */
-
-function updateClaimState(data) {
-
-    if (
-        data.claimed &&
-        data.nextClaimAt
-    ) {
-
-        claimButtonWrap.classList.add(
-            "hidden"
-        );
-
-        receivedState.classList.remove(
-            "hidden"
-        );
-
-        refreshClaimBtn.classList.add(
-            "hidden"
-        );
-
-        startCountdown(
-            data.nextClaimAt
-        );
-
-    } else {
-
-        claimButtonWrap.classList.remove(
-            "hidden"
-        );
-
-        receivedState.classList.add(
-            "hidden"
-        );
-
-        stopCountdown();
-    }
-}
-
-
-/* ============================================================
-   COUNTDOWN
-============================================================ */
-
-function startCountdown(
-    nextClaimAt
-) {
-
-    stopCountdown();
-
-    function update() {
-
-        const remaining =
-            new Date(
-                nextClaimAt
-            ).getTime() -
-            Date.now();
-
-        if (
-            remaining <= 0
-        ) {
-
-            countdown.textContent =
-                "00:00:00";
-
-            refreshClaimBtn.classList.remove(
-                "hidden"
-            );
-
-            clearInterval(
-                countdownInterval
-            );
-
-            countdownInterval =
-                null;
-
-            return;
-        }
-
-        countdown.textContent =
-            formatDuration(
-                remaining
-            );
     }
 
-    update();
 
-    countdownInterval =
-        setInterval(
-            update,
-            1000
-        );
-}
+    /* =========================================================
+       STATUS POLLING
+       ========================================================= */
 
-function stopCountdown() {
-
-    if (
-        countdownInterval
-    ) {
+    function startStatusPolling() {
 
         clearInterval(
-            countdownInterval
+            statusTimer
         );
 
-        countdownInterval =
-            null;
+        checkStatus();
+
+        statusTimer =
+            setInterval(
+                checkStatus,
+                3000
+            );
+
     }
-}
 
 
-/* ============================================================
-   CLAIM BUTTON
-============================================================ */
-
-claimBtn.addEventListener(
-    "click",
-    () => {
+    async function checkStatus() {
 
         if (
-            claimRequestRunning ||
-            servingAnimationRunning
+            !currentStudent ||
+            !currentStudent.sessionToken
         ) {
             return;
         }
 
-        openConfirmModal();
-    }
-);
+        try {
 
+            const response =
+                await fetch(
+                    `${API_URL}/status`,
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${currentStudent.sessionToken}`
+                        }
+                    }
+                );
 
-/* ============================================================
-   CONFIRM MODAL
-============================================================ */
+            const data =
+                await response.json();
 
-function openConfirmModal() {
+            if (
+                response.status === 401
+            ) {
 
-    confirmModal.classList.add(
-        "active"
-    );
+                forceLogout(
+                    "Your session expired. Please login again."
+                );
 
-    setTimeout(
-        () => {
-            confirmClaimBtn.focus();
-        },
-        100
-    );
-}
+                return;
+            }
 
-function closeConfirmModal() {
+            if (!response.ok) {
+                return;
+            }
 
-    confirmModal.classList.remove(
-        "active"
-    );
-}
+            updateClaimState(
+                data
+            );
 
-cancelClaimBtn.addEventListener(
-    "click",
-    closeConfirmModal
-);
+        } catch (error) {
 
-confirmModal.addEventListener(
-    "click",
-    event => {
+            console.error(
+                "Status error:",
+                error
+            );
 
-        if (
-            event.target ===
-            confirmModal
-        ) {
-            closeConfirmModal();
         }
+
     }
-);
 
 
-/* ============================================================
-   CONFIRM CLAIM
-============================================================ */
+    /* =========================================================
+       UPDATE CLAIM STATE
+       ========================================================= */
 
-confirmClaimBtn.addEventListener(
-    "click",
-    async () => {
+    function updateClaimState(data) {
+
+        const button =
+            document.getElementById(
+                "claim-button"
+            );
+
+        const receivedBox =
+            document.getElementById(
+                "received-box"
+            );
+
+        const title =
+            document.getElementById(
+                "claim-title"
+            );
+
+        const subtitle =
+            document.getElementById(
+                "claim-subtitle"
+            );
+
+        const receivedTime =
+            document.getElementById(
+                "received-time"
+            );
 
         if (
-            claimRequestRunning
+            data.claimAvailable
+        ) {
+
+            button.disabled =
+                false;
+
+            button.className =
+                "claim-button";
+
+            button.innerHTML =
+                "CLAIM MEAL";
+
+            receivedBox.style.display =
+                "none";
+
+            title.innerText =
+                "Meal Access Ready";
+
+            subtitle.innerText =
+                "Tap the button below when receiving your meal.";
+
+            stopCooldownTimer();
+
+            return;
+
+        }
+
+
+        // =====================================================
+        // COOLDOWN STATE
+        // =====================================================
+
+        button.disabled =
+            true;
+
+        button.className =
+            "claim-button received";
+
+        button.innerHTML =
+            "MEAL RECEIVED";
+
+        receivedBox.style.display =
+            "block";
+
+        title.innerText =
+            "Meal Already Received";
+
+        subtitle.innerText =
+            "Your meal claim has been securely recorded.";
+
+        if (data.lastClaimedAt) {
+
+            receivedTime.innerText =
+                `Confirmed ${formatDateTime(
+                    data.lastClaimedAt
+                )}`;
+
+        }
+
+        startCooldown(
+            data.cooldownEndsAt
+        );
+
+    }
+
+
+    /* =========================================================
+       CLAIM MEAL
+       ========================================================= */
+
+    async function claimMeal() {
+
+        if (
+            !currentStudent ||
+            !currentStudent.sessionToken
+        ) {
+
+            showToast(
+                "Please login again.",
+                "error"
+            );
+
+            return;
+        }
+
+        const button =
+            document.getElementById(
+                "claim-button"
+            );
+
+        if (
+            button.disabled
         ) {
             return;
         }
 
-        claimRequestRunning =
+        button.disabled =
             true;
 
-        confirmClaimBtn.disabled =
-            true;
+        button.className =
+            "claim-button loading";
 
-        /*
-          Start/resume AudioContext while this
-          is still directly connected to the user's
-          click gesture.
-        */
-
-        prepareSuccessAudio();
-
-        closeConfirmModal();
-
-        claimBtn.disabled =
-            true;
+        button.innerHTML =
+            `<span class="spinner"></span>VERIFYING LIVE...`;
 
         try {
 
@@ -3570,950 +3206,687 @@ confirmClaimBtn.addEventListener(
                 await fetch(
                     `${API_URL}/claim`,
                     {
-                        method:"POST",
-                        headers:{
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
                             Authorization:
-                                `Bearer ${studentToken}`,
+                                `Bearer ${currentStudent.sessionToken}`
                         },
+
+                        body:
+                            JSON.stringify({})
                     }
                 );
 
             const data =
                 await response.json();
 
+            if (response.ok) {
+
+                playClaimSound();
+
+                vibrateDevice();
+
+                button.className =
+                    "claim-button received";
+
+                button.innerHTML =
+                    "✓ MEAL RECEIVED";
+
+                button.disabled =
+                    true;
+
+                const receivedBox =
+                    document.getElementById(
+                        "received-box"
+                    );
+
+                receivedBox.style.display =
+                    "block";
+
+                document
+                    .getElementById(
+                        "claim-title"
+                    )
+                    .innerText =
+                    "Meal Successfully Received";
+
+                document
+                    .getElementById(
+                        "claim-subtitle"
+                    )
+                    .innerText =
+                    "Your live meal claim has been securely recorded.";
+
+                document
+                    .getElementById(
+                        "received-time"
+                    )
+                    .innerText =
+                    `Confirmed ${formatDateTime(
+                        data.claimedAt
+                    )}`;
+
+                startCooldown(
+                    data.cooldownEndsAt
+                );
+
+                showToast(
+                    "Meal received successfully!",
+                    "success"
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // COOLDOWN RESPONSE
+            // =================================================
+
+            if (
+                response.status === 429
+            ) {
+
+                updateClaimState({
+                    claimAvailable:
+                        false,
+
+                    lastClaimedAt:
+                        data.lastClaimedAt,
+
+                    cooldownEndsAt:
+                        data.cooldownEndsAt,
+
+                    lastClaimedMeal:
+                        data.lastClaimedMeal
+                });
+
+                showToast(
+                    "Meal already received. Please wait for the 2-hour cooldown.",
+                    "error"
+                );
+
+                return;
+            }
+
+
             if (
                 response.status === 401
             ) {
 
-                logoutStudent(
-                    false
-                );
-
-                showToast(
+                forceLogout(
                     "Your session expired. Please login again."
                 );
 
                 return;
             }
 
-            if (
-                response.status === 429
-            ) {
 
-                showToast(
-                    data.message ||
-                    "Meal already received."
-                );
+            button.disabled =
+                false;
 
-                await checkStatus();
+            button.className =
+                "claim-button";
 
-                return;
-            }
+            button.innerHTML =
+                "CLAIM MEAL";
 
-            if (!response.ok) {
-
-                throw new Error(
-                    data.message ||
-                    "Unable to claim meal."
-                );
-            }
-
-            /*
-              Server has now recorded the claim.
-
-              Only AFTER successful server response
-              do we play the serving animation.
-            */
-
-            playServingAnimation(
-                data
+            showToast(
+                data.message ||
+                "Could not claim meal.",
+                "error"
             );
 
         } catch (error) {
 
+            console.error(error);
+
+            button.disabled =
+                false;
+
+            button.className =
+                "claim-button";
+
+            button.innerHTML =
+                "CLAIM MEAL";
+
             showToast(
-                error.message
+                "Network error. Please try again.",
+                "error"
             );
 
-            claimBtn.disabled =
-                false;
-
-        } finally {
-
-            claimRequestRunning =
-                false;
-
-            confirmClaimBtn.disabled =
-                false;
         }
+
     }
-);
 
 
-/* ============================================================
-   ADVANCED SERVING ANIMATION
-============================================================ */
+    /* =========================================================
+       COOLDOWN
+       ========================================================= */
 
-function playServingAnimation(
-    data
-) {
-
-    if (
-        servingAnimationRunning
+    function startCooldown(
+        endTime
     ) {
-        return;
-    }
 
-    servingAnimationRunning =
-        true;
+        stopCooldownTimer();
 
-    /*
-      Reset ONLY because this is a new successful
-      claim. Polling never calls this function.
-    */
-
-    servingOverlay.classList.remove(
-        "play"
-    );
-
-    servingStatus.classList.remove(
-        "success"
-    );
-
-    servingStatus.textContent =
-        "VERIFYING MEAL ACCESS";
-
-    void servingOverlay.offsetWidth;
-
-    servingOverlay.classList.add(
-        "active"
-    );
-
-    /*
-      Start the one-shot animation.
-    */
-
-    servingOverlay.classList.add(
-        "play"
-    );
-
-    setTimeout(
-        () => {
-
-            if (
-                !servingAnimationRunning
-            ) {
-                return;
-            }
-
-            servingStatus.textContent =
-                "SERVING YOUR MEAL";
-
-        },
-        1450
-    );
-
-    setTimeout(
-        () => {
-
-            if (
-                !servingAnimationRunning
-            ) {
-                return;
-            }
-
-            servingStatus.textContent =
-                "PLATING COMPLETE";
-
-        },
-        3000
-    );
-
-    setTimeout(
-        () => {
-
-            if (
-                !servingAnimationRunning
-            ) {
-                return;
-            }
-
-            servingStatus.textContent =
-                "✓ MEAL RECEIVED";
-
-            servingStatus.classList.add(
-                "success"
-            );
-
-            playSuccessSound();
-
-        },
-        3900
-    );
-
-    setTimeout(
-        () => {
-
-            if (
-                !servingAnimationRunning
-            ) {
-                return;
-            }
-
-            finishServingAnimation(
-                data
-            );
-
-        },
-        5100
-    );
-}
-
-
-/* ============================================================
-   FINISH SERVING ANIMATION
-============================================================ */
-
-function finishServingAnimation(
-    data
-) {
-
-    servingAnimationRunning =
-        false;
-
-    servingOverlay.classList.remove(
-        "play"
-    );
-
-    servingOverlay.classList.remove(
-        "active"
-    );
-
-    /*
-      Directly put the UI into received state.
-
-      We DO NOT replay the animation.
-    */
-
-    claimButtonWrap.classList.add(
-        "hidden"
-    );
-
-    receivedState.classList.remove(
-        "hidden"
-    );
-
-    refreshClaimBtn.classList.add(
-        "hidden"
-    );
-
-    countdown.textContent =
-        formatDuration(
-            data.cooldownRemainingMs
-        );
-
-    startCountdown(
-        data.nextClaimAt
-    );
-
-    showToast(
-        "Meal received successfully.",
-        true
-    );
-}
-
-
-/* ============================================================
-   SUCCESS SOUND
-============================================================ */
-
-let audioContext = null;
-
-function prepareSuccessAudio() {
-
-    try {
-
-        const AudioCtx =
-            window.AudioContext ||
-            window.webkitAudioContext;
-
-        if (!AudioCtx) {
+        if (!endTime) {
             return;
         }
 
-        if (!audioContext) {
-            audioContext =
-                new AudioCtx();
+        const end =
+            new Date(
+                endTime
+            ).getTime();
+
+        updateCooldown(
+            end
+        );
+
+        cooldownTimer =
+            setInterval(
+                () => {
+
+                    updateCooldown(
+                        end
+                    );
+
+                },
+                1000
+            );
+
+    }
+
+
+    function updateCooldown(
+        end
+    ) {
+
+        const remaining =
+            Math.max(
+                0,
+                end -
+                Date.now()
+            );
+
+        const text =
+            document.getElementById(
+                "cooldown-text"
+            );
+
+        if (remaining <= 0) {
+
+            stopCooldownTimer();
+
+            text.innerText =
+                "READY";
+
+            const button =
+                document.getElementById(
+                    "claim-button"
+                );
+
+            button.disabled =
+                false;
+
+            button.className =
+                "claim-button";
+
+            button.innerHTML =
+                "CLAIM MEAL";
+
+            document
+                .getElementById(
+                    "received-box"
+                )
+                .style.display =
+                "none";
+
+            document
+                .getElementById(
+                    "claim-title"
+                )
+                .innerText =
+                "Meal Access Ready";
+
+            document
+                .getElementById(
+                    "claim-subtitle"
+                )
+                .innerText =
+                "Tap the button below when receiving your meal.";
+
+            playReadySound();
+
+            return;
         }
+
+        text.innerText =
+            formatDuration(
+                remaining
+            );
+
+    }
+
+
+    function stopCooldownTimer() {
 
         if (
-            audioContext.state ===
-            "suspended"
+            cooldownTimer
         ) {
 
-            audioContext.resume();
+            clearInterval(
+                cooldownTimer
+            );
+
+            cooldownTimer =
+                null;
+
         }
 
-    } catch (error) {
-
-        console.warn(
-            "Audio unavailable:",
-            error
-        );
     }
-}
 
-function playSuccessSound() {
 
-    try {
+    function formatDuration(
+        milliseconds
+    ) {
 
-        if (!audioContext) {
-            prepareSuccessAudio();
-        }
+        let seconds =
+            Math.floor(
+                milliseconds / 1000
+            );
 
-        if (!audioContext) {
-            return;
-        }
+        const hours =
+            Math.floor(
+                seconds / 3600
+            );
 
-        const now =
-            audioContext.currentTime;
+        seconds %=
+            3600;
 
-        /*
-          Three-note success chime.
-        */
+        const minutes =
+            Math.floor(
+                seconds / 60
+            );
 
-        const notes = [
+        seconds %=
+            60;
+
+        return [
+            hours,
+            minutes,
+            seconds
+        ]
+            .map(
+                value =>
+                    String(value)
+                        .padStart(
+                            2,
+                            "0"
+                        )
+            )
+            .join(":");
+
+    }
+
+
+    function formatDateTime(
+        value
+    ) {
+
+        const date =
+            new Date(
+                value
+            );
+
+        return date.toLocaleString(
+            "en-IN",
             {
-                frequency:523.25,
-                start:0,
-                duration:.22
-            },
-            {
-                frequency:659.25,
-                start:.12,
-                duration:.24
-            },
-            {
-                frequency:783.99,
-                start:.25,
-                duration:.45
-            },
-        ];
+                day:
+                    "2-digit",
 
-        notes.forEach(
-            note => {
+                month:
+                    "short",
 
-                const oscillator =
-                    audioContext.createOscillator();
+                hour:
+                    "2-digit",
 
-                const gain =
-                    audioContext.createGain();
+                minute:
+                    "2-digit",
 
-                oscillator.type =
-                    "sine";
+                second:
+                    "2-digit",
 
-                oscillator.frequency.setValueAtTime(
-                    note.frequency,
-                    now +
-                        note.start
+                hour12:
+                    true
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       SOUND
+       ========================================================= */
+
+    function playClaimSound() {
+
+        try {
+
+            const AudioContext =
+                window.AudioContext ||
+                window.webkitAudioContext;
+
+            if (!AudioContext) {
+                return;
+            }
+
+            const context =
+                new AudioContext();
+
+            const now =
+                context.currentTime;
+
+            const oscillator =
+                context.createOscillator();
+
+            const gain =
+                context.createGain();
+
+            oscillator.type =
+                "sine";
+
+            oscillator.frequency
+                .setValueAtTime(
+                    520,
+                    now
                 );
 
-                gain.gain.setValueAtTime(
+            oscillator.frequency
+                .exponentialRampToValueAtTime(
+                    880,
+                    now + .16
+                );
+
+            oscillator.frequency
+                .exponentialRampToValueAtTime(
+                    1040,
+                    now + .28
+                );
+
+            gain.gain
+                .setValueAtTime(
                     0,
-                    now +
-                        note.start
+                    now
                 );
 
-                gain.gain.linearRampToValueAtTime(
-                    .12,
-                    now +
-                        note.start +
-                        .025
+            gain.gain
+                .linearRampToValueAtTime(
+                    .16,
+                    now + .025
                 );
 
-                gain.gain.exponentialRampToValueAtTime(
+            gain.gain
+                .exponentialRampToValueAtTime(
                     .001,
-                    now +
-                        note.start +
-                        note.duration
+                    now + .45
                 );
 
-                oscillator.connect(
-                    gain
-                );
+            oscillator.connect(
+                gain
+            );
 
-                gain.connect(
-                    audioContext.destination
-                );
+            gain.connect(
+                context.destination
+            );
 
-                oscillator.start(
-                    now +
-                        note.start
-                );
+            oscillator.start(
+                now
+            );
 
-                oscillator.stop(
-                    now +
-                        note.start +
-                        note.duration +
-                        .02
-                );
-            }
-        );
+            oscillator.stop(
+                now + .45
+            );
 
-    } catch (error) {
+        } catch (error) {
 
-        console.warn(
-            "Success sound failed:",
-            error
-        );
-    }
-}
+            console.log(
+                "Audio unavailable:",
+                error
+            );
 
+        }
 
-/* ============================================================
-   REFRESH AFTER 2 HOURS
-============================================================ */
-
-refreshClaimBtn.addEventListener(
-    "click",
-    async () => {
-
-        refreshClaimBtn.disabled =
-            true;
-
-        await checkStatus();
-
-        refreshClaimBtn.disabled =
-            false;
-    }
-);
-
-
-/* ============================================================
-   LIVE CLOCK
-============================================================ */
-
-function updateClock() {
-
-    const now =
-        new Date();
-
-    document.getElementById(
-        "liveClock"
-    ).textContent =
-        now.toLocaleTimeString(
-            "en-IN",
-            {
-                hour12:false,
-            }
-        );
-
-    document.getElementById(
-        "liveDate"
-    ).textContent =
-        now.toLocaleDateString(
-            "en-IN",
-            {
-                weekday:"long",
-                day:"numeric",
-                month:"long",
-                year:"numeric",
-            }
-        );
-}
-
-setInterval(
-    updateClock,
-    1000
-);
-
-updateClock();
-
-
-/* ============================================================
-   DYNAMIC LIVE DISPLAY ID
-============================================================ */
-
-function generateLiveId() {
-
-    const characters =
-        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-    let value = "";
-
-    for (
-        let i = 0;
-        i < 7;
-        i++
-    ) {
-
-        value +=
-            characters[
-                Math.floor(
-                    Math.random() *
-                    characters.length
-                )
-            ];
     }
 
-    return `LIVE-${value}`;
-}
 
-function updateLiveId() {
-
-    document.getElementById(
-        "liveDisplayId"
-    ).textContent =
-        generateLiveId();
-}
-
-updateLiveId();
-
-liveDisplayInterval =
-    setInterval(
-        updateLiveId,
-        2500
-    );
-
-
-/* ============================================================
-   START LIVE STUDENT SYSTEM
-============================================================ */
-
-function startLiveSystem() {
-
-    if (
-        statusInterval
-    ) {
-        clearInterval(
-            statusInterval
-        );
-    }
-
-    checkStatus();
-
-    statusInterval =
-        setInterval(
-            checkStatus,
-            3000
-        );
-}
-
-
-/* ============================================================
-   STUDENT LOGOUT
-============================================================ */
-
-async function logoutStudent(
-    callServer = true
-) {
-
-    if (
-        callServer &&
-        studentToken
-    ) {
+    function playReadySound() {
 
         try {
 
-            await fetch(
-                `${API_URL}/logout`,
-                {
-                    method:"POST",
-                    headers:{
-                        Authorization:
-                            `Bearer ${studentToken}`,
-                    },
-                }
+            const AudioContext =
+                window.AudioContext ||
+                window.webkitAudioContext;
+
+            if (!AudioContext) {
+                return;
+            }
+
+            const context =
+                new AudioContext();
+
+            const oscillator =
+                context.createOscillator();
+
+            const gain =
+                context.createGain();
+
+            oscillator.type =
+                "sine";
+
+            oscillator.frequency.value =
+                720;
+
+            gain.gain.value =
+                .06;
+
+            oscillator.connect(
+                gain
             );
 
-        } catch {}
+            gain.connect(
+                context.destination
+            );
+
+            oscillator.start();
+
+            gain.gain.exponentialRampToValueAtTime(
+                .001,
+                context.currentTime + .22
+            );
+
+            oscillator.stop(
+                context.currentTime + .22
+            );
+
+        } catch (error) {}
+
     }
 
-    studentToken = "";
-    studentData = null;
 
-    localStorage.removeItem(
-        "messStudentToken"
-    );
+    function vibrateDevice() {
 
-    localStorage.removeItem(
-        "messStudent"
-    );
+        try {
 
-    if (
-        statusInterval
+            if (
+                navigator.vibrate
+            ) {
+
+                navigator.vibrate([
+                    60,
+                    40,
+                    100
+                ]);
+
+            }
+
+        } catch (error) {}
+
+    }
+
+
+    /* =========================================================
+       LOGOUT
+       ========================================================= */
+
+    async function logout() {
+
+        if (
+            currentStudent &&
+            currentStudent.sessionToken
+        ) {
+
+            try {
+
+                await fetch(
+                    `${API_URL}/logout`,
+                    {
+                        method:
+                            "POST",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${currentStudent.sessionToken}`
+                        }
+                    }
+                );
+
+            } catch (error) {}
+
+        }
+
+        forceLogout();
+
+    }
+
+
+    function forceLogout(
+        message = null
     ) {
 
-        clearInterval(
-            statusInterval
-        );
+        stopStudentTimers();
 
-        statusInterval =
+        currentStudent =
             null;
-    }
 
-    stopCountdown();
-
-    studentPanel.classList.add(
-        "hidden"
-    );
-
-    authPanel.classList.remove(
-        "hidden"
-    );
-
-    otpPanel.classList.add(
-        "hidden"
-    );
-
-    showLogin();
-}
-
-document.getElementById(
-    "logoutBtn"
-).addEventListener(
-    "click",
-    () => logoutStudent(true)
-);
-
-
-/* ============================================================
-   STAFF LOGIN
-============================================================ */
-
-staffLoginForm.addEventListener(
-    "submit",
-    async event => {
-
-        event.preventDefault();
-
-        const message =
-            document.getElementById(
-                "staffLoginMessage"
-            );
-
-        showMessage(
-            message,
-            "Authenticating..."
+        localStorage.removeItem(
+            "manit_active_student"
         );
 
-        try {
+        document
+            .getElementById(
+                "login-pass"
+            )
+            .value = "";
 
-            const response =
-                await fetch(
-                    `${API_URL}/staff/login`,
-                    {
-                        method:"POST",
-                        headers:{
-                            "Content-Type":
-                                "application/json",
-                        },
-                        body:
-                            JSON.stringify({
-                                pin:
-                                    document.getElementById(
-                                        "staffPin"
-                                    ).value,
-                            }),
-                    }
-                );
+        switchView(
+            "view-login"
+        );
 
-            const data =
-                await response.json();
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.message ||
-                    "Staff login failed."
-                );
-            }
-
-            staffToken =
-                data.staffToken;
-
-            localStorage.setItem(
-                "messStaffToken",
-                staffToken
-            );
-
-            authPanel.classList.add(
-                "hidden"
-            );
-
-            staffPanel.classList.remove(
-                "hidden"
-            );
+        if (message) {
 
             showToast(
-                "Staff access granted.",
-                true
-            );
-
-        } catch (error) {
-
-            showMessage(
                 message,
-                error.message
+                "error"
             );
+
         }
+
     }
-);
 
 
-/* ============================================================
-   RESET ONE
-============================================================ */
+    function stopStudentTimers() {
 
-document.getElementById(
-    "resetOneBtn"
-).addEventListener(
-    "click",
-    async () => {
+        clearInterval(
+            statusTimer
+        );
 
-        const scholarId =
-            document.getElementById(
-                "resetScholarId"
-            ).value.trim();
+        clearInterval(
+            clockTimer
+        );
 
-        const message =
-            document.getElementById(
-                "staffMessage"
-            );
+        clearInterval(
+            cooldownTimer
+        );
 
-        if (!scholarId) {
+        statusTimer =
+            null;
 
-            showMessage(
-                message,
-                "Enter a Scholar ID."
-            );
+        clockTimer =
+            null;
 
-            return;
-        }
+        cooldownTimer =
+            null;
 
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/reset-one`,
-                    {
-                        method:"POST",
-                        headers:{
-                            "Content-Type":
-                                "application/json",
-
-                            Authorization:
-                                `Bearer ${staffToken}`,
-                        },
-                        body:
-                            JSON.stringify({
-                                scholarId,
-                            }),
-                    }
-                );
-
-            const data =
-                await response.json();
-
-            if (
-                response.status === 401
-            ) {
-
-                logoutStaff();
-
-                throw new Error(
-                    "Staff session expired."
-                );
-            }
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.message
-                );
-            }
-
-            showMessage(
-                message,
-                data.message,
-                true
-            );
-
-            showToast(
-                "Student meal claim reset.",
-                true
-            );
-
-        } catch (error) {
-
-            showMessage(
-                message,
-                error.message
-            );
-        }
     }
-);
 
 
-/* ============================================================
-   RESET ALL
-============================================================ */
+    /* =========================================================
+       RESTORE SESSION
+       ========================================================= */
 
-document.getElementById(
-    "resetAllBtn"
-).addEventListener(
-    "click",
-    async () => {
+    window.addEventListener(
+        "DOMContentLoaded",
+        () => {
 
-        const confirmed =
-            confirm(
-                "Reset ALL meal claims? This will allow every registered student to claim again."
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        const message =
-            document.getElementById(
-                "staffMessage"
-            );
-
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/reset-all`,
-                    {
-                        method:"POST",
-                        headers:{
-                            Authorization:
-                                `Bearer ${staffToken}`,
-                        },
-                    }
+            const cached =
+                localStorage.getItem(
+                    "manit_active_student"
                 );
 
-            const data =
-                await response.json();
-
-            if (
-                response.status === 401
-            ) {
-
-                logoutStaff();
-
-                throw new Error(
-                    "Staff session expired."
-                );
+            if (!cached) {
+                return;
             }
 
-            if (!response.ok) {
+            try {
 
-                throw new Error(
-                    data.message
+                const student =
+                    JSON.parse(
+                        cached
+                    );
+
+                if (
+                    !student.sessionToken
+                ) {
+
+                    localStorage.removeItem(
+                        "manit_active_student"
+                    );
+
+                    return;
+                }
+
+                renderStudentCard(
+                    student
                 );
+
+            } catch (error) {
+
+                localStorage.removeItem(
+                    "manit_active_student"
+                );
+
             }
 
-            showMessage(
-                message,
-                data.message,
-                true
-            );
-
-            showToast(
-                "All meal claims reset.",
-                true
-            );
-
-        } catch (error) {
-
-            showMessage(
-                message,
-                error.message
-            );
         }
-    }
-);
-
-
-/* ============================================================
-   STAFF LOGOUT
-============================================================ */
-
-function logoutStaff() {
-
-    staffToken = "";
-
-    localStorage.removeItem(
-        "messStaffToken"
     );
-
-    staffPanel.classList.add(
-        "hidden"
-    );
-
-    authPanel.classList.remove(
-        "hidden"
-    );
-
-    showLogin();
-}
-
-document.getElementById(
-    "staffLogoutBtn"
-).addEventListener(
-    "click",
-    logoutStaff
-);
-
-
-/* ============================================================
-   RESTORE EXISTING SESSION
-============================================================ */
-
-function restoreSession() {
-
-    if (
-        studentToken &&
-        studentData
-    ) {
-
-        authPanel.classList.add(
-            "hidden"
-        );
-
-        studentPanel.classList.remove(
-            "hidden"
-        );
-
-        renderStudent();
-
-        startLiveSystem();
-
-        return;
-    }
-
-    if (
-        staffToken
-    ) {
-
-        authPanel.classList.add(
-            "hidden"
-        );
-
-        staffPanel.classList.remove(
-            "hidden"
-        );
-
-        return;
-    }
-
-    showLogin();
-}
-
-restoreSession();
 
 </script>
 
 </body>
+
 </html>
