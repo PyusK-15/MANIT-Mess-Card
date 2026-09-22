@@ -52,6 +52,7 @@
             align-items: center;
             min-height: 100vh;
             padding: 20px 10px;
+
             background: linear-gradient(
                 135deg,
                 #cbd5e1 0%,
@@ -81,6 +82,7 @@
             background: white;
             padding: 35px 28px;
             border-radius: 20px;
+
             box-shadow:
                 0 15px 35px rgba(0, 0, 0, 0.08);
         }
@@ -98,6 +100,7 @@
             height: auto;
             object-fit: contain;
             margin-bottom: 12px;
+
             filter:
                 drop-shadow(
                     0 4px 6px rgba(0, 0, 0, 0.08)
@@ -274,8 +277,10 @@
             background: #ffffff;
             border-radius: 20px;
             overflow: hidden;
+
             box-shadow:
                 0 20px 45px rgba(15, 23, 42, 0.15);
+
             border-top: 8px solid var(--accent-gold);
             position: relative;
         }
@@ -294,9 +299,11 @@
             height: 52px;
             background: white;
             border-radius: 50%;
+
             display: flex;
             align-items: center;
             justify-content: center;
+
             border: 2px solid var(--accent-gold);
             flex-shrink: 0;
             padding: 4px;
@@ -408,8 +415,10 @@
             padding: 10px;
             border-radius: 16px;
             border: 1px solid #e2e8f0;
+
             box-shadow:
                 0 4px 12px rgba(0,0,0,0.04);
+
             overflow: hidden;
         }
 
@@ -425,12 +434,15 @@
             width: 100%;
             height: 3px;
             background: var(--accent);
+
             box-shadow:
                 0 0 10px var(--accent);
+
             animation: scan 2.4s infinite;
         }
 
         @keyframes scan {
+
             0% {
                 top: 0;
             }
@@ -442,6 +454,7 @@
             100% {
                 top: 0;
             }
+
         }
 
         .claimed-box {
@@ -489,6 +502,7 @@
         }
 
         @keyframes blink {
+
             0%, 100% {
                 opacity: 1;
             }
@@ -496,6 +510,7 @@
             50% {
                 opacity: 0.3;
             }
+
         }
 
         .active-slot {
@@ -510,16 +525,20 @@
             position: fixed;
             top: 20px;
             left: 50%;
+
             transform:
                 translateX(-50%)
                 translateY(-100px);
+
             padding: 15px 22px;
             border-radius: 14px;
             font-weight: 700;
             font-size: 14px;
             color: white;
+
             box-shadow:
                 0 10px 25px rgba(0,0,0,0.15);
+
             transition: transform 0.3s;
             z-index: 1000;
             text-align: center;
@@ -551,6 +570,7 @@
 
 <div class="app-container">
 
+
     <!-- =====================================================
          STUDENT LOGIN
          ===================================================== -->
@@ -573,6 +593,7 @@
 
             </div>
 
+
             <div class="input-group">
 
                 <label>
@@ -589,6 +610,7 @@
 
             </div>
 
+
             <div class="input-group">
 
                 <label>
@@ -604,12 +626,14 @@
 
             </div>
 
+
             <button
                 id="btn-login"
                 onclick="handleLogin()"
             >
                 Display Identity Card
             </button>
+
 
             <div
                 style="
@@ -626,6 +650,7 @@
                 </button>
 
             </div>
+
 
             <button
                 class="btn-outline"
@@ -660,6 +685,9 @@
                 <p>MANIT Student Verification</p>
 
             </div>
+
+
+            <!-- REGISTRATION FORM -->
 
             <div id="registration-form">
 
@@ -752,6 +780,7 @@
                         onchange="previewPhoto(event)"
                     >
 
+
                     <div
                         style="
                             margin-top:10px;
@@ -822,7 +851,9 @@
             </div>
 
 
-            <!-- OTP FORM -->
+            <!-- =================================================
+                 OTP FORM
+                 ================================================= -->
 
             <div
                 id="otp-form"
@@ -1405,7 +1436,7 @@
         }
 
         /*
-         * NO LENGTH RESTRICTION.
+         * NO 9-DIGIT RESTRICTION.
          * Any non-empty scholar number is accepted.
          */
 
@@ -1544,106 +1575,264 @@
        ===================================================== */
 
     async function handleRegister() {
-    const scholarId = document.getElementById('reg-id').value.trim();
-    const name = document.getElementById('reg-name').value.trim();
-    const room = document.getElementById('reg-room').value.trim();
-    const password = document.getElementById('reg-pass').value;
-    const btn = document.getElementById('btn-register');
 
-    // Basic validation
-    if (!scholarId || !name || !room || !password || !uploadedPhotoBase64) {
-        showToast("Please fill all fields and upload photo.", "error");
-        return;
-    }
+        const scholarId =
+            document
+                .getElementById('reg-id')
+                .value
+                .trim();
 
-    // NO 9-DIGIT RESTRICTION
-    if (password.length < 6) {
-        showToast("Password must contain at least 6 characters.", "error");
-        return;
-    }
+        const name =
+            document
+                .getElementById('reg-name')
+                .value
+                .trim();
 
-    btn.disabled = true;
-    btn.innerText = "Sending OTP...";
+        const room =
+            document
+                .getElementById('reg-room')
+                .value
+                .trim();
 
-    try {
-        const response = await fetch(`${API_URL}/register/start`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                scholarId: scholarId,
-                name: name,
-                room: room,
-                password: password,
-                photo: uploadedPhotoBase64
-            })
-        });
+        const password =
+            document
+                .getElementById('reg-pass')
+                .value;
 
-        const data = await readApiResponse(response);
+        const btn =
+            document
+                .getElementById('btn-register');
 
-        console.log("REGISTER START RESPONSE:", data);
 
-        if (!response.ok || !data.success) {
-            throw new Error(
-                data.message || `Server returned ${response.status}`
+        /* =================================================
+           BASIC VALIDATION
+
+           IMPORTANT:
+           There is NO scholar-number length restriction.
+           ================================================= */
+
+        if (
+            !scholarId ||
+            !name ||
+            !room ||
+            !password ||
+            !uploadedPhotoBase64
+        ) {
+
+            showToast(
+                "Please fill all fields and upload photo.",
+                "error"
             );
+
+            return;
         }
 
-        // Save scholar ID for OTP verification
-        registrationScholarId = scholarId.trim().toLowerCase();
 
-        // Show the email that received the OTP
-        const emailText =
-            data.emailMasked ||
-            `${registrationScholarId}@stu.manit.ac.in`;
+        if (password.length < 6) {
 
-        const verifyEmailElement =
-            document.getElementById("verify-email");
+            showToast(
+                "Password must contain at least 6 characters.",
+                "error"
+            );
 
-        if (verifyEmailElement) {
-            verifyEmailElement.innerText =
-                `OTP sent to ${emailText}`;
+            return;
         }
 
-        // Clear old OTP
-        const otpInput = document.getElementById("otp-input");
-        if (otpInput) {
-            otpInput.value = "";
-        }
 
-        // IMPORTANT:
-        // Move from Registration screen → OTP Verification screen
-        switchView("verify");
+        btn.disabled =
+            true;
 
-        // Start resend countdown
-        startResendCountdown();
+        btn.innerText =
+            "Sending OTP...";
 
-        // Focus OTP input
-        setTimeout(() => {
-            if (otpInput) {
-                otpInput.focus();
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/register/start`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                scholarId:
+                                    scholarId,
+
+                                name:
+                                    name,
+
+                                room:
+                                    room,
+
+                                password:
+                                    password,
+
+                                photo:
+                                    uploadedPhotoBase64
+                            })
+                    }
+                );
+
+
+            const result =
+                await readApiResponse(
+                    response
+                );
+
+            const data =
+                result.data;
+
+
+            console.log(
+                "REGISTER START RESPONSE:",
+                result
+            );
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+
+                throw new Error(
+                    data.message ||
+                    `Server returned HTTP ${response.status}`
+                );
             }
-        }, 300);
 
-        showToast(
-            "OTP sent successfully! Check your MANIT email.",
-            "success"
-        );
 
-    } catch (error) {
-        console.error("REGISTER START ERROR:", error);
+            /* =================================================
+               SAVE SCHOLAR ID FOR OTP VERIFICATION
+               ================================================= */
 
-        showToast(
-            error.message || "Unable to send OTP.",
-            "error"
-        );
+            registrationScholarId =
+                scholarId
+                    .trim()
+                    .toLowerCase();
 
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Send OTP to MANIT Email";
+
+            /* =================================================
+               SHOW EMAIL
+               ================================================= */
+
+            const emailText =
+                data.email ||
+                data.emailMasked ||
+                `${registrationScholarId}@stu.manit.ac.in`;
+
+
+            document
+                .getElementById('otp-email')
+                .innerText =
+                emailText;
+
+
+            /* =================================================
+               CLEAR OLD OTP
+               ================================================= */
+
+            document
+                .getElementById('reg-otp')
+                .value =
+                "";
+
+
+            /* =================================================
+               THIS IS THE IMPORTANT FIX
+
+               OTP FORM IS INSIDE view-register.
+               There is NO "verify" view.
+
+               Therefore:
+               registration-form → hide
+               otp-form → show
+               ================================================= */
+
+            document
+                .getElementById(
+                    'registration-form'
+                )
+                .style.display =
+                'none';
+
+
+            document
+                .getElementById(
+                    'otp-form'
+                )
+                .style.display =
+                'block';
+
+
+            /* Make sure registration view itself is active */
+
+            switchView(
+                'view-register'
+            );
+
+
+            /* =================================================
+               START RESEND COUNTDOWN
+               ================================================= */
+
+            startResendCountdown();
+
+
+            /* =================================================
+               FOCUS OTP BOX
+               ================================================= */
+
+            setTimeout(() => {
+
+                document
+                    .getElementById(
+                        'reg-otp'
+                    )
+                    .focus();
+
+            }, 300);
+
+
+            showToast(
+                "OTP sent successfully! Check your MANIT email.",
+                "success"
+            );
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "REGISTER START ERROR:",
+                error
+            );
+
+
+            showToast(
+                error.message ||
+                "Unable to send OTP.",
+                "error"
+            );
+
+        }
+
+
+        finally {
+
+            btn.disabled =
+                false;
+
+            btn.innerText =
+                "Send OTP to MANIT Email";
+        }
     }
-}
 
 
     /* =====================================================
@@ -1685,7 +1874,8 @@
         }
 
 
-        btn.disabled = true;
+        btn.disabled =
+            true;
 
         btn.innerText =
             "Verifying...";
@@ -1741,6 +1931,8 @@
                 );
 
 
+                /* Return to registration form */
+
                 document
                     .getElementById(
                         'registration-form'
@@ -1756,6 +1948,8 @@
                     .style.display =
                     'none';
 
+
+                /* Clear registration fields */
 
                 document
                     .getElementById(
@@ -1825,6 +2019,8 @@
                     "";
 
 
+                /* Put scholar ID into login */
+
                 document
                     .getElementById(
                         'login-id'
@@ -1847,7 +2043,13 @@
 
 
                 if (resendTimer) {
-                    clearInterval(resendTimer);
+
+                    clearInterval(
+                        resendTimer
+                    );
+
+                    resendTimer =
+                        null;
                 }
 
 
@@ -1855,7 +2057,9 @@
                     'view-login'
                 );
 
-            } else {
+            }
+
+            else {
 
                 showToast(
                     data.message ||
@@ -1872,6 +2076,7 @@
                 "OTP verification exception:",
                 e
             );
+
 
             showToast(
                 `Could not reach the server: ${e.message}`,
@@ -1961,15 +2166,28 @@
                 data.success
             ) {
 
+                document
+                    .getElementById(
+                        'otp-email'
+                    )
+                    .innerText =
+                    data.email ||
+                    data.emailMasked ||
+                    `${registrationScholarId}@stu.manit.ac.in`;
+
+
                 showToast(
                     data.message ||
                     "New OTP sent.",
                     "success"
                 );
 
+
                 startResendCountdown();
 
-            } else {
+            }
+
+            else {
 
                 showToast(
                     data.message ||
@@ -1984,7 +2202,9 @@
 
                     startResendCountdown();
 
-                } else {
+                }
+
+                else {
 
                     btn.disabled =
                         false;
@@ -2000,10 +2220,12 @@
                 e
             );
 
+
             showToast(
                 `Could not reach the server: ${e.message}`,
                 "error"
             );
+
 
             btn.disabled =
                 false;
@@ -2018,7 +2240,10 @@
     function startResendCountdown() {
 
         if (resendTimer) {
-            clearInterval(resendTimer);
+
+            clearInterval(
+                resendTimer
+            );
         }
 
 
@@ -2036,7 +2261,8 @@
                 );
 
 
-        let seconds = 60;
+        let seconds =
+            60;
 
 
         btn.disabled =
@@ -2058,6 +2284,10 @@
                     clearInterval(
                         resendTimer
                     );
+
+
+                    resendTimer =
+                        null;
 
 
                     btn.disabled =
@@ -2089,12 +2319,19 @@
                 "Go back? Your current OTP verification will be cancelled."
             )
         ) {
+
             return;
         }
 
 
         if (resendTimer) {
-            clearInterval(resendTimer);
+
+            clearInterval(
+                resendTimer
+            );
+
+            resendTimer =
+                null;
         }
 
 
@@ -2132,6 +2369,14 @@
             )
             .disabled =
             true;
+
+
+        document
+            .getElementById(
+                'resend-countdown'
+            )
+            .innerText =
+            "Please wait 60 seconds.";
     }
 
 
@@ -2203,9 +2448,11 @@
                         body:
                             JSON.stringify({
 
-                                scholarId,
+                                scholarId:
+                                    scholarId,
 
-                                password
+                                password:
+                                    password
                             })
                     }
                 );
@@ -2235,7 +2482,9 @@
                     data.student
                 );
 
-            } else {
+            }
+
+            else {
 
                 showToast(
                     data.message ||
@@ -2329,7 +2578,9 @@
             tag.innerText =
                 "Verified";
 
-        } else {
+        }
+
+        else {
 
             tag.className =
                 "verification-tag tag-pending";
@@ -2381,7 +2632,10 @@
 
 
         if (clockInterval) {
-            clearInterval(clockInterval);
+
+            clearInterval(
+                clockInterval
+            );
         }
 
 
@@ -2402,7 +2656,10 @@
 
 
         if (pollInterval) {
-            clearInterval(pollInterval);
+
+            clearInterval(
+                pollInterval
+            );
         }
 
 
@@ -2493,7 +2750,9 @@
                 claimedBox.style.display =
                     'block';
 
-            } else {
+            }
+
+            else {
 
                 qrWrapper.style.display =
                     'block';
@@ -2526,12 +2785,24 @@
 
 
         if (clockInterval) {
-            clearInterval(clockInterval);
+
+            clearInterval(
+                clockInterval
+            );
+
+            clockInterval =
+                null;
         }
 
 
         if (pollInterval) {
-            clearInterval(pollInterval);
+
+            clearInterval(
+                pollInterval
+            );
+
+            pollInterval =
+                null;
         }
 
 
@@ -2634,7 +2905,9 @@
                 );
             }
 
-        } else {
+        }
+
+        else {
 
             showToast(
                 "Invalid Staff Password",
@@ -2676,6 +2949,7 @@
 
                         body:
                             JSON.stringify({
+
                                 scholarId:
                                     decodedText,
 
@@ -2796,7 +3070,8 @@
                         body:
                             JSON.stringify({
 
-                                scholarId,
+                                scholarId:
+                                    scholarId,
 
                                 staffPin:
                                     'manitH10'
@@ -2827,7 +3102,9 @@
                     .value =
                     '';
 
-            } else {
+            }
+
+            else {
 
                 showToast(
                     data.message ||
@@ -2865,6 +3142,7 @@
                 "Reset all cards for the next meal?"
             )
         ) {
+
             return;
         }
 
@@ -2907,7 +3185,9 @@
                     "success"
                 );
 
-            } else {
+            }
+
+            else {
 
                 showToast(
                     data.message ||
