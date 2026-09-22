@@ -1544,226 +1544,106 @@
        ===================================================== */
 
     async function handleRegister() {
+    const scholarId = document.getElementById('reg-id').value.trim();
+    const name = document.getElementById('reg-name').value.trim();
+    const room = document.getElementById('reg-room').value.trim();
+    const password = document.getElementById('reg-pass').value;
+    const btn = document.getElementById('btn-register');
 
-        const scholarId =
-            document
-                .getElementById('reg-id')
-                .value
-                .trim();
-
-        const name =
-            document
-                .getElementById('reg-name')
-                .value
-                .trim();
-
-        const room =
-            document
-                .getElementById('reg-room')
-                .value
-                .trim();
-
-        const password =
-            document
-                .getElementById('reg-pass')
-                .value;
-
-        const btn =
-            document
-                .getElementById('btn-register');
-
-
-        /* =================================================
-           ONLY EMPTY CHECK
-           
-           THERE IS NO 9-DIGIT CHECK.
-           ================================================= */
-
-        if (!scholarId) {
-
-            showToast(
-                "Please enter your scholar number.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (
-            !name ||
-            !room ||
-            !password ||
-            !uploadedPhotoBase64
-        ) {
-
-            showToast(
-                "Please fill all fields and upload photo.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (password.length < 6) {
-
-            showToast(
-                "Password must contain at least 6 characters.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        btn.disabled = true;
-
-        btn.innerText =
-            "Sending OTP...";
-
-
-        try {
-
-            const res =
-                await fetch(
-                    `${API_URL}/register/start`,
-                    {
-                        method: 'POST',
-
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                scholarId:
-                                    scholarId,
-
-                                name:
-                                    name,
-
-                                room:
-                                    room,
-
-                                password:
-                                    password,
-
-                                photo:
-                                    uploadedPhotoBase64
-                            })
-                    }
-                );
-
-
-            const result =
-                await readApiResponse(res);
-
-            const data =
-                result.data;
-
-
-            console.log(
-                "OTP start response:",
-                result
-            );
-
-
-            if (
-                res.ok &&
-                data.success
-            ) {
-
-                registrationScholarId =
-                    scholarId
-                        .trim()
-                        .toLowerCase();
-
-
-                document
-                    .getElementById(
-                        'otp-email'
-                    )
-                    .innerText =
-                    data.email ||
-                    data.emailMasked ||
-                    `${registrationScholarId}@stu.manit.ac.in`;
-
-
-                document
-                    .getElementById(
-                        'registration-form'
-                    )
-                    .style.display =
-                    'none';
-
-
-                document
-                    .getElementById(
-                        'otp-form'
-                    )
-                    .style.display =
-                    'block';
-
-
-                document
-                    .getElementById(
-                        'reg-otp'
-                    )
-                    .value =
-                    '';
-
-
-                startResendCountdown();
-
-
-                showToast(
-                    data.message ||
-                    "OTP sent successfully.",
-                    "success"
-                );
-
-            } else {
-
-                showToast(
-                    data.message ||
-                    `OTP request failed. HTTP ${res.status}`,
-                    "error"
-                );
-
-                console.error(
-                    "OTP server error:",
-                    result
-                );
-            }
-
-        }
-
-        catch (e) {
-
-            console.error(
-                "OTP request exception:",
-                e
-            );
-
-            showToast(
-                `Could not reach the server: ${e.message}`,
-                "error"
-            );
-
-        }
-
-        finally {
-
-            btn.disabled =
-                false;
-
-            btn.innerText =
-                "Send OTP to MANIT Email";
-        }
+    // Basic validation
+    if (!scholarId || !name || !room || !password || !uploadedPhotoBase64) {
+        showToast("Please fill all fields and upload photo.", "error");
+        return;
     }
+
+    // NO 9-DIGIT RESTRICTION
+    if (password.length < 6) {
+        showToast("Password must contain at least 6 characters.", "error");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Sending OTP...";
+
+    try {
+        const response = await fetch(`${API_URL}/register/start`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                scholarId: scholarId,
+                name: name,
+                room: room,
+                password: password,
+                photo: uploadedPhotoBase64
+            })
+        });
+
+        const data = await readApiResponse(response);
+
+        console.log("REGISTER START RESPONSE:", data);
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.message || `Server returned ${response.status}`
+            );
+        }
+
+        // Save scholar ID for OTP verification
+        registrationScholarId = scholarId.trim().toLowerCase();
+
+        // Show the email that received the OTP
+        const emailText =
+            data.emailMasked ||
+            `${registrationScholarId}@stu.manit.ac.in`;
+
+        const verifyEmailElement =
+            document.getElementById("verify-email");
+
+        if (verifyEmailElement) {
+            verifyEmailElement.innerText =
+                `OTP sent to ${emailText}`;
+        }
+
+        // Clear old OTP
+        const otpInput = document.getElementById("otp-input");
+        if (otpInput) {
+            otpInput.value = "";
+        }
+
+        // IMPORTANT:
+        // Move from Registration screen → OTP Verification screen
+        switchView("verify");
+
+        // Start resend countdown
+        startResendCountdown();
+
+        // Focus OTP input
+        setTimeout(() => {
+            if (otpInput) {
+                otpInput.focus();
+            }
+        }, 300);
+
+        showToast(
+            "OTP sent successfully! Check your MANIT email.",
+            "success"
+        );
+
+    } catch (error) {
+        console.error("REGISTER START ERROR:", error);
+
+        showToast(
+            error.message || "Unable to send OTP.",
+            "error"
+        );
+
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Send OTP to MANIT Email";
+    }
+}
 
 
     /* =====================================================
