@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
@@ -158,6 +159,11 @@
             background: #ffffff;
         }
 
+        input:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
         button {
             width: 100%;
             padding: 15px;
@@ -222,6 +228,7 @@
             font-weight: 800;
             color: var(--primary);
             word-break: break-all;
+            margin-top: 4px;
         }
 
         .otp-input {
@@ -250,6 +257,18 @@
         .resend-button:hover {
             background: transparent;
             transform: none;
+        }
+
+        .email-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-top: 5px;
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: 700;
+            word-break: break-all;
         }
 
         .id-badge {
@@ -413,6 +432,7 @@
         }
 
         @keyframes scan {
+
             0% {
                 top: 0;
             }
@@ -424,6 +444,7 @@
             100% {
                 top: 0;
             }
+
         }
 
         .claimed-box {
@@ -471,6 +492,7 @@
         }
 
         @keyframes blink {
+
             0%, 100% {
                 opacity: 1;
             }
@@ -478,6 +500,7 @@
             50% {
                 opacity: 0.3;
             }
+
         }
 
         .active-slot {
@@ -506,6 +529,7 @@
             z-index: 1000;
             text-align: center;
             min-width: 280px;
+            max-width: 92%;
         }
 
         .toast.show {
@@ -526,15 +550,17 @@
 
 </head>
 
+
 <body>
 
 <div id="toast" class="toast"></div>
+
 
 <div class="app-container">
 
 
     <!-- =====================================================
-         LOGIN
+         STUDENT LOGIN
          ===================================================== -->
 
     <div id="view-login" class="view active">
@@ -627,7 +653,7 @@
 
 
     <!-- =====================================================
-         REGISTRATION
+         STUDENT REGISTRATION
          ===================================================== -->
 
     <div id="view-register" class="view">
@@ -653,6 +679,7 @@
 
             <div id="registration-form">
 
+
                 <div class="input-group">
 
                     <label>
@@ -666,6 +693,34 @@
                         placeholder="e.g. 241112001"
                         autocomplete="off"
                     >
+
+                </div>
+
+
+                <!-- AUTOMATIC MANIT EMAIL -->
+
+                <div class="input-group">
+
+                    <label>
+                        Official MANIT Email
+                    </label>
+
+                    <div
+                        id="email-preview"
+                        class="email-preview"
+                    >
+                        Enter Scholar Number first
+                    </div>
+
+                    <div
+                        style="
+                            font-size:11px;
+                            color:#64748b;
+                            margin-top:5px;
+                        "
+                    >
+                        OTP will be sent to this official MANIT email.
+                    </div>
 
                 </div>
 
@@ -808,7 +863,8 @@
                     </div>
 
                     <div style="margin-top:6px;">
-                        Check your MANIT student email inbox.
+                        Check your MANIT student email inbox,
+                        including Spam/Junk.
                     </div>
 
                 </div>
@@ -937,7 +993,7 @@
 
 
     <!-- =====================================================
-         DIGITAL CARD
+         DIGITAL STUDENT CARD
          ===================================================== -->
 
     <div id="view-student" class="view">
@@ -1256,6 +1312,7 @@
 
     const API_URL = '/api';
 
+
     let uploadedPhotoBase64 = "";
 
     let qrcodeInstance = null;
@@ -1270,6 +1327,10 @@
 
     let resendTimer = null;
 
+    let html5QrcodeScanner = null;
+
+    let isProcessingScan = false;
+
 
     /* =====================================================
        TOAST
@@ -1283,13 +1344,51 @@
         toast.className =
             `toast ${type} show`;
 
-        toast.innerHTML = msg;
+        toast.innerHTML =
+            msg;
 
         setTimeout(() => {
 
             toast.classList.remove('show');
 
-        }, 3500);
+        }, 4000);
+    }
+
+
+    /* =====================================================
+       SAFE API RESPONSE
+       
+       IMPORTANT:
+       This prevents a 404/HTML response from becoming
+       the misleading "Server connection failure".
+       ===================================================== */
+
+    async function readApiResponse(response) {
+
+        const text =
+            await response.text();
+
+        let data = null;
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        } catch (error) {
+
+            data = {
+                success: false,
+                message:
+                    `Server returned HTTP ${response.status}.`
+            };
+        }
+
+        return {
+            response,
+            data,
+            raw: text
+        };
     }
 
 
@@ -1305,10 +1404,57 @@
                 v.classList.remove('active')
             );
 
-        document
-            .getElementById(viewId)
-            .classList.add('active');
+
+        const view =
+            document.getElementById(viewId);
+
+
+        if (view) {
+
+            view.classList.add('active');
+
+        }
     }
+
+
+    /* =====================================================
+       EMAIL PREVIEW
+       ===================================================== */
+
+    function updateEmailPreview() {
+
+        const scholarId =
+            document
+                .getElementById('reg-id')
+                .value
+                .trim();
+
+
+        const preview =
+            document
+                .getElementById('email-preview');
+
+
+        if (!scholarId) {
+
+            preview.innerText =
+                "Enter Scholar Number first";
+
+            return;
+        }
+
+
+        preview.innerText =
+            `${scholarId.toLowerCase()}@stu.manit.ac.in`;
+    }
+
+
+    document
+        .getElementById('reg-id')
+        .addEventListener(
+            'input',
+            updateEmailPreview
+        );
 
 
     /* =====================================================
@@ -1320,16 +1466,20 @@
         const file =
             event.target.files[0];
 
-        if (!file) return;
+
+        if (!file)
+            return;
 
 
         uploadedPhotoBase64 = "";
+
 
         document
             .getElementById(
                 'photo-preview-container'
             )
-            .style.display = 'none';
+            .style.display =
+            'none';
 
 
         const reader =
@@ -1366,11 +1516,15 @@
 
 
                         canvas.height =
-                            img.height * scale;
+                            Math.round(
+                                img.height * scale
+                            );
 
 
                         const ctx =
-                            canvas.getContext('2d');
+                            canvas.getContext(
+                                '2d'
+                            );
 
 
                         ctx.imageSmoothingEnabled =
@@ -1441,6 +1595,8 @@
 
     /* =====================================================
        START REGISTRATION / SEND OTP
+       
+       MAIN OTP FUNCTION
        ===================================================== */
 
     async function handleRegister() {
@@ -1485,19 +1641,34 @@
             !uploadedPhotoBase64
         ) {
 
-            return showToast(
+            showToast(
                 "Please fill all fields and upload photo.",
                 "error"
             );
+
+            return;
+        }
+
+
+        if (!/^\d{9}$/.test(scholarId)) {
+
+            showToast(
+                "Scholar Number must be 9 digits.",
+                "error"
+            );
+
+            return;
         }
 
 
         if (password.length < 6) {
 
-            return showToast(
+            showToast(
                 "Password must contain at least 6 characters.",
                 "error"
             );
+
+            return;
         }
 
 
@@ -1509,13 +1680,16 @@
 
         try {
 
+            /*
+             * This is the primary endpoint used by
+             * the current OTP server.
+             */
+
             const res =
                 await fetch(
                     `${API_URL}/register/start`,
                     {
-
-                        method:
-                            'POST',
+                        method: 'POST',
 
                         headers: {
                             'Content-Type':
@@ -1525,13 +1699,17 @@
                         body:
                             JSON.stringify({
 
-                                scholarId,
+                                scholarId:
+                                    scholarId,
 
-                                name,
+                                name:
+                                    name,
 
-                                room,
+                                room:
+                                    room,
 
-                                password,
+                                password:
+                                    password,
 
                                 photo:
                                     uploadedPhotoBase64
@@ -1540,8 +1718,18 @@
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
+
+
+            console.log(
+                "OTP start response:",
+                result
+            );
 
 
             if (
@@ -1550,7 +1738,9 @@
             ) {
 
                 registrationScholarId =
-                    scholarId.trim().toLowerCase();
+                    scholarId
+                        .trim()
+                        .toLowerCase();
 
 
                 document
@@ -1559,7 +1749,7 @@
                     )
                     .innerText =
                     data.emailMasked ||
-                    `${registrationScholarId.slice(0, 2)}******@stu.manit.ac.in`;
+                    `${registrationScholarId}@stu.manit.ac.in`;
 
 
                 document
@@ -1590,7 +1780,8 @@
 
 
                 showToast(
-                    data.message,
+                    data.message ||
+                    "OTP sent successfully.",
                     "success"
                 );
 
@@ -1598,8 +1789,13 @@
 
                 showToast(
                     data.message ||
-                    "Could not send OTP.",
+                    `OTP request failed. HTTP ${res.status}`,
                     "error"
+                );
+
+                console.error(
+                    "OTP server error:",
+                    result
                 );
             }
 
@@ -1607,10 +1803,14 @@
 
         catch (e) {
 
-            console.error(e);
+            console.error(
+                "OTP request exception:",
+                e
+            );
+
 
             showToast(
-                "Server connection failure.",
+                "Could not reach the server. Check Render logs.",
                 "error"
             );
 
@@ -1618,7 +1818,8 @@
 
         finally {
 
-            btn.disabled = false;
+            btn.disabled =
+                false;
 
             btn.innerText =
                 "Send OTP to MANIT Email";
@@ -1646,19 +1847,23 @@
 
         if (!registrationScholarId) {
 
-            return showToast(
+            showToast(
                 "Registration session expired. Please start again.",
                 "error"
             );
+
+            return;
         }
 
 
         if (!/^\d{6}$/.test(otp)) {
 
-            return showToast(
+            showToast(
                 "Enter the 6-digit OTP.",
                 "error"
             );
+
+            return;
         }
 
 
@@ -1675,8 +1880,7 @@
                     `${API_URL}/register/verify`,
                     {
 
-                        method:
-                            'POST',
+                        method: 'POST',
 
                         headers: {
                             'Content-Type':
@@ -1689,14 +1893,25 @@
                                 scholarId:
                                     registrationScholarId,
 
-                                otp
+                                otp:
+                                    otp
                             })
                     }
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
+
+
+            console.log(
+                "OTP verification response:",
+                result
+            );
 
 
             if (
@@ -1709,8 +1924,6 @@
                     "success"
                 );
 
-
-                /* Reset registration UI */
 
                 document
                     .getElementById(
@@ -1784,6 +1997,14 @@
                     'none';
 
 
+                document
+                    .getElementById(
+                        'email-preview'
+                    )
+                    .innerText =
+                    'Enter Scholar Number first';
+
+
                 uploadedPhotoBase64 =
                     "";
 
@@ -1793,7 +2014,8 @@
                         'login-id'
                     )
                     .value =
-                    data.student.scholarId;
+                    data.student?.scholarId ||
+                    registrationScholarId;
 
 
                 document
@@ -1808,6 +2030,14 @@
                     null;
 
 
+                if (resendTimer) {
+
+                    clearInterval(
+                        resendTimer
+                    );
+                }
+
+
                 switchView(
                     'view-login'
                 );
@@ -1816,7 +2046,7 @@
 
                 showToast(
                     data.message ||
-                    "OTP verification failed.",
+                    `OTP verification failed. HTTP ${res.status}`,
                     "error"
                 );
             }
@@ -1825,10 +2055,14 @@
 
         catch (e) {
 
-            console.error(e);
+            console.error(
+                "OTP verification exception:",
+                e
+            );
+
 
             showToast(
-                "Server connection failure.",
+                "Could not reach the server. Check Render logs.",
                 "error"
             );
 
@@ -1836,7 +2070,8 @@
 
         finally {
 
-            btn.disabled = false;
+            btn.disabled =
+                false;
 
             btn.innerText =
                 "Verify OTP & Create Account";
@@ -1852,10 +2087,12 @@
 
         if (!registrationScholarId) {
 
-            return showToast(
+            showToast(
                 "Registration session expired.",
                 "error"
             );
+
+            return;
         }
 
 
@@ -1890,14 +2127,23 @@
 
                                 scholarId:
                                     registrationScholarId
-
                             })
                     }
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
+
+
+            console.log(
+                "OTP resend response:",
+                result
+            );
 
 
             if (
@@ -1906,9 +2152,11 @@
             ) {
 
                 showToast(
-                    data.message,
+                    data.message ||
+                    "New OTP sent.",
                     "success"
                 );
+
 
                 startResendCountdown();
 
@@ -1916,7 +2164,7 @@
 
                 showToast(
                     data.message ||
-                    "Could not resend OTP.",
+                    `Could not resend OTP. HTTP ${res.status}`,
                     "error"
                 );
 
@@ -1926,6 +2174,11 @@
                 ) {
 
                     startResendCountdown();
+
+                } else {
+
+                    btn.disabled =
+                        false;
                 }
             }
 
@@ -1933,10 +2186,17 @@
 
         catch (e) {
 
+            console.error(
+                "Resend exception:",
+                e
+            );
+
+
             showToast(
-                "Server connection failure.",
+                "Could not reach the server. Check Render logs.",
                 "error"
             );
+
 
             btn.disabled =
                 false;
@@ -2055,6 +2315,22 @@
 
         registrationScholarId =
             null;
+
+
+        document
+            .getElementById(
+                'reg-otp'
+            )
+            .value =
+            '';
+
+
+        document
+            .getElementById(
+                'btn-resend'
+            )
+            .disabled =
+            true;
     }
 
 
@@ -2093,10 +2369,12 @@
             !password
         ) {
 
-            return showToast(
+            showToast(
                 "Enter Scholar ID and Password",
                 "error"
             );
+
+            return;
         }
 
 
@@ -2128,14 +2406,17 @@
                                 scholarId,
 
                                 password
-
                             })
                     }
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
 
 
             if (
@@ -2168,8 +2449,14 @@
 
         catch (err) {
 
+            console.error(
+                "Login error:",
+                err
+            );
+
+
             showToast(
-                "Server connection failure",
+                "Could not reach the server.",
                 "error"
             );
 
@@ -2241,7 +2528,7 @@
                 "verification-tag tag-verified";
 
             tag.innerText =
-                "Verified MANIT Email";
+                "Verified";
 
         } else {
 
@@ -2249,7 +2536,7 @@
                 "verification-tag tag-pending";
 
             tag.innerText =
-                "Email Verification Pending";
+                "Pending Staff Verification";
         }
 
 
@@ -2352,12 +2639,20 @@
 
             const res =
                 await fetch(
-                    `${API_URL}/status/${currentScholarId}`
+                    `${API_URL}/status/${encodeURIComponent(currentScholarId)}`
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
+
+
+            if (!res.ok)
+                return;
 
 
             const qrWrapper =
@@ -2386,15 +2681,7 @@
                     'current-meal'
                 )
                 .innerText =
-                `${data.activeSlot} Active`;
-
-
-            document
-                .getElementById(
-                    'live-dot'
-                )
-                .style.background =
-                "var(--success)";
+                `${data.activeSlot || 'Mess Service'} Active`;
 
 
             if (data.isVerified) {
@@ -2403,7 +2690,7 @@
                     "verification-tag tag-verified";
 
                 tag.innerText =
-                    "Verified MANIT Email";
+                    "Verified";
             }
 
 
@@ -2517,24 +2804,21 @@
 
 
     /* =====================================================
-       STAFF SCANNER
+       STAFF LOGIN
        ===================================================== */
-
-    let html5QrcodeScanner =
-        null;
-
-    let isProcessingScan =
-        false;
-
 
     function handleAdminLogin() {
 
-        if (
+        const password =
             document
                 .getElementById(
                     'admin-pass'
                 )
-                .value ===
+                .value;
+
+
+        if (
+            password ===
             'manitH10'
         ) {
 
@@ -2550,6 +2834,7 @@
                         "reader",
                         {
                             fps: 15,
+
                             qrbox: {
                                 width: 220,
                                 height: 220
@@ -2607,6 +2892,7 @@
 
                         body:
                             JSON.stringify({
+
                                 scholarId:
                                     decodedText
                             })
@@ -2614,8 +2900,12 @@
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
 
 
             if (
@@ -2656,6 +2946,12 @@
 
         catch (e) {
 
+            console.error(
+                "Scan error:",
+                e
+            );
+
+
             showToast(
                 "Scan error",
                 "error"
@@ -2689,10 +2985,12 @@
 
         if (!scholarId) {
 
-            return showToast(
+            showToast(
                 "Enter Scholar ID",
                 "error"
             );
+
+            return;
         }
 
 
@@ -2723,8 +3021,12 @@
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
 
 
             if (data.success) {
@@ -2745,7 +3047,8 @@
             } else {
 
                 showToast(
-                    data.message,
+                    data.message ||
+                    "Reset failed.",
                     "error"
                 );
             }
@@ -2753,6 +3056,12 @@
         }
 
         catch (e) {
+
+            console.error(
+                "Reset error:",
+                e
+            );
+
 
             showToast(
                 "Reset failed",
@@ -2802,8 +3111,12 @@
                 );
 
 
+            const result =
+                await readApiResponse(res);
+
+
             const data =
-                await res.json();
+                result.data;
 
 
             if (data.success) {
@@ -2816,7 +3129,8 @@
             } else {
 
                 showToast(
-                    data.message,
+                    data.message ||
+                    "Reset failed.",
                     "error"
                 );
             }
@@ -2824,6 +3138,12 @@
         }
 
         catch (e) {
+
+            console.error(
+                "Reset all error:",
+                e
+            );
+
 
             showToast(
                 "Reset all failed",
@@ -2844,6 +3164,7 @@
             html5QrcodeScanner
                 .clear()
                 .catch(() => {});
+
 
             html5QrcodeScanner =
                 null;
@@ -2866,4 +3187,5 @@
 </script>
 
 </body>
+
 </html>
