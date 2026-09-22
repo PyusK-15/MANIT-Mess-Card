@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const MONGO_URI =
     process.env.MONGO_URI ||
-    'mongodb+srv://pyus1528_db_user:qG3feuciLBXuBciS@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority';
+    'mongodb+srv://pyus1528_db_user:Piyush123@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority';
 
 mongoose.connect(MONGO_URI, {
     maxPoolSize: 50,
@@ -46,8 +46,11 @@ mongoose.connect(MONGO_URI, {
    This is only the account used to SEND OTP emails.
    ========================================================= */
 
-const EMAIL_USER = process.env.EMAIL_USER || '';
-const EMAIL_PASS = process.env.EMAIL_PASS || '';
+const EMAIL_1 = process.env.EMAIL_1;
+const PASS_1 = process.env.PASS_1;
+
+const EMAIL_2 = process.env.EMAIL_2;
+const PASS_2 = process.env.PASS_2;
 
 let transporter = null;
 
