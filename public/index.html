@@ -10,7 +10,9 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>MANIT Digital Mess Identity Card</title>
+    <title>
+        MANIT Digital Mess Card
+    </title>
 
     <link
         rel="icon"
@@ -18,816 +20,1292 @@
         href="/manit-logo.png"
     >
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
     <style>
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-        :root {
-            --primary: #0a2540;
-            --accent: #2563eb;
-            --accent-gold: #d97706;
-            --success: #059669;
-            --danger: #dc2626;
-            --bg: #e2e8f0;
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-        }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+        }
+
+        :root {
+            --navy: #0a2540;
+            --blue: #2563eb;
+            --blue2: #3b82f6;
+            --green: #059669;
+            --red: #dc2626;
+            --orange: #d97706;
+            --light: #f5f7fb;
+            --border: #e5e7eb;
+            --text: #172033;
+            --muted: #64748b;
+            --white: #ffffff;
         }
 
         body {
-            background-color: var(--bg);
-            color: var(--text-dark);
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
-            padding: 20px 10px;
+            font-family:
+                Inter,
+                Arial,
+                sans-serif;
 
-            background: linear-gradient(
-                135deg,
-                #cbd5e1 0%,
-                #f1f5f9 100%
-            );
+            background:
+                radial-gradient(
+                    circle at top left,
+                    #dbeafe,
+                    transparent 35%
+                ),
+                linear-gradient(
+                    135deg,
+                    #f8fafc,
+                    #eef2ff
+                );
+
+            color: var(--text);
         }
 
-        .app-container {
-            width: 100%;
-            max-width: 420px;
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+
+        /* =====================================================
+           HEADER
+           ===================================================== */
+
+        header {
+            height: 72px;
+
+            background:
+                rgba(10, 37, 64, 0.96);
+
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 28px;
+
+            box-shadow:
+                0 8px 30px
+                rgba(15, 23, 42, 0.18);
+
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            background: white;
+            border-radius: 50%;
+            padding: 4px;
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+
+        /* =====================================================
+           MAIN
+           ===================================================== */
+
+        main {
+            width: min(1100px, 94%);
+            margin: 40px auto;
         }
 
         .view {
             display: none;
-            opacity: 0;
-            transform: translateY(8px);
-            transition: all 0.3s ease;
         }
 
         .view.active {
             display: block;
-            opacity: 1;
-            transform: translateY(0);
         }
 
-        .panel-box {
-            background: white;
-            padding: 35px 28px;
-            border-radius: 20px;
 
-            box-shadow:
-                0 15px 35px rgba(0, 0, 0, 0.08);
-        }
+        /* =====================================================
+           AUTH CARD
+           ===================================================== */
 
-        .header-emblem {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .logo-img-top {
-            width: 72px;
-            height: auto;
-            object-fit: contain;
-            margin-bottom: 12px;
-
-            filter:
-                drop-shadow(
-                    0 4px 6px rgba(0, 0, 0, 0.08)
-                );
-        }
-
-        .header-emblem h1 {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: -0.5px;
-        }
-
-        .header-emblem p {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--accent-gold);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 3px;
-        }
-
-        .input-group {
-            margin-bottom: 14px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-        }
-
-        .req {
-            color: var(--danger);
-            font-weight: bold;
-            margin-left: 2px;
-        }
-
-        input[type="text"],
-        input[type="password"],
-        input[type="file"],
-        input[type="number"] {
-            width: 100%;
-            padding: 13px 15px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 14px;
-            background: #f8fafc;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: var(--accent);
-            background: #ffffff;
-        }
-
-        input:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: #000;
-            transform: translateY(-1px);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-link {
-            background: transparent;
-            color: var(--accent);
-            border: none;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 12px;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--text-muted);
-            border: 1.5px solid #e2e8f0;
-            margin-top: 12px;
-        }
-
-        .btn-outline:hover {
-            background: #f8fafc;
-            color: var(--text-dark);
-        }
-
-        .otp-info {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e40af;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            line-height: 1.5;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .otp-email {
-            font-weight: 800;
-            color: var(--primary);
-            word-break: break-all;
-            margin-top: 4px;
-        }
-
-        .otp-input {
-            text-align: center;
-            font-size: 24px !important;
-            font-weight: 800;
-            letter-spacing: 8px;
-        }
-
-        .resend-text {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 12px;
-            margin-top: 12px;
-        }
-
-        .resend-button {
-            background: transparent;
-            color: var(--accent);
-            padding: 0;
-            margin: 5px 0 0;
-            font-size: 12px;
-            text-decoration: underline;
-        }
-
-        .resend-button:hover {
-            background: transparent;
-            transform: none;
-        }
-
-        .email-preview {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 10px 12px;
-            border-radius: 10px;
-            margin-top: 5px;
-            font-size: 13px;
-            color: var(--primary);
-            font-weight: 700;
-            word-break: break-all;
-        }
-
-        .id-badge {
-            background: #ffffff;
-            border-radius: 20px;
-            overflow: hidden;
-
-            box-shadow:
-                0 20px 45px rgba(15, 23, 42, 0.15);
-
-            border-top: 8px solid var(--accent-gold);
-            position: relative;
-        }
-
-        .badge-header {
-            background: var(--primary);
-            padding: 16px 18px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: white;
-        }
-
-        .badge-logo-frame {
-            width: 52px;
-            height: 52px;
-            background: white;
-            border-radius: 50%;
+        .auth-wrapper {
+            min-height:
+                calc(100vh - 160px);
 
             display: flex;
             align-items: center;
             justify-content: center;
-
-            border: 2px solid var(--accent-gold);
-            flex-shrink: 0;
-            padding: 4px;
-            overflow: hidden;
         }
 
-        .badge-logo-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .auth-card {
+            width: min(470px, 100%);
+
+            background: white;
+
+            border:
+                1px solid
+                rgba(255,255,255,.8);
+
+            border-radius: 26px;
+
+            padding: 34px;
+
+            box-shadow:
+                0 25px 70px
+                rgba(15,23,42,.12);
         }
 
-        .badge-titles h3 {
-            font-size: 13.5px;
+        .auth-logo {
+            width: 76px;
+            height: 76px;
+            display: block;
+            margin: 0 auto 18px;
+        }
+
+        .auth-card h1 {
+            text-align: center;
+            color: var(--navy);
+            font-size: 26px;
+        }
+
+        .auth-description {
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            margin:
+                9px 0 25px;
+            line-height: 1.5;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
             font-weight: 800;
-            letter-spacing: 0.3px;
-            line-height: 1.2;
+            color: #475569;
+            margin-bottom: 7px;
         }
 
-        .badge-titles p {
-            font-size: 10.5px;
-            color: #cbd5e1;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-top: 2px;
+        .field input {
+            width: 100%;
+
+            border:
+                1px solid
+                var(--border);
+
+            border-radius: 13px;
+
+            padding: 13px 14px;
+
+            outline: none;
+
+            transition:
+                .2s ease;
+
+            background: #fbfdff;
         }
 
-        .badge-identity {
-            display: flex;
-            padding: 18px 20px 10px 20px;
-            gap: 18px;
-            align-items: center;
-            background: #ffffff;
+        .field input:focus {
+            border-color:
+                var(--blue);
+
+            box-shadow:
+                0 0 0 4px
+                rgba(37,99,235,.1);
+
+            background: white;
         }
 
-        .photo-frame {
-            width: 88px;
-            height: 105px;
-            border-radius: 12px;
-            border: 2px solid #cbd5e1;
+        .primary-btn {
+            width: 100%;
+
+            border: none;
+
+            border-radius: 14px;
+
+            padding: 14px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--blue),
+                    #1d4ed8
+                );
+
+            font-weight: 800;
+
+            box-shadow:
+                0 10px 25px
+                rgba(37,99,235,.22);
+
+            transition:
+                transform .18s,
+                box-shadow .18s;
+        }
+
+        .primary-btn:hover {
+            transform:
+                translateY(-2px);
+
+            box-shadow:
+                0 15px 30px
+                rgba(37,99,235,.28);
+        }
+
+        .primary-btn:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .secondary-btn {
+            width: 100%;
+
+            border:
+                1px solid
+                var(--border);
+
+            background: white;
+
+            color: var(--navy);
+
+            border-radius: 14px;
+
+            padding: 12px;
+
+            margin-top: 10px;
+
+            font-weight: 700;
+        }
+
+        .switch-text {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .link-btn {
+            border: none;
+            background: none;
+            color: var(--blue);
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+
+        /* =====================================================
+           OTP
+           ===================================================== */
+
+        .otp-input {
+            text-align: center;
+
+            letter-spacing:
+                9px;
+
+            font-size: 25px;
+
+            font-weight: 800;
+        }
+
+        .otp-email {
+            background:
+                #eff6ff;
+
+            border-radius: 13px;
+
+            padding: 12px;
+
+            color:
+                #1e40af;
+
+            text-align: center;
+
+            font-size: 13px;
+
+            margin-bottom: 20px;
+        }
+
+        .resend {
+            text-align: center;
+
+            color:
+                var(--muted);
+
+            font-size: 13px;
+
+            margin-top: 15px;
+        }
+
+
+        /* =====================================================
+           STUDENT CARD
+           ===================================================== */
+
+        .student-container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .identity-card {
             overflow: hidden;
-            flex-shrink: 0;
-            background: #f1f5f9;
+
+            background: white;
+
+            border-radius: 30px;
+
+            box-shadow:
+                0 30px 80px
+                rgba(15,23,42,.15);
         }
 
-        .photo-frame img {
+        .card-top {
+            background:
+                linear-gradient(
+                    135deg,
+                    #071d35,
+                    #0a3963
+                );
+
+            color: white;
+
+            padding: 30px;
+
+            position: relative;
+        }
+
+        .card-top::after {
+            content: "";
+
+            position: absolute;
+
+            width: 180px;
+            height: 180px;
+
+            right: -70px;
+            top: -70px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255,255,255,.07);
+        }
+
+        .card-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .college-name {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .college-subtitle {
+            opacity: .72;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .verified-tag {
+            padding: 7px 12px;
+            border-radius: 999px;
+
+            background:
+                rgba(16,185,129,.15);
+
+            border:
+                1px solid
+                rgba(52,211,153,.4);
+
+            color:
+                #6ee7b7;
+
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .identity-body {
+            display: grid;
+
+            grid-template-columns:
+                160px 1fr;
+
+            gap: 28px;
+
+            padding: 30px;
+        }
+
+        .photo-wrap {
+            width: 160px;
+            height: 190px;
+
+            border-radius: 20px;
+
+            overflow: hidden;
+
+            background:
+                #e2e8f0;
+
+            border:
+                5px solid
+                #f8fafc;
+
+            box-shadow:
+                0 10px 25px
+                rgba(15,23,42,.12);
+        }
+
+        .photo-wrap img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .identity-meta {
-            flex-grow: 1;
-            text-align: left;
+        .student-name {
+            font-size: 29px;
+            font-weight: 900;
+            color: var(--navy);
         }
 
-        .meta-name {
-            font-size: 17px;
-            font-weight: 800;
-            color: var(--primary);
-            line-height: 1.2;
-            margin-bottom: 6px;
+        .student-info {
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+            gap: 12px;
+
+            margin-top: 18px;
         }
 
-        .meta-field {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 3px;
+        .info-box {
+            background:
+                #f8fafc;
+
+            border:
+                1px solid
+                #e8edf3;
+
+            padding: 13px;
+
+            border-radius: 14px;
         }
 
-        .meta-field strong {
-            color: var(--text-dark);
-        }
-
-        .verification-tag {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 10.5px;
+        .info-label {
+            font-size: 10px;
+            color: var(--muted);
             font-weight: 800;
             text-transform: uppercase;
+        }
+
+        .info-value {
             margin-top: 4px;
+            font-size: 14px;
+            font-weight: 800;
         }
 
-        .tag-verified {
-            background: #dcfce7;
-            color: var(--success);
-        }
 
-        .tag-pending {
-            background: #fef3c7;
-            color: var(--accent-gold);
-        }
+        /* =====================================================
+           LIVE MEAL PANEL
+           ===================================================== */
 
-        .badge-qr-section {
-            padding: 15px 20px 20px 20px;
-            background: #f8fafc;
-            border-top: 1px dashed #cbd5e1;
-            text-align: center;
-            min-height: 250px;
-        }
+        .meal-panel {
+            margin:
+                0 30px 30px;
 
-        .qr-wrapper {
+            border-radius: 24px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eff6ff,
+                    #f8fafc
+                );
+
+            border:
+                1px solid
+                #dbeafe;
+
+            padding: 25px;
+
             position: relative;
-            width: 180px;
-            height: 180px;
-            margin: 0 auto;
-            background: white;
-            padding: 10px;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-
-            box-shadow:
-                0 4px 12px rgba(0,0,0,0.04);
 
             overflow: hidden;
         }
 
-        #qrcode img {
-            width: 100%;
-            height: 100%;
-        }
+        .meal-panel::before {
+            content: "";
 
-        .scanner-line {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--accent);
 
-            box-shadow:
-                0 0 10px var(--accent);
+            width: 220px;
+            height: 220px;
 
-            animation: scan 2.4s infinite;
+            right: -100px;
+            bottom: -120px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(37,99,235,.08);
         }
 
-        @keyframes scan {
-
-            0% {
-                top: 0;
-            }
-
-            50% {
-                top: 96%;
-            }
-
-            100% {
-                top: 0;
-            }
-
-        }
-
-        .claimed-box {
-            display: none;
-            width: 100%;
-            padding: 25px 15px;
-            background: #ecfdf5;
-            border: 2px solid var(--success);
-            border-radius: 16px;
-            margin: 10px auto;
-        }
-
-        .claimed-box h3 {
-            color: var(--success);
-            font-size: 20px;
-            font-weight: 800;
-            margin-bottom: 8px;
-        }
-
-        .claimed-box p {
-            font-size: 13px;
-            color: var(--text-dark);
-            font-weight: 600;
-        }
-
-        .live-status {
-            margin-top: 12px;
-            display: inline-flex;
+        .live-header {
+            display: flex;
             align-items: center;
-            gap: 6px;
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
+            justify-content: space-between;
+
+            position: relative;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color:
+                var(--green);
+
+            font-size: 11px;
+
+            font-weight: 900;
+
+            letter-spacing: 1px;
         }
 
         .live-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
+            width: 9px;
+            height: 9px;
+
+            background:
+                #10b981;
+
             border-radius: 50%;
-            animation: blink 1.2s infinite;
+
+            animation:
+                livePulse 1.3s
+                infinite;
         }
 
-        @keyframes blink {
-
-            0%, 100% {
+        @keyframes livePulse {
+            0%,100% {
+                transform: scale(1);
                 opacity: 1;
             }
 
             50% {
-                opacity: 0.3;
+                transform: scale(1.65);
+                opacity: .45;
             }
-
         }
 
-        .active-slot {
-            font-size: 12px;
+        .clock {
+            font-size: 13px;
+            font-weight: 800;
+            color: #475569;
+        }
+
+        .meal-title {
+            margin-top: 20px;
+
+            font-size: 13px;
+            color: var(--muted);
             font-weight: 700;
-            color: var(--accent);
+        }
+
+        .meal-name {
+            font-size: 34px;
+            font-weight: 950;
+            color: var(--navy);
+            margin-top: 4px;
+        }
+
+        .meal-status {
             margin-top: 8px;
-            text-transform: uppercase;
+
+            color: var(--muted);
+
+            font-size: 13px;
+        }
+
+        .claim-btn {
+            position: relative;
+
+            width: 100%;
+
+            border: none;
+
+            margin-top: 22px;
+
+            padding: 18px;
+
+            border-radius: 17px;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #059669,
+                    #047857
+                );
+
+            font-size: 16px;
+
+            font-weight: 950;
+
+            letter-spacing: .5px;
+
+            box-shadow:
+                0 14px 30px
+                rgba(5,150,105,.22);
+
+            overflow: hidden;
+
+            transition:
+                transform .18s,
+                box-shadow .18s;
+        }
+
+        .claim-btn::before {
+            content: "";
+
+            position: absolute;
+
+            top: 0;
+            left: -100%;
+
+            width: 70%;
+            height: 100%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,.25),
+                    transparent
+                );
+
+            animation:
+                buttonShine 2.5s
+                infinite;
+        }
+
+        @keyframes buttonShine {
+            0% {
+                left: -100%;
+            }
+
+            55%,100% {
+                left: 140%;
+            }
+        }
+
+        .claim-btn:hover {
+            transform:
+                translateY(-2px);
+
+            box-shadow:
+                0 18px 35px
+                rgba(5,150,105,.3);
+        }
+
+        .claim-btn:disabled {
+            cursor: not-allowed;
+            transform: none;
+            opacity: .7;
+        }
+
+        .claim-success {
+            margin-top: 20px;
+
+            border-radius: 18px;
+
+            padding: 18px;
+
+            background:
+                #ecfdf5;
+
+            border:
+                1px solid
+                #a7f3d0;
+
+            color:
+                #065f46;
+
+            text-align: center;
+
+            animation:
+                successPop .4s ease;
+        }
+
+        @keyframes successPop {
+            from {
+                transform:
+                    scale(.9);
+                opacity: 0;
+            }
+
+            to {
+                transform:
+                    scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-icon {
+            width: 54px;
+            height: 54px;
+
+            margin:
+                0 auto 9px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background:
+                #10b981;
+
+            color: white;
+
+            font-size: 28px;
+
+            font-weight: 900;
+        }
+
+        .success-title {
+            font-size: 19px;
+            font-weight: 950;
+        }
+
+        .success-subtitle {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: .75;
+        }
+
+        .logout-btn {
+            margin:
+                0 30px 30px;
+
+            width:
+                calc(100% - 60px);
+
+            border:
+                1px solid
+                #e2e8f0;
+
+            background:
+                white;
+
+            padding: 12px;
+
+            border-radius: 13px;
+
+            color:
+                #475569;
+
+            font-weight: 800;
+        }
+
+
+        /* =====================================================
+           STAFF
+           ===================================================== */
+
+        .staff-card {
+            max-width: 600px;
+            margin: 80px auto;
+
+            background: white;
+
+            border-radius: 26px;
+
+            padding: 30px;
+
+            box-shadow:
+                0 25px 70px
+                rgba(15,23,42,.12);
+        }
+
+        .staff-card h2 {
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+
+        .staff-description {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 25px;
+        }
+
+        .reset-section {
+            padding: 20px;
+
+            background:
+                #f8fafc;
+
+            border:
+                1px solid
+                #e2e8f0;
+
+            border-radius: 18px;
+
+            margin-bottom: 15px;
+        }
+
+        .reset-section h3 {
+            font-size: 15px;
+            margin-bottom: 13px;
+        }
+
+        .danger-btn {
+            width: 100%;
+
+            border: none;
+
+            background:
+                #dc2626;
+
+            color: white;
+
+            padding: 13px;
+
+            border-radius: 13px;
+
+            font-weight: 900;
+
+            margin-top: 10px;
+        }
+
+        .staff-logout {
+            width: 100%;
+
+            border:
+                1px solid
+                var(--border);
+
+            background: white;
+
+            padding: 12px;
+
+            border-radius: 13px;
+
+            font-weight: 800;
+
+            margin-top: 5px;
+        }
+
+
+        /* =====================================================
+           TOAST
+           ===================================================== */
+
+        #toast-container {
+            position: fixed;
+
+            top: 88px;
+            right: 20px;
+
+            z-index: 9999;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 10px;
         }
 
         .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
+            min-width: 270px;
+            max-width: 390px;
 
-            transform:
-                translateX(-50%)
-                translateY(-100px);
+            padding: 14px 17px;
 
-            padding: 15px 22px;
             border-radius: 14px;
-            font-weight: 700;
-            font-size: 14px;
+
+            background:
+                #0f172a;
+
             color: white;
 
             box-shadow:
-                0 10px 25px rgba(0,0,0,0.15);
+                0 15px 40px
+                rgba(0,0,0,.2);
 
-            transition: transform 0.3s;
-            z-index: 1000;
-            text-align: center;
-            min-width: 280px;
-            max-width: 92%;
-        }
+            font-size: 13px;
 
-        .toast.show {
-            transform:
-                translateX(-50%)
-                translateY(0);
+            font-weight: 700;
+
+            animation:
+                toastIn .25s ease;
         }
 
         .toast.success {
-            background: var(--primary);
+            background:
+                #047857;
         }
 
         .toast.error {
-            background: var(--danger);
+            background:
+                #b91c1c;
+        }
+
+        @keyframes toastIn {
+            from {
+                transform:
+                    translateX(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform:
+                    translateX(0);
+                opacity: 1;
+            }
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
+
+        @media(max-width:700px) {
+
+            header {
+                padding: 0 15px;
+            }
+
+            main {
+                width: 94%;
+                margin: 25px auto;
+            }
+
+            .auth-card {
+                padding: 25px 20px;
+            }
+
+            .identity-body {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .photo-wrap {
+                margin: auto;
+            }
+
+            .student-info {
+                grid-template-columns: 1fr;
+            }
+
+            .card-heading {
+                gap: 10px;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .student-name {
+                font-size: 25px;
+            }
+
+            .meal-name {
+                font-size: 28px;
+            }
+
+            .meal-panel {
+                margin:
+                    0 15px 20px;
+            }
+
+            .logout-btn {
+                margin:
+                    0 15px 20px;
+
+                width:
+                    calc(100% - 30px);
+            }
         }
 
     </style>
 
 </head>
 
+
 <body>
 
-<div id="toast" class="toast"></div>
+<header>
 
-<div class="app-container">
+    <div class="brand">
 
+        <img
+            src="/manit-logo.png"
+            alt="MANIT"
+        >
 
-    <!-- =====================================================
-         STUDENT LOGIN
-         ===================================================== -->
+        <div>
 
-    <div id="view-login" class="view active">
-
-        <div class="panel-box">
-
-            <div class="header-emblem">
-
-                <img
-                    src="/manit-logo.png"
-                    alt="MANIT Logo"
-                    class="logo-img-top"
-                >
-
-                <h1>Mess Access System</h1>
-
-                <p>Digital Identity Portal</p>
-
+            <div class="brand-title">
+                MANIT Digital Mess Card
             </div>
 
-
-            <div class="input-group">
-
-                <label>
-                    Scholar Number
-                    <span class="req">*</span>
-                </label>
-
-                <input
-                    type="text"
-                    id="login-id"
-                    placeholder="Enter Scholar Number"
-                    autocomplete="off"
-                >
-
+            <div class="brand-subtitle">
+                National Institute of Technology, Bhopal
             </div>
-
-
-            <div class="input-group">
-
-                <label>
-                    Password
-                    <span class="req">*</span>
-                </label>
-
-                <input
-                    type="password"
-                    id="login-pass"
-                    placeholder="Enter Password"
-                >
-
-            </div>
-
-
-            <button
-                id="btn-login"
-                onclick="handleLogin()"
-            >
-                Display Identity Card
-            </button>
-
-
-            <div
-                style="
-                    text-align:center;
-                    margin-top:15px;
-                "
-            >
-
-                <button
-                    class="btn-link"
-                    onclick="switchView('view-register')"
-                >
-                    New Student? Register Here
-                </button>
-
-            </div>
-
-
-            <button
-                class="btn-outline"
-                onclick="switchView('view-admin-login')"
-            >
-                Mess Staff Scanner
-            </button>
 
         </div>
 
     </div>
 
+</header>
+
+
+<main>
+
 
     <!-- =====================================================
-         STUDENT REGISTRATION
+         LOGIN
          ===================================================== -->
 
-    <div id="view-register" class="view">
+    <section
+        id="view-login"
+        class="view active"
+    >
 
-        <div class="panel-box">
+        <div class="auth-wrapper">
 
-            <div class="header-emblem">
+            <div class="auth-card">
 
                 <img
+                    class="auth-logo"
                     src="/manit-logo.png"
-                    alt="MANIT Logo"
-                    class="logo-img-top"
+                    alt="MANIT"
                 >
 
-                <h1>Student Registration</h1>
+                <h1>
+                    Student Login
+                </h1>
 
-                <p>MANIT Student Verification</p>
+                <p class="auth-description">
+                    Login to access your digital
+                    mess identity card.
+                </p>
+
+
+                <div class="field">
+
+                    <label>
+                        SCHOLAR NUMBER
+                    </label>
+
+                    <input
+                        id="login-id"
+                        type="text"
+                        placeholder="Enter scholar number"
+                        autocomplete="username"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        PASSWORD
+                    </label>
+
+                    <input
+                        id="login-pass"
+                        type="password"
+                        placeholder="Enter password"
+                        autocomplete="current-password"
+                    >
+
+                </div>
+
+
+                <button
+                    id="btn-login"
+                    class="primary-btn"
+                    onclick="handleLogin()"
+                >
+                    Display Identity Card
+                </button>
+
+
+                <div class="switch-text">
+
+                    Don't have an account?
+
+                    <button
+                        class="link-btn"
+                        onclick="showRegistration()"
+                    >
+                        Register
+                    </button>
+
+                </div>
+
+
+                <div class="switch-text">
+
+                    Mess Staff?
+
+                    <button
+                        class="link-btn"
+                        onclick="showStaffLogin()"
+                    >
+                        Staff Login
+                    </button>
+
+                </div>
 
             </div>
 
+        </div>
 
-            <!-- REGISTRATION FORM -->
+    </section>
 
-            <div id="registration-form">
 
-                <div class="input-group">
+
+    <!-- =====================================================
+         REGISTRATION
+         ===================================================== -->
+
+    <section
+        id="view-registration"
+        class="view"
+    >
+
+        <div class="auth-wrapper">
+
+            <div class="auth-card">
+
+                <img
+                    class="auth-logo"
+                    src="/manit-logo.png"
+                    alt="MANIT"
+                >
+
+                <h1>
+                    Student Registration
+                </h1>
+
+                <p class="auth-description">
+                    Your OTP will be sent to your
+                    official MANIT student email.
+                </p>
+
+
+                <div class="field">
 
                     <label>
-                        Scholar Number
-                        <span class="req">*</span>
+                        SCHOLAR NUMBER
                     </label>
 
                     <input
-                        type="text"
                         id="reg-id"
-                        placeholder="Enter Scholar Number"
-                        autocomplete="off"
+                        type="text"
+                        placeholder="Enter scholar number"
                     >
 
                 </div>
 
 
-                <div class="input-group">
+                <div class="field">
 
                     <label>
-                        Official MANIT Email
-                    </label>
-
-                    <div
-                        id="email-preview"
-                        class="email-preview"
-                    >
-                        Enter Scholar Number first
-                    </div>
-
-                    <div
-                        style="
-                            font-size:11px;
-                            color:#64748b;
-                            margin-top:5px;
-                        "
-                    >
-                        OTP will be sent to this official MANIT email.
-                    </div>
-
-                </div>
-
-
-                <div class="input-group">
-
-                    <label>
-                        Full Name
-                        <span class="req">*</span>
+                        FULL NAME
                     </label>
 
                     <input
-                        type="text"
                         id="reg-name"
-                        placeholder="Full Name as on ID Card"
-                    >
-
-                </div>
-
-
-                <div class="input-group">
-
-                    <label>
-                        Hostel & Room Number
-                        <span class="req">*</span>
-                    </label>
-
-                    <input
                         type="text"
+                        placeholder="Enter your name"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        ROOM NUMBER
+                    </label>
+
+                    <input
                         id="reg-room"
-                        placeholder="e.g. Hostel 10, Room 304"
+                        type="text"
+                        placeholder="Enter hostel room"
                     >
 
                 </div>
 
 
-                <div class="input-group">
+                <div class="field">
 
                     <label>
-                        Student Photo
-                        <span class="req">*</span>
+                        PASSWORD
                     </label>
 
                     <input
-                        type="file"
-                        id="reg-photo-input"
-                        accept="image/*"
-                        onchange="previewPhoto(event)"
-                    >
-
-
-                    <div
-                        style="
-                            margin-top:10px;
-                            display:none;
-                            align-items:center;
-                        "
-                        id="photo-preview-container"
-                    >
-
-                        <img
-                            id="reg-photo-preview"
-                            src=""
-                            style="
-                                width:60px;
-                                height:75px;
-                                object-fit:cover;
-                                border-radius:8px;
-                                border:2px solid var(--accent);
-                            "
-                        >
-
-                        <span
-                            style="
-                                font-size:11px;
-                                color:var(--success);
-                                margin-left:10px;
-                                font-weight:bold;
-                            "
-                            id="photo-size-label"
-                        ></span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="input-group">
-
-                    <label>
-                        Create Password
-                        <span class="req">*</span>
-                    </label>
-
-                    <input
-                        type="password"
                         id="reg-pass"
+                        type="password"
                         placeholder="Minimum 6 characters"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label>
+                        PROFILE PHOTO
+                    </label>
+
+                    <input
+                        id="reg-photo"
+                        type="file"
+                        accept="image/*"
                     >
 
                 </div>
@@ -835,66 +1313,77 @@
 
                 <button
                     id="btn-register"
-                    onclick="handleRegister()"
+                    class="primary-btn"
+                    onclick="handleRegistration()"
                 >
-                    Send OTP to MANIT Email
+                    Send Verification OTP
                 </button>
 
 
                 <button
-                    class="btn-outline"
-                    onclick="switchView('view-login')"
+                    class="secondary-btn"
+                    onclick="showLogin()"
                 >
                     Back to Login
                 </button>
 
             </div>
 
+        </div>
 
-            <!-- =================================================
-                 OTP FORM
-                 ================================================= -->
+    </section>
 
-            <div
-                id="otp-form"
-                style="display:none;"
-            >
 
-                <div class="otp-info">
 
-                    <div>
-                        A verification OTP has been sent to:
-                    </div>
+    <!-- =====================================================
+         OTP
+         ===================================================== -->
 
-                    <div
-                        id="otp-email"
-                        class="otp-email"
-                    >
-                        student@stu.manit.ac.in
-                    </div>
+    <section
+        id="view-otp"
+        class="view"
+    >
 
-                    <div style="margin-top:6px;">
-                        Check your MANIT student email inbox,
-                        including Spam/Junk.
-                    </div>
+        <div class="auth-wrapper">
 
+            <div class="auth-card">
+
+                <img
+                    class="auth-logo"
+                    src="/manit-logo.png"
+                    alt="MANIT"
+                >
+
+                <h1>
+                    Verify Email
+                </h1>
+
+                <p class="auth-description">
+                    Enter the OTP sent to your
+                    official MANIT student email.
+                </p>
+
+
+                <div
+                    id="otp-email"
+                    class="otp-email"
+                >
+                    OTP sent to your MANIT email.
                 </div>
 
 
-                <div class="input-group">
+                <div class="field">
 
                     <label>
-                        Enter 6-Digit OTP
-                        <span class="req">*</span>
+                        6-DIGIT OTP
                     </label>
 
                     <input
-                        type="text"
                         id="reg-otp"
                         class="otp-input"
-                        maxlength="6"
+                        type="text"
                         inputmode="numeric"
-                        autocomplete="one-time-code"
+                        maxlength="6"
                         placeholder="000000"
                     >
 
@@ -903,732 +1392,688 @@
 
                 <button
                     id="btn-verify"
-                    onclick="verifyOTP()"
+                    class="primary-btn"
+                    onclick="handleOTPVerification()"
                 >
-                    Verify OTP & Create Account
+                    Verify OTP
                 </button>
 
 
-                <div class="resend-text">
-
-                    Didn't receive the OTP?
-
-                    <button
-                        id="btn-resend"
-                        class="resend-button"
-                        onclick="resendOTP()"
-                        disabled
-                    >
-                        Resend OTP
-                    </button>
-
-                    <div
-                        id="resend-countdown"
-                        style="margin-top:4px;"
-                    >
-                        Please wait 60 seconds.
-                    </div>
-
+                <div
+                    id="resend-text"
+                    class="resend"
+                >
+                    You can resend OTP in
+                    <b id="resend-countdown">60</b>
+                    seconds.
                 </div>
 
 
                 <button
-                    class="btn-outline"
-                    onclick="backToRegistrationForm()"
+                    id="btn-resend"
+                    class="secondary-btn"
+                    disabled
+                    onclick="resendOTP()"
                 >
-                    Change Registration Details
+                    Resend OTP
+                </button>
+
+
+                <button
+                    class="secondary-btn"
+                    onclick="backToRegistration()"
+                >
+                    Back to Registration
                 </button>
 
             </div>
 
         </div>
 
-    </div>
+    </section>
+
+
+
+    <!-- =====================================================
+         STUDENT CARD
+         ===================================================== -->
+
+    <section
+        id="view-student"
+        class="view"
+    >
+
+        <div class="student-container">
+
+            <div class="identity-card">
+
+
+                <div class="card-top">
+
+                    <div class="card-heading">
+
+                        <div>
+
+                            <div class="college-name">
+                                MANIT
+                            </div>
+
+                            <div class="college-subtitle">
+                                Digital Mess Identity Card
+                            </div>
+
+                        </div>
+
+
+                        <div class="verified-tag">
+                            ✓ EMAIL VERIFIED
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="identity-body">
+
+
+                    <div class="photo-wrap">
+
+                        <img
+                            id="card-photo"
+                            alt="Student Photo"
+                        >
+
+                    </div>
+
+
+                    <div>
+
+                        <div
+                            id="card-name"
+                            class="student-name"
+                        >
+                            Student
+                        </div>
+
+
+                        <div class="student-info">
+
+
+                            <div class="info-box">
+
+                                <div class="info-label">
+                                    Scholar Number
+                                </div>
+
+                                <div
+                                    id="card-id"
+                                    class="info-value"
+                                >
+                                    —
+                                </div>
+
+                            </div>
+
+
+                            <div class="info-box">
+
+                                <div class="info-label">
+                                    Room
+                                </div>
+
+                                <div
+                                    id="card-room"
+                                    class="info-value"
+                                >
+                                    —
+                                </div>
+
+                            </div>
+
+
+                            <div class="info-box">
+
+                                <div class="info-label">
+                                    Email
+                                </div>
+
+                                <div
+                                    id="card-email"
+                                    class="info-value"
+                                >
+                                    —
+                                </div>
+
+                            </div>
+
+
+                            <div class="info-box">
+
+                                <div class="info-label">
+                                    Card Status
+                                </div>
+
+                                <div
+                                    class="info-value"
+                                >
+                                    Active
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- LIVE MEAL -->
+
+                <div class="meal-panel">
+
+
+                    <div class="live-header">
+
+                        <div class="live-indicator">
+
+                            <span class="live-dot"></span>
+
+                            LIVE MESS STATUS
+
+                        </div>
+
+
+                        <div
+                            id="live-clock"
+                            class="clock"
+                        >
+                            --:--:--
+                        </div>
+
+                    </div>
+
+
+                    <div class="meal-title">
+                        CURRENT MEAL
+                    </div>
+
+
+                    <div
+                        id="current-meal"
+                        class="meal-name"
+                    >
+                        Checking...
+                    </div>
+
+
+                    <div
+                        id="meal-status"
+                        class="meal-status"
+                    >
+                        Connecting to live mess service...
+                    </div>
+
+
+                    <button
+                        id="claim-button"
+                        class="claim-btn"
+                        onclick="claimMeal()"
+                    >
+                        CLAIM MEAL
+                    </button>
+
+
+                    <div
+                        id="claim-success"
+                        class="claim-success hidden"
+                    >
+
+                        <div class="success-icon">
+                            ✓
+                        </div>
+
+                        <div class="success-title">
+                            MEAL RECEIVED
+                        </div>
+
+                        <div
+                            id="claim-success-text"
+                            class="success-subtitle"
+                        >
+                            Your meal has been recorded.
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <button
+                    class="logout-btn"
+                    onclick="logout()"
+                >
+                    Logout
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
 
 
     <!-- =====================================================
          STAFF LOGIN
          ===================================================== -->
 
-    <div id="view-admin-login" class="view">
+    <section
+        id="view-staff-login"
+        class="view"
+    >
 
-        <div class="panel-box">
+        <div class="auth-wrapper">
 
-            <div class="header-emblem">
+            <div class="auth-card">
 
                 <img
+                    class="auth-logo"
                     src="/manit-logo.png"
-                    alt="MANIT Logo"
-                    class="logo-img-top"
-                    style="width:58px;"
+                    alt="MANIT"
                 >
 
-                <h1>Mess Staff Terminal</h1>
+                <h1>
+                    Mess Staff
+                </h1>
 
-                <p>Authorized Counter Access</p>
+                <p class="auth-description">
+                    Staff controls are limited to
+                    resetting meal claims.
+                </p>
 
-            </div>
 
+                <div class="field">
 
-            <div class="input-group">
-
-                <label>
-                    Staff Password
-                    <span class="req">*</span>
-                </label>
-
-                <input
-                    type="password"
-                    id="admin-pass"
-                    placeholder="Enter Staff Password"
-                >
-
-            </div>
-
-
-            <button onclick="handleAdminLogin()">
-                Open Counter Scanner
-            </button>
-
-
-            <button
-                class="btn-outline"
-                onclick="switchView('view-login')"
-            >
-                Back to Student Login
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         DIGITAL STUDENT CARD
-         ===================================================== -->
-
-    <div id="view-student" class="view">
-
-        <div class="id-badge">
-
-            <div class="badge-header">
-
-                <div class="badge-logo-frame">
-
-                    <img
-                        src="/manit-logo.png"
-                        alt="MANIT Emblem"
-                    >
-
-                </div>
-
-
-                <div class="badge-titles">
-
-                    <h3>
-                        MAULANA AZAD NATIONAL INSTITUTE OF TECHNOLOGY
-                    </h3>
-
-                    <p>
-                        BHOPAL, MADHYA PRADESH
-                    </p>
-
-                    <span
-                        style="
-                            background:var(--accent-gold);
-                            color:black;
-                            font-size:9px;
-                            font-weight:800;
-                            padding:2px 6px;
-                            border-radius:4px;
-                            margin-top:4px;
-                            display:inline-block;
-                        "
-                    >
-                        STUDENT MESS CARD
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="badge-identity">
-
-                <div class="photo-frame">
-
-                    <img
-                        id="card-photo"
-                        src=""
-                        alt="Student Portrait"
-                    >
-
-                </div>
-
-
-                <div class="identity-meta">
-
-                    <div
-                        class="meta-name"
-                        id="card-name"
-                    >
-                        Student Name
-                    </div>
-
-                    <div class="meta-field">
-
-                        Scholar ID:
-
-                        <strong id="card-id">
-                            ------
-                        </strong>
-
-                    </div>
-
-                    <div class="meta-field">
-
-                        Hostel/Room:
-
-                        <strong id="card-room">
-                            ------
-                        </strong>
-
-                    </div>
-
-                    <div
-                        id="card-tag"
-                        class="verification-tag tag-pending"
-                    >
-                        Pending Verification
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="badge-qr-section">
-
-                <div
-                    class="qr-wrapper"
-                    id="qr-container-box"
-                >
-
-                    <div id="qrcode"></div>
-
-                    <div class="scanner-line"></div>
-
-                </div>
-
-
-                <div
-                    class="claimed-box"
-                    id="claimed-container-box"
-                >
-
-                    <h3>
-                        ✅ Meal Received
-                    </h3>
-
-                    <p>
-                        Verified. QR resets automatically for the next meal window.
-                    </p>
-
-                </div>
-
-
-                <div>
-
-                    <div class="live-status">
-
-                        <div
-                            class="live-dot"
-                            id="live-dot"
-                        ></div>
-
-                        <span id="live-clock">
-                            00:00:00 AM
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    id="current-meal"
-                    class="active-slot"
-                >
-                    Connecting...
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <button
-            class="btn-outline"
-            onclick="logout()"
-            style="
-                background:white;
-                border-radius:12px;
-                margin-top:15px;
-            "
-        >
-            Exit Identity Card
-        </button>
-
-    </div>
-
-
-    <!-- =====================================================
-         STAFF SCANNER
-         ===================================================== -->
-
-    <div id="view-admin" class="view">
-
-        <div class="panel-box">
-
-            <div
-                style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    margin-bottom:15px;
-                "
-            >
-
-                <h2
-                    style="
-                        font-size:16px;
-                        font-weight:800;
-                    "
-                >
-                    Counter Camera
-                </h2>
-
-                <span
-                    style="
-                        background:#e0e7ff;
-                        color:var(--accent);
-                        padding:4px 8px;
-                        border-radius:6px;
-                        font-size:11px;
-                        font-weight:700;
-                    "
-                >
-                    Live
-                </span>
-
-            </div>
-
-
-            <div
-                id="reader"
-                style="
-                    border-radius:14px;
-                    overflow:hidden;
-                    border:none;
-                "
-            ></div>
-
-
-            <div
-                style="
-                    margin-top:15px;
-                    padding-top:15px;
-                    border-top:1px solid #e2e8f0;
-                    text-align:left;
-                "
-            >
-
-                <h4
-                    style="
-                        font-size:13px;
-                        font-weight:700;
-                        color:var(--primary);
-                        margin-bottom:8px;
-                    "
-                >
-                    Staff Card Reset
-                </h4>
-
-
-                <div
-                    style="
-                        display:flex;
-                        gap:8px;
-                    "
-                >
+                    <label>
+                        STAFF PIN
+                    </label>
 
                     <input
-                        type="text"
-                        id="manual-reset-id"
-                        placeholder="Scholar ID"
-                        style="
-                            padding:10px;
-                            font-size:13px;
-                        "
+                        id="staff-pass"
+                        type="password"
+                        placeholder="Enter staff PIN"
                     >
-
-
-                    <button
-                        onclick="resetSingleStudent()"
-                        style="
-                            width:auto;
-                            padding:10px 15px;
-                            margin:0;
-                            font-size:13px;
-                            background:var(--accent);
-                        "
-                    >
-                        Reset
-                    </button>
 
                 </div>
 
 
                 <button
-                    onclick="resetAllStudents()"
+                    class="primary-btn"
+                    onclick="staffLogin()"
+                >
+                    Open Staff Controls
+                </button>
+
+
+                <button
+                    class="secondary-btn"
+                    onclick="showLogin()"
+                >
+                    Back to Student Login
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         STAFF CONTROLS
+         ===================================================== -->
+
+    <section
+        id="view-staff"
+        class="view"
+    >
+
+        <div class="staff-card">
+
+            <h2>
+                Mess Staff Controls
+            </h2>
+
+            <p class="staff-description">
+                Reset meal claims when required.
+                There is no QR scanner or student
+                activation here.
+            </p>
+
+
+            <div class="reset-section">
+
+                <h3>
+                    Reset One Student
+                </h3>
+
+                <div class="field">
+
+                    <label>
+                        SCHOLAR NUMBER
+                    </label>
+
+                    <input
+                        id="reset-id"
+                        type="text"
+                        placeholder="Enter scholar number"
+                    >
+
+                </div>
+
+
+                <button
+                    class="danger-btn"
+                    onclick="resetOne()"
+                >
+                    RESET STUDENT MEAL
+                </button>
+
+            </div>
+
+
+            <div class="reset-section">
+
+                <h3>
+                    Reset Everyone
+                </h3>
+
+                <p
                     style="
-                        background:var(--accent-gold);
-                        margin-top:10px;
-                        padding:12px;
-                        font-size:13px;
+                        font-size:12px;
+                        color:#64748b;
+                        line-height:1.5;
                     "
                 >
-                    Reset All Students (Next Meal)
+                    This clears the current meal
+                    claim status for every registered
+                    student.
+                </p>
+
+
+                <button
+                    class="danger-btn"
+                    onclick="resetAll()"
+                >
+                    RESET ALL STUDENTS
                 </button>
 
             </div>
 
 
             <button
-                class="btn-outline"
-                onclick="stopScannerAndLogout()"
-                style="margin-top:15px;"
+                class="staff-logout"
+                onclick="staffLogout()"
             >
-                Close Terminal
+                Staff Logout
             </button>
 
         </div>
 
-    </div>
+    </section>
 
-</div>
+</main>
+
+
+<div id="toast-container"></div>
 
 
 <script>
 
-    const API_URL = '/api';
+    const API_URL = "/api";
 
-    let uploadedPhotoBase64 = "";
-    let qrcodeInstance = null;
-    let clockInterval = null;
-    let pollInterval = null;
-    let currentScholarId = null;
+
     let registrationScholarId = null;
+
     let resendTimer = null;
-    let html5QrcodeScanner = null;
-    let isProcessingScan = false;
+
+    let statusTimer = null;
+
+    let clockTimer = null;
+
+    let currentStudent = null;
+
+    let sessionToken = null;
+
+    let claiming = false;
 
 
-    /* =====================================================
-       TOAST
-       ===================================================== */
+    // =========================================================
+    // VIEW MANAGEMENT
+    // =========================================================
 
-    function showToast(msg, type) {
+    function switchView(id) {
 
-        const toast =
-            document.getElementById('toast');
+        document
+            .querySelectorAll(".view")
+            .forEach(view => {
 
-        toast.className =
-            `toast ${type} show`;
+                view.classList.remove(
+                    "active"
+                );
 
-        toast.innerHTML =
-            msg;
+            });
 
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 4000);
+
+        const target =
+            document.getElementById(id);
+
+        if (target) {
+
+            target.classList.add(
+                "active"
+            );
+
+        }
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
     }
 
 
-    /* =====================================================
-       SAFE API RESPONSE
-       ===================================================== */
+    function showLogin() {
 
-    async function readApiResponse(response) {
+        switchView(
+            "view-login"
+        );
+
+    }
+
+
+    function showRegistration() {
+
+        switchView(
+            "view-registration"
+        );
+
+    }
+
+
+    function showStaffLogin() {
+
+        switchView(
+            "view-staff-login"
+        );
+
+    }
+
+
+    // =========================================================
+    // TOAST
+    // =========================================================
+
+    function showToast(
+        message,
+        type = "normal"
+    ) {
+
+        const container =
+            document.getElementById(
+                "toast-container"
+            );
+
+        const toast =
+            document.createElement(
+                "div"
+            );
+
+        toast.className =
+            `toast ${type}`;
+
+        toast.innerText =
+            message;
+
+        container.appendChild(
+            toast
+        );
+
+        setTimeout(() => {
+
+            toast.style.opacity =
+                "0";
+
+            toast.style.transform =
+                "translateX(30px)";
+
+            setTimeout(() => {
+
+                toast.remove();
+
+            }, 250);
+
+        }, 3500);
+    }
+
+
+    // =========================================================
+    // API RESPONSE
+    // =========================================================
+
+    async function parseResponse(
+        response
+    ) {
 
         const text =
             await response.text();
 
-        let data;
-
         try {
 
-            data = text
-                ? JSON.parse(text)
-                : {};
+            return JSON.parse(text);
 
-        } catch (error) {
+        } catch {
 
-            data = {
+            return {
                 success: false,
                 message:
                     text ||
-                    `Server returned HTTP ${response.status}.`
+                    "Unexpected server response."
             };
+
         }
 
-        return {
-            response,
-            data,
-            raw: text
-        };
     }
 
 
-    /* =====================================================
-       VIEW SWITCH
-       ===================================================== */
+    // =========================================================
+    // PHOTO TO BASE64
+    // =========================================================
 
-    function switchView(viewId) {
+    function fileToBase64(file) {
 
-        document
-            .querySelectorAll('.view')
-            .forEach(v =>
-                v.classList.remove('active')
-            );
+        return new Promise(
+            (resolve, reject) => {
 
-        const view =
-            document.getElementById(viewId);
+                const reader =
+                    new FileReader();
 
-        if (view) {
-            view.classList.add('active');
-        }
-    }
+                reader.onload = () =>
+                    resolve(
+                        reader.result
+                    );
 
+                reader.onerror = reject;
 
-    /* =====================================================
-       EMAIL PREVIEW
-       ===================================================== */
+                reader.readAsDataURL(
+                    file
+                );
 
-    function updateEmailPreview() {
-
-        const scholarId =
-            document
-                .getElementById('reg-id')
-                .value
-                .trim();
-
-        const preview =
-            document
-                .getElementById('email-preview');
-
-        if (!scholarId) {
-
-            preview.innerText =
-                "Enter Scholar Number first";
-
-            return;
-        }
-
-        /*
-         * NO 9-DIGIT RESTRICTION.
-         * Any non-empty scholar number is accepted.
-         */
-
-        preview.innerText =
-            `${scholarId.toLowerCase()}@stu.manit.ac.in`;
-    }
-
-
-    document
-        .getElementById('reg-id')
-        .addEventListener(
-            'input',
-            updateEmailPreview
+            }
         );
 
-
-    /* =====================================================
-       PHOTO PREVIEW
-       ===================================================== */
-
-    function previewPhoto(event) {
-
-        const file =
-            event.target.files[0];
-
-        if (!file)
-            return;
-
-        uploadedPhotoBase64 = "";
-
-        document
-            .getElementById(
-                'photo-preview-container'
-            )
-            .style.display =
-            'none';
-
-        const reader =
-            new FileReader();
-
-        reader.onload =
-            function(e) {
-
-                const img =
-                    new Image();
-
-                img.onload =
-                    function() {
-
-                        const canvas =
-                            document.createElement(
-                                'canvas'
-                            );
-
-                        const TARGET_WIDTH = 350;
-
-                        let scale =
-                            img.width > TARGET_WIDTH
-                                ? TARGET_WIDTH / img.width
-                                : 1;
-
-                        canvas.width =
-                            Math.round(
-                                img.width * scale
-                            );
-
-                        canvas.height =
-                            Math.round(
-                                img.height * scale
-                            );
-
-                        const ctx =
-                            canvas.getContext(
-                                '2d'
-                            );
-
-                        ctx.imageSmoothingEnabled =
-                            true;
-
-                        ctx.imageSmoothingQuality =
-                            'high';
-
-                        ctx.drawImage(
-                            img,
-                            0,
-                            0,
-                            canvas.width,
-                            canvas.height
-                        );
-
-                        uploadedPhotoBase64 =
-                            canvas.toDataURL(
-                                'image/jpeg',
-                                0.82
-                            );
-
-                        document
-                            .getElementById(
-                                'reg-photo-preview'
-                            )
-                            .src =
-                            uploadedPhotoBase64;
-
-                        document
-                            .getElementById(
-                                'photo-preview-container'
-                            )
-                            .style.display =
-                            'flex';
-
-                        const sizeInKb =
-                            (
-                                Math.round(
-                                    (uploadedPhotoBase64.length * 3) / 4
-                                ) / 1024
-                            ).toFixed(1);
-
-                        document
-                            .getElementById(
-                                'photo-size-label'
-                            )
-                            .innerText =
-                            `Ready (${sizeInKb} KB)`;
-                    };
-
-                img.src =
-                    e.target.result;
-            };
-
-        reader.readAsDataURL(file);
     }
 
 
-    /* =====================================================
-       START REGISTRATION / SEND OTP
-       ===================================================== */
+    // =========================================================
+    // REGISTRATION
+    // =========================================================
 
-    async function handleRegister() {
+    async function handleRegistration() {
 
         const scholarId =
             document
-                .getElementById('reg-id')
+                .getElementById("reg-id")
                 .value
                 .trim();
 
         const name =
             document
-                .getElementById('reg-name')
+                .getElementById("reg-name")
                 .value
                 .trim();
 
         const room =
             document
-                .getElementById('reg-room')
+                .getElementById("reg-room")
                 .value
                 .trim();
 
         const password =
             document
-                .getElementById('reg-pass')
+                .getElementById("reg-pass")
                 .value;
 
-        const btn =
+        const photoInput =
             document
-                .getElementById('btn-register');
+                .getElementById("reg-photo");
 
-
-        /* =================================================
-           BASIC VALIDATION
-
-           IMPORTANT:
-           There is NO scholar-number length restriction.
-           ================================================= */
 
         if (
             !scholarId ||
             !name ||
             !room ||
-            !password ||
-            !uploadedPhotoBase64
+            !password
         ) {
 
             showToast(
-                "Please fill all fields and upload photo.",
+                "Please fill all fields.",
                 "error"
             );
 
             return;
+
         }
 
 
-        if (password.length < 6) {
+        if (
+            password.length < 6
+        ) {
 
             showToast(
                 "Password must contain at least 6 characters.",
@@ -1636,17 +2081,42 @@
             );
 
             return;
+
         }
 
 
-        btn.disabled =
-            true;
+        if (
+            !photoInput.files.length
+        ) {
+
+            showToast(
+                "Please select a profile photo.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const btn =
+            document.getElementById(
+                "btn-register"
+            );
+
+        btn.disabled = true;
 
         btn.innerText =
             "Sending OTP...";
 
 
         try {
+
+            const photo =
+                await fileToBase64(
+                    photoInput.files[0]
+                );
+
 
             const response =
                 await fetch(
@@ -1661,221 +2131,129 @@
 
                         body:
                             JSON.stringify({
-                                scholarId:
-                                    scholarId,
-
-                                name:
-                                    name,
-
-                                room:
-                                    room,
-
-                                password:
-                                    password,
-
-                                photo:
-                                    uploadedPhotoBase64
+                                scholarId,
+                                name,
+                                room,
+                                password,
+                                photo
                             })
                     }
                 );
 
 
-            const result =
-                await readApiResponse(
+            const data =
+                await parseResponse(
                     response
                 );
 
-            const data =
-                result.data;
-
-
-            console.log(
-                "REGISTER START RESPONSE:",
-                result
-            );
-
 
             if (
-                !response.ok ||
-                !data.success
+                response.ok &&
+                data.success
             ) {
 
-                throw new Error(
-                    data.message ||
-                    `Server returned HTTP ${response.status}`
-                );
-            }
-
-
-            /* =================================================
-               SAVE SCHOLAR ID FOR OTP VERIFICATION
-               ================================================= */
-
-            registrationScholarId =
-                scholarId
-                    .trim()
-                    .toLowerCase();
-
-
-            /* =================================================
-               SHOW EMAIL
-               ================================================= */
-
-            const emailText =
-                data.email ||
-                data.emailMasked ||
-                `${registrationScholarId}@stu.manit.ac.in`;
-
-
-            document
-                .getElementById('otp-email')
-                .innerText =
-                emailText;
-
-
-            /* =================================================
-               CLEAR OLD OTP
-               ================================================= */
-
-            document
-                .getElementById('reg-otp')
-                .value =
-                "";
-
-
-            /* =================================================
-               THIS IS THE IMPORTANT FIX
-
-               OTP FORM IS INSIDE view-register.
-               There is NO "verify" view.
-
-               Therefore:
-               registration-form → hide
-               otp-form → show
-               ================================================= */
-
-            document
-                .getElementById(
-                    'registration-form'
-                )
-                .style.display =
-                'none';
-
-
-            document
-                .getElementById(
-                    'otp-form'
-                )
-                .style.display =
-                'block';
-
-
-            /* Make sure registration view itself is active */
-
-            switchView(
-                'view-register'
-            );
-
-
-            /* =================================================
-               START RESEND COUNTDOWN
-               ================================================= */
-
-            startResendCountdown();
-
-
-            /* =================================================
-               FOCUS OTP BOX
-               ================================================= */
-
-            setTimeout(() => {
+                registrationScholarId =
+                    scholarId;
 
                 document
                     .getElementById(
-                        'reg-otp'
+                        "otp-email"
                     )
-                    .focus();
+                    .innerText =
+                    `OTP sent to ${data.email}`;
 
-            }, 300);
+                switchView(
+                    "view-otp"
+                );
 
+                startResendTimer();
+
+                showToast(
+                    "OTP sent successfully.",
+                    "success"
+                );
+
+            } else {
+
+                showToast(
+                    data.message ||
+                    "Could not send OTP.",
+                    "error"
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error(error);
 
             showToast(
-                "OTP sent successfully! Check your MANIT email.",
-                "success"
-            );
-
-        }
-
-
-        catch (error) {
-
-            console.error(
-                "REGISTER START ERROR:",
-                error
-            );
-
-
-            showToast(
-                error.message ||
-                "Unable to send OTP.",
+                "Could not connect to server.",
                 "error"
             );
 
-        }
+        } finally {
 
-
-        finally {
-
-            btn.disabled =
-                false;
+            btn.disabled = false;
 
             btn.innerText =
-                "Send OTP to MANIT Email";
+                "Send Verification OTP";
+
         }
+
     }
 
 
-    /* =====================================================
-       VERIFY OTP
-       ===================================================== */
+    // =========================================================
+    // OTP VERIFICATION
+    // =========================================================
 
-    async function verifyOTP() {
+    async function handleOTPVerification() {
 
         const otp =
             document
-                .getElementById('reg-otp')
+                .getElementById(
+                    "reg-otp"
+                )
                 .value
                 .trim();
 
+
+        if (
+            !registrationScholarId ||
+            !otp
+        ) {
+
+            showToast(
+                "Enter the OTP.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !/^\d{6}$/.test(otp)
+        ) {
+
+            showToast(
+                "OTP must contain 6 digits.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
         const btn =
-            document
-                .getElementById('btn-verify');
-
-
-        if (!registrationScholarId) {
-
-            showToast(
-                "Registration session expired. Please start again.",
-                "error"
+            document.getElementById(
+                "btn-verify"
             );
 
-            return;
-        }
-
-
-        if (!/^\d{6}$/.test(otp)) {
-
-            showToast(
-                "Enter the 6-digit OTP.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        btn.disabled =
-            true;
+        btn.disabled = true;
 
         btn.innerText =
             "Verifying...";
@@ -1883,164 +2261,59 @@
 
         try {
 
-            const res =
+            const response =
                 await fetch(
                     `${API_URL}/register/verify`,
                     {
-                        method: 'POST',
+                        method: "POST",
 
                         headers: {
-                            'Content-Type':
-                                'application/json'
+                            "Content-Type":
+                                "application/json"
                         },
 
                         body:
                             JSON.stringify({
-
                                 scholarId:
                                     registrationScholarId,
 
-                                otp:
-                                    otp
+                                otp
                             })
                     }
                 );
 
 
-            const result =
-                await readApiResponse(res);
-
             const data =
-                result.data;
-
-
-            console.log(
-                "OTP verification response:",
-                result
-            );
+                await parseResponse(
+                    response
+                );
 
 
             if (
-                res.ok &&
+                response.ok &&
                 data.success
             ) {
 
                 showToast(
-                    "Email verified! Account created successfully.",
+                    "Email verified! Registration complete.",
                     "success"
                 );
 
-
-                /* Return to registration form */
-
                 document
                     .getElementById(
-                        'registration-form'
-                    )
-                    .style.display =
-                    'block';
-
-
-                document
-                    .getElementById(
-                        'otp-form'
-                    )
-                    .style.display =
-                    'none';
-
-
-                /* Clear registration fields */
-
-                document
-                    .getElementById(
-                        'reg-id'
+                        "login-id"
                     )
                     .value =
-                    '';
-
-
-                document
-                    .getElementById(
-                        'reg-name'
-                    )
-                    .value =
-                    '';
-
-
-                document
-                    .getElementById(
-                        'reg-room'
-                    )
-                    .value =
-                    '';
-
-
-                document
-                    .getElementById(
-                        'reg-pass'
-                    )
-                    .value =
-                    '';
-
-
-                document
-                    .getElementById(
-                        'reg-otp'
-                    )
-                    .value =
-                    '';
-
-
-                document
-                    .getElementById(
-                        'reg-photo-input'
-                    )
-                    .value =
-                    '';
-
-
-                document
-                    .getElementById(
-                        'photo-preview-container'
-                    )
-                    .style.display =
-                    'none';
-
-
-                document
-                    .getElementById(
-                        'email-preview'
-                    )
-                    .innerText =
-                    'Enter Scholar Number first';
-
-
-                uploadedPhotoBase64 =
-                    "";
-
-
-                /* Put scholar ID into login */
-
-                document
-                    .getElementById(
-                        'login-id'
-                    )
-                    .value =
-                    data.student?.scholarId ||
                     registrationScholarId;
 
-
                 document
                     .getElementById(
-                        'login-pass'
+                        "reg-otp"
                     )
-                    .value =
-                    '';
-
+                    .value = "";
 
                 registrationScholarId =
                     null;
-
 
                 if (resendTimer) {
 
@@ -2050,227 +2323,75 @@
 
                     resendTimer =
                         null;
-                }
 
+                }
 
                 switchView(
-                    'view-login'
+                    "view-login"
                 );
 
-            }
-
-            else {
+            } else {
 
                 showToast(
                     data.message ||
-                    `OTP verification failed. HTTP ${res.status}`,
+                    "OTP verification failed.",
                     "error"
                 );
+
             }
 
-        }
+        } catch (error) {
 
-        catch (e) {
-
-            console.error(
-                "OTP verification exception:",
-                e
-            );
-
+            console.error(error);
 
             showToast(
-                `Could not reach the server: ${e.message}`,
+                "Could not connect to server.",
                 "error"
             );
 
-        }
+        } finally {
 
-        finally {
-
-            btn.disabled =
-                false;
+            btn.disabled = false;
 
             btn.innerText =
-                "Verify OTP & Create Account";
+                "Verify OTP";
+
         }
+
     }
 
 
-    /* =====================================================
-       RESEND OTP
-       ===================================================== */
+    // =========================================================
+    // RESEND OTP TIMER
+    // =========================================================
 
-    async function resendOTP() {
-
-        if (!registrationScholarId) {
-
-            showToast(
-                "Registration session expired.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const btn =
-            document
-                .getElementById(
-                    'btn-resend'
-                );
-
-
-        btn.disabled =
-            true;
-
-
-        try {
-
-            const res =
-                await fetch(
-                    `${API_URL}/register/resend`,
-                    {
-                        method:
-                            'POST',
-
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                scholarId:
-                                    registrationScholarId
-                            })
-                    }
-                );
-
-
-            const result =
-                await readApiResponse(res);
-
-            const data =
-                result.data;
-
-
-            console.log(
-                "OTP resend response:",
-                result
-            );
-
-
-            if (
-                res.ok &&
-                data.success
-            ) {
-
-                document
-                    .getElementById(
-                        'otp-email'
-                    )
-                    .innerText =
-                    data.email ||
-                    data.emailMasked ||
-                    `${registrationScholarId}@stu.manit.ac.in`;
-
-
-                showToast(
-                    data.message ||
-                    "New OTP sent.",
-                    "success"
-                );
-
-
-                startResendCountdown();
-
-            }
-
-            else {
-
-                showToast(
-                    data.message ||
-                    `Could not resend OTP. HTTP ${res.status}`,
-                    "error"
-                );
-
-
-                if (
-                    res.status === 429
-                ) {
-
-                    startResendCountdown();
-
-                }
-
-                else {
-
-                    btn.disabled =
-                        false;
-                }
-            }
-
-        }
-
-        catch (e) {
-
-            console.error(
-                "Resend exception:",
-                e
-            );
-
-
-            showToast(
-                `Could not reach the server: ${e.message}`,
-                "error"
-            );
-
-
-            btn.disabled =
-                false;
-        }
-    }
-
-
-    /* =====================================================
-       RESEND COUNTDOWN
-       ===================================================== */
-
-    function startResendCountdown() {
+    function startResendTimer() {
 
         if (resendTimer) {
 
             clearInterval(
                 resendTimer
             );
+
         }
 
 
-        const btn =
-            document
-                .getElementById(
-                    'btn-resend'
-                );
+        const button =
+            document.getElementById(
+                "btn-resend"
+            );
 
+        const counter =
+            document.getElementById(
+                "resend-countdown"
+            );
 
-        const countdown =
-            document
-                .getElementById(
-                    'resend-countdown'
-                );
+        let seconds = 60;
 
+        button.disabled = true;
 
-        let seconds =
-            60;
-
-
-        btn.disabled =
-            true;
-
-
-        countdown.innerText =
-            `You can request another OTP in ${seconds} seconds.`;
+        counter.innerText =
+            seconds;
 
 
         resendTimer =
@@ -2278,51 +2399,136 @@
 
                 seconds--;
 
+                counter.innerText =
+                    seconds;
 
-                if (seconds <= 0) {
+                if (
+                    seconds <= 0
+                ) {
 
                     clearInterval(
                         resendTimer
                     );
 
-
                     resendTimer =
                         null;
 
-
-                    btn.disabled =
+                    button.disabled =
                         false;
 
-
-                    countdown.innerText =
+                    document
+                        .getElementById(
+                            "resend-text"
+                        )
+                        .innerHTML =
                         "You can resend the OTP now.";
 
-                    return;
                 }
 
-
-                countdown.innerText =
-                    `You can request another OTP in ${seconds} seconds.`;
-
             }, 1000);
+
     }
 
 
-    /* =====================================================
-       BACK TO REGISTRATION
-       ===================================================== */
+    async function resendOTP() {
 
-    function backToRegistrationForm() {
-
-        if (
-            !confirm(
-                "Go back? Your current OTP verification will be cancelled."
-            )
-        ) {
-
+        if (!registrationScholarId) {
             return;
         }
 
+
+        const button =
+            document.getElementById(
+                "btn-resend"
+            );
+
+        button.disabled = true;
+
+        button.innerText =
+            "Sending...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/register/resend`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({
+                                scholarId:
+                                    registrationScholarId
+                            })
+                    }
+                );
+
+
+            const data =
+                await parseResponse(
+                    response
+                );
+
+
+            if (
+                response.ok &&
+                data.success
+            ) {
+
+                document
+                    .getElementById(
+                        "otp-email"
+                    )
+                    .innerText =
+                    `New OTP sent to ${data.email}`;
+
+                showToast(
+                    "New OTP sent.",
+                    "success"
+                );
+
+                startResendTimer();
+
+            } else {
+
+                showToast(
+                    data.message ||
+                    "Could not resend OTP.",
+                    "error"
+                );
+
+                button.disabled =
+                    false;
+
+            }
+
+        } catch (error) {
+
+            showToast(
+                "Could not connect to server.",
+                "error"
+            );
+
+            button.disabled =
+                false;
+
+        } finally {
+
+            button.innerText =
+                "Resend OTP";
+
+        }
+
+    }
+
+
+    function backToRegistration() {
 
         if (resendTimer) {
 
@@ -2332,82 +2538,36 @@
 
             resendTimer =
                 null;
+
         }
 
+        switchView(
+            "view-registration"
+        );
 
-        document
-            .getElementById(
-                'otp-form'
-            )
-            .style.display =
-            'none';
-
-
-        document
-            .getElementById(
-                'registration-form'
-            )
-            .style.display =
-            'block';
-
-
-        registrationScholarId =
-            null;
-
-
-        document
-            .getElementById(
-                'reg-otp'
-            )
-            .value =
-            '';
-
-
-        document
-            .getElementById(
-                'btn-resend'
-            )
-            .disabled =
-            true;
-
-
-        document
-            .getElementById(
-                'resend-countdown'
-            )
-            .innerText =
-            "Please wait 60 seconds.";
     }
 
 
-    /* =====================================================
-       LOGIN
-       ===================================================== */
+    // =========================================================
+    // LOGIN
+    // =========================================================
 
     async function handleLogin() {
 
         const scholarId =
             document
                 .getElementById(
-                    'login-id'
+                    "login-id"
                 )
                 .value
                 .trim();
 
-
         const password =
             document
                 .getElementById(
-                    'login-pass'
+                    "login-pass"
                 )
                 .value;
-
-
-        const btn =
-            document
-                .getElementById(
-                    'btn-login'
-                );
 
 
         if (
@@ -2416,16 +2576,21 @@
         ) {
 
             showToast(
-                "Enter Scholar ID and Password",
+                "Enter Scholar Number and Password.",
                 "error"
             );
 
             return;
+
         }
 
 
-        btn.disabled =
-            true;
+        const btn =
+            document.getElementById(
+                "btn-login"
+            );
+
+        btn.disabled = true;
 
         btn.innerText =
             "Verifying...";
@@ -2433,817 +2598,1068 @@
 
         try {
 
-            const res =
+            const response =
                 await fetch(
                     `${API_URL}/login`,
                     {
-                        method:
-                            'POST',
+                        method: "POST",
 
                         headers: {
-                            'Content-Type':
-                                'application/json'
+                            "Content-Type":
+                                "application/json"
                         },
 
                         body:
                             JSON.stringify({
-
-                                scholarId:
-                                    scholarId,
-
-                                password:
-                                    password
+                                scholarId,
+                                password
                             })
                     }
                 );
 
 
-            const result =
-                await readApiResponse(res);
-
             const data =
-                result.data;
+                await parseResponse(
+                    response
+                );
 
 
             if (
-                res.ok &&
+                response.ok &&
                 data.success
             ) {
 
+                sessionToken =
+                    data.token;
+
+                currentStudent =
+                    data.student;
+
                 localStorage.setItem(
-                    'manit_active_student',
+                    "manit_session_token",
+                    sessionToken
+                );
+
+                localStorage.setItem(
+                    "manit_active_student",
                     JSON.stringify(
-                        data.student
+                        currentStudent
                     )
                 );
 
+                renderStudentCard();
 
-                renderStudentCard(
-                    data.student
+                showToast(
+                    `Welcome, ${currentStudent.name}!`,
+                    "success"
                 );
 
-            }
-
-            else {
+            } else {
 
                 showToast(
                     data.message ||
-                    "Invalid credentials",
+                    "Invalid credentials.",
                     "error"
                 );
+
             }
 
-        }
+        } catch (error) {
 
-        catch (err) {
-
-            console.error(
-                "Login error:",
-                err
-            );
-
+            console.error(error);
 
             showToast(
-                `Could not reach the server: ${err.message}`,
+                "Could not connect to server.",
                 "error"
             );
 
-        }
+        } finally {
 
-        finally {
-
-            btn.disabled =
-                false;
+            btn.disabled = false;
 
             btn.innerText =
                 "Display Identity Card";
+
         }
+
     }
 
 
-    /* =====================================================
-       RENDER STUDENT CARD
-       ===================================================== */
+    // =========================================================
+    // RENDER STUDENT CARD
+    // =========================================================
 
-    function renderStudentCard(s) {
+    function renderStudentCard() {
 
-        currentScholarId =
-            s.scholarId;
+        if (!currentStudent) {
+            return;
+        }
 
 
         document
             .getElementById(
-                'card-name'
+                "card-name"
             )
             .innerText =
-            s.name;
+            currentStudent.name;
 
 
         document
             .getElementById(
-                'card-id'
+                "card-id"
             )
             .innerText =
-            s.scholarId;
+            currentStudent.scholarId;
 
 
         document
             .getElementById(
-                'card-room'
+                "card-room"
             )
             .innerText =
-            s.room;
+            currentStudent.room;
 
 
         document
             .getElementById(
-                'card-photo'
+                "card-email"
+            )
+            .innerText =
+            currentStudent.collegeEmail;
+
+
+        document
+            .getElementById(
+                "card-photo"
             )
             .src =
-            s.photo;
-
-
-        const tag =
-            document
-                .getElementById(
-                    'card-tag'
-                );
-
-
-        if (s.isVerified) {
-
-            tag.className =
-                "verification-tag tag-verified";
-
-            tag.innerText =
-                "Verified";
-
-        }
-
-        else {
-
-            tag.className =
-                "verification-tag tag-pending";
-
-            tag.innerText =
-                "Pending Staff Verification";
-        }
-
-
-        const qrContainer =
-            document
-                .getElementById(
-                    'qrcode'
-                );
-
-
-        qrContainer.innerHTML =
-            "";
-
-
-        qrcodeInstance =
-            new QRCode(
-                qrContainer,
-                {
-                    text:
-                        s.scholarId,
-
-                    width:
-                        160,
-
-                    height:
-                        160,
-
-                    colorDark:
-                        "#0a2540",
-
-                    colorLight:
-                        "#ffffff",
-
-                    correctLevel:
-                        QRCode.CorrectLevel.M
-                }
-            );
+            currentStudent.photo;
 
 
         switchView(
-            'view-student'
+            "view-student"
         );
 
 
-        if (clockInterval) {
-
-            clearInterval(
-                clockInterval
-            );
-        }
-
-
-        clockInterval =
-            setInterval(() => {
-
-                document
-                    .getElementById(
-                        'live-clock'
-                    )
-                    .innerText =
-                    new Date()
-                        .toLocaleTimeString(
-                            'en-US'
-                        );
-
-            }, 1000);
-
-
-        if (pollInterval) {
-
-            clearInterval(
-                pollInterval
-            );
-        }
-
+        startLiveClock();
 
         checkMealStatus();
 
 
-        pollInterval =
+        if (statusTimer) {
+
+            clearInterval(
+                statusTimer
+            );
+
+        }
+
+
+        statusTimer =
             setInterval(
                 checkMealStatus,
                 2500
             );
+
     }
 
 
-    /* =====================================================
-       MEAL STATUS
-       ===================================================== */
+    // =========================================================
+    // LIVE CLOCK
+    // =========================================================
 
-    async function checkMealStatus() {
+    function startLiveClock() {
 
-        if (!currentScholarId)
-            return;
-
-
-        try {
-
-            const res =
-                await fetch(
-                    `${API_URL}/status/${encodeURIComponent(currentScholarId)}`
-                );
-
-
-            const result =
-                await readApiResponse(res);
-
-            const data =
-                result.data;
-
-
-            if (!res.ok)
-                return;
-
-
-            const qrWrapper =
-                document
-                    .getElementById(
-                        'qr-container-box'
-                    );
-
-
-            const claimedBox =
-                document
-                    .getElementById(
-                        'claimed-container-box'
-                    );
-
-
-            const tag =
-                document
-                    .getElementById(
-                        'card-tag'
-                    );
-
-
-            document
-                .getElementById(
-                    'current-meal'
-                )
-                .innerText =
-                `${data.activeSlot || 'Mess Service'} Active`;
-
-
-            if (data.isVerified) {
-
-                tag.className =
-                    "verification-tag tag-verified";
-
-                tag.innerText =
-                    "Verified";
-            }
-
-
-            if (data.claimed) {
-
-                qrWrapper.style.display =
-                    'none';
-
-                claimedBox.style.display =
-                    'block';
-
-            }
-
-            else {
-
-                qrWrapper.style.display =
-                    'block';
-
-                claimedBox.style.display =
-                    'none';
-            }
-
-        }
-
-        catch(e) {
-
-            console.error(
-                "Status check error:",
-                e
-            );
-        }
-    }
-
-
-    /* =====================================================
-       LOGOUT
-       ===================================================== */
-
-    function logout() {
-
-        localStorage.removeItem(
-            'manit_active_student'
-        );
-
-
-        if (clockInterval) {
+        if (clockTimer) {
 
             clearInterval(
-                clockInterval
+                clockTimer
             );
 
-            clockInterval =
-                null;
         }
 
 
-        if (pollInterval) {
+        function update() {
 
-            clearInterval(
-                pollInterval
-            );
+            const now =
+                new Date();
 
-            pollInterval =
-                null;
-        }
-
-
-        currentScholarId =
-            null;
-
-
-        document
-            .getElementById(
-                'login-pass'
-            )
-            .value =
-            '';
-
-
-        switchView(
-            'view-login'
-        );
-    }
-
-
-    /* =====================================================
-       RESTORE LOGIN SESSION
-       ===================================================== */
-
-    window.addEventListener(
-        'DOMContentLoaded',
-        () => {
-
-            const cached =
-                localStorage.getItem(
-                    'manit_active_student'
-                );
-
-
-            if (cached) {
-
-                try {
-
-                    renderStudentCard(
-                        JSON.parse(cached)
-                    );
-
-                }
-
-                catch(e) {
-
-                    localStorage.removeItem(
-                        'manit_active_student'
-                    );
-                }
-            }
-        }
-    );
-
-
-    /* =====================================================
-       STAFF LOGIN
-       ===================================================== */
-
-    function handleAdminLogin() {
-
-        const password =
-            document
-                .getElementById(
-                    'admin-pass'
-                )
-                .value;
-
-
-        if (
-            password ===
-            'manitH10'
-        ) {
-
-            switchView(
-                'view-admin'
-            );
-
-
-            if (!html5QrcodeScanner) {
-
-                html5QrcodeScanner =
-                    new Html5QrcodeScanner(
-                        "reader",
-                        {
-                            fps: 15,
-
-                            qrbox: {
-                                width: 220,
-                                height: 220
-                            }
-                        },
-                        false
-                    );
-
-
-                html5QrcodeScanner.render(
-                    onScanSuccess
-                );
-            }
-
-        }
-
-        else {
-
-            showToast(
-                "Invalid Staff Password",
-                "error"
-            );
-        }
-    }
-
-
-    /* =====================================================
-       QR SCAN
-       ===================================================== */
-
-    async function onScanSuccess(
-        decodedText
-    ) {
-
-        if (isProcessingScan)
-            return;
-
-
-        isProcessingScan =
-            true;
-
-
-        try {
-
-            const res =
-                await fetch(
-                    `${API_URL}/scan`,
+            const time =
+                now.toLocaleTimeString(
+                    "en-IN",
                     {
-                        method:
-                            'POST',
+                        timeZone:
+                            "Asia/Kolkata",
 
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
+                        hour:
+                            "2-digit",
 
-                        body:
-                            JSON.stringify({
+                        minute:
+                            "2-digit",
 
-                                scholarId:
-                                    decodedText,
+                        second:
+                            "2-digit",
 
-                                staffPin:
-                                    'manitH10'
-                            })
+                        hour12: true
                     }
                 );
 
 
-            const result =
-                await readApiResponse(res);
-
-            const data =
-                result.data;
-
-
-            if (
-                data.status ===
-                'allowed'
-            ) {
-
-                showToast(
-                    `APPROVED: ${data.name || "Student"}${data.room ? ` (${data.room})` : ""}`,
-                    "success"
-                );
-
-            }
-
-            else if (
-                data.status ===
-                'denied'
-            ) {
-
-                showToast(
-                    data.message ||
-                    "DENIED: Student already received meal!",
-                    "error"
-                );
-
-            }
-
-            else {
-
-                showToast(
-                    data.message ||
-                    "UNREGISTERED CARD",
-                    "error"
-                );
-            }
+            document
+                .getElementById(
+                    "live-clock"
+                )
+                .innerText =
+                time;
 
         }
 
-        catch (e) {
 
-            console.error(
-                "Scan error:",
-                e
+        update();
+
+        clockTimer =
+            setInterval(
+                update,
+                1000
             );
 
-
-            showToast(
-                `Scan error: ${e.message}`,
-                "error"
-            );
-        }
-
-
-        setTimeout(() => {
-
-            isProcessingScan =
-                false;
-
-        }, 2200);
     }
 
 
-    /* =====================================================
-       RESET ONE STUDENT
-       ===================================================== */
+    // =========================================================
+    // LIVE MEAL STATUS
+    // =========================================================
 
-    async function resetSingleStudent() {
+    async function checkMealStatus() {
+
+        if (!sessionToken) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/status`,
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${sessionToken}`
+                        }
+                    }
+                );
+
+
+            const data =
+                await parseResponse(
+                    response
+                );
+
+
+            if (
+                response.status === 401
+            ) {
+
+                forceLogout(
+                    "Your session expired. Please login again."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !response.ok ||
+                !data.success
+            ) {
+                return;
+            }
+
+
+            currentStudent =
+                data.student;
+
+
+            localStorage.setItem(
+                "manit_active_student",
+                JSON.stringify(
+                    currentStudent
+                )
+            );
+
+
+            document
+                .getElementById(
+                    "current-meal"
+                )
+                .innerText =
+                data.activeSlot;
+
+
+            const status =
+                document.getElementById(
+                    "meal-status"
+                );
+
+            const button =
+                document.getElementById(
+                    "claim-button"
+                );
+
+            const success =
+                document.getElementById(
+                    "claim-success"
+                );
+
+
+            if (
+                data.activeSlot ===
+                "Mess Closed"
+            ) {
+
+                status.innerText =
+                    "Mess service is currently closed.";
+
+                button.disabled = true;
+
+                button.innerText =
+                    "MESS CLOSED";
+
+                success.classList.add(
+                    "hidden"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                data.claimed
+            ) {
+
+                button.disabled = true;
+
+                button.innerText =
+                    "✓ MEAL ALREADY RECEIVED";
+
+                status.innerText =
+                    `${data.claimedMeal} has already been recorded for today.`;
+
+                success.classList.remove(
+                    "hidden"
+                );
+
+                const time =
+                    data.claimedAt
+                        ? new Date(
+                            data.claimedAt
+                        ).toLocaleTimeString(
+                            "en-IN",
+                            {
+                                timeZone:
+                                    "Asia/Kolkata",
+
+                                hour:
+                                    "2-digit",
+
+                                minute:
+                                    "2-digit",
+
+                                second:
+                                    "2-digit",
+
+                                hour12: true
+                            }
+                        )
+                        : "";
+
+                document
+                    .getElementById(
+                        "claim-success-text"
+                    )
+                    .innerText =
+                    `${data.claimedMeal} received at ${time}.`;
+
+            } else {
+
+                success.classList.add(
+                    "hidden"
+                );
+
+                if (!claiming) {
+
+                    button.disabled =
+                        false;
+
+                    button.innerText =
+                        `CLAIM ${data.activeSlot.toUpperCase()}`;
+
+                }
+
+                status.innerText =
+                    "Live claim available. Tap the button when you receive your meal.";
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Status error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =========================================================
+    // CLAIM MEAL
+    // =========================================================
+
+    async function claimMeal() {
+
+        if (
+            claiming ||
+            !sessionToken
+        ) {
+            return;
+        }
+
+
+        claiming = true;
+
+
+        const button =
+            document.getElementById(
+                "claim-button"
+            );
+
+
+        button.disabled = true;
+
+        button.innerText =
+            "VERIFYING LIVE CLAIM...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/claim`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${sessionToken}`,
+
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify({})
+                    }
+                );
+
+
+            const data =
+                await parseResponse(
+                    response
+                );
+
+
+            if (
+                response.status === 401
+            ) {
+
+                forceLogout(
+                    "Your session expired. Please login again."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                response.ok &&
+                data.success
+            ) {
+
+                button.innerText =
+                    "✓ MEAL RECEIVED";
+
+
+                document
+                    .getElementById(
+                        "meal-status"
+                    )
+                    .innerText =
+                    `${data.meal} successfully recorded on the server.`;
+
+
+                document
+                    .getElementById(
+                        "claim-success"
+                    )
+                    .classList.remove(
+                        "hidden"
+                    );
+
+
+                const time =
+                    data.claimedAt
+                        ? new Date(
+                            data.claimedAt
+                        ).toLocaleTimeString(
+                            "en-IN",
+                            {
+                                timeZone:
+                                    "Asia/Kolkata",
+
+                                hour:
+                                    "2-digit",
+
+                                minute:
+                                    "2-digit",
+
+                                second:
+                                    "2-digit",
+
+                                hour12: true
+                            }
+                        )
+                        : "";
+
+
+                document
+                    .getElementById(
+                        "claim-success-text"
+                    )
+                    .innerText =
+                    `${data.meal} received at ${time}.`;
+
+
+                showToast(
+                    `${data.meal} received successfully!`,
+                    "success"
+                );
+
+
+                await checkMealStatus();
+
+            } else {
+
+                showToast(
+                    data.message ||
+                    "Meal could not be claimed.",
+                    "error"
+                );
+
+
+                if (
+                    data.alreadyClaimed
+                ) {
+
+                    await checkMealStatus();
+
+                } else {
+
+                    button.disabled =
+                        false;
+
+                    button.innerText =
+                        "CLAIM MEAL";
+
+                }
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Claim error:",
+                error
+            );
+
+            showToast(
+                "Could not reach the server.",
+                "error"
+            );
+
+            button.disabled =
+                false;
+
+            button.innerText =
+                "CLAIM MEAL";
+
+        } finally {
+
+            claiming = false;
+
+        }
+
+    }
+
+
+    // =========================================================
+    // STUDENT LOGOUT
+    // =========================================================
+
+    async function logout() {
+
+        try {
+
+            if (sessionToken) {
+
+                await fetch(
+                    `${API_URL}/logout`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${sessionToken}`
+                        }
+                    }
+                );
+
+            }
+
+        } catch (error) {
+            console.error(error);
+        }
+
+
+        forceLogout();
+
+    }
+
+
+    function forceLogout(message) {
+
+        if (statusTimer) {
+
+            clearInterval(
+                statusTimer
+            );
+
+            statusTimer =
+                null;
+
+        }
+
+
+        if (clockTimer) {
+
+            clearInterval(
+                clockTimer
+            );
+
+            clockTimer =
+                null;
+
+        }
+
+
+        currentStudent =
+            null;
+
+        sessionToken =
+            null;
+
+        localStorage.removeItem(
+            "manit_session_token"
+        );
+
+        localStorage.removeItem(
+            "manit_active_student"
+        );
+
+
+        if (message) {
+
+            showToast(
+                message,
+                "error"
+            );
+
+        }
+
+
+        switchView(
+            "view-login"
+        );
+
+    }
+
+
+    // =========================================================
+    // STAFF LOGIN
+    // =========================================================
+
+    function staffLogin() {
+
+        const pin =
+            document
+                .getElementById(
+                    "staff-pass"
+                )
+                .value;
+
+
+        if (!pin) {
+
+            showToast(
+                "Enter staff PIN.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        /*
+         * We don't verify the PIN here.
+         * It is verified by the SERVER when
+         * reset operations are performed.
+         *
+         * This avoids putting the real staff
+         * PIN into frontend JavaScript.
+         */
+
+        sessionStorage.setItem(
+            "manit_staff_pin",
+            pin
+        );
+
+
+        switchView(
+            "view-staff"
+        );
+
+    }
+
+
+    // =========================================================
+    // STAFF RESET ONE
+    // =========================================================
+
+    async function resetOne() {
 
         const scholarId =
             document
                 .getElementById(
-                    'manual-reset-id'
+                    "reset-id"
                 )
                 .value
                 .trim();
 
 
+        const staffPin =
+            sessionStorage.getItem(
+                "manit_staff_pin"
+            );
+
+
+        if (!staffPin) {
+
+            showStaffLogin();
+
+            return;
+
+        }
+
+
         if (!scholarId) {
 
             showToast(
-                "Enter Scholar ID",
+                "Enter Scholar Number.",
                 "error"
             );
 
             return;
+
         }
 
 
         try {
 
-            const res =
+            const response =
                 await fetch(
                     `${API_URL}/reset-one`,
                     {
-                        method:
-                            'POST',
+                        method: "POST",
 
                         headers: {
-                            'Content-Type':
-                                'application/json'
+                            "Content-Type":
+                                "application/json"
                         },
 
                         body:
                             JSON.stringify({
-
-                                scholarId:
-                                    scholarId,
-
-                                staffPin:
-                                    'manitH10'
+                                scholarId,
+                                staffPin
                             })
                     }
                 );
 
 
-            const result =
-                await readApiResponse(res);
-
             const data =
-                result.data;
+                await parseResponse(
+                    response
+                );
 
 
-            if (data.success) {
+            if (
+                response.ok &&
+                data.success
+            ) {
 
                 showToast(
                     data.message,
                     "success"
                 );
 
-
                 document
                     .getElementById(
-                        'manual-reset-id'
+                        "reset-id"
                     )
-                    .value =
-                    '';
+                    .value = "";
 
-            }
-
-            else {
+            } else {
 
                 showToast(
                     data.message ||
                     "Reset failed.",
                     "error"
                 );
+
             }
 
-        }
-
-        catch (e) {
-
-            console.error(
-                "Reset error:",
-                e
-            );
-
+        } catch (error) {
 
             showToast(
-                `Reset failed: ${e.message}`,
+                "Could not connect to server.",
                 "error"
             );
+
         }
+
     }
 
 
-    /* =====================================================
-       RESET ALL
-       ===================================================== */
+    // =========================================================
+    // STAFF RESET ALL
+    // =========================================================
 
-    async function resetAllStudents() {
+    async function resetAll() {
 
-        if (
-            !confirm(
-                "Reset all cards for the next meal?"
-            )
-        ) {
+        const confirmed =
+            confirm(
+                "Are you sure you want to reset ALL student meal claims?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        const staffPin =
+            sessionStorage.getItem(
+                "manit_staff_pin"
+            );
+
+
+        if (!staffPin) {
+
+            showStaffLogin();
 
             return;
+
         }
 
 
         try {
 
-            const res =
+            const response =
                 await fetch(
                     `${API_URL}/reset-all`,
                     {
-                        method:
-                            'POST',
+                        method: "POST",
 
                         headers: {
-                            'Content-Type':
-                                'application/json'
+                            "Content-Type":
+                                "application/json"
                         },
 
                         body:
                             JSON.stringify({
-
-                                staffPin:
-                                    'manitH10'
+                                staffPin
                             })
                     }
                 );
 
 
-            const result =
-                await readApiResponse(res);
-
             const data =
-                result.data;
+                await parseResponse(
+                    response
+                );
 
 
-            if (data.success) {
+            if (
+                response.ok &&
+                data.success
+            ) {
 
                 showToast(
                     data.message,
                     "success"
                 );
 
-            }
-
-            else {
+            } else {
 
                 showToast(
                     data.message ||
                     "Reset failed.",
                     "error"
                 );
+
             }
 
-        }
-
-        catch (e) {
-
-            console.error(
-                "Reset all error:",
-                e
-            );
-
+        } catch (error) {
 
             showToast(
-                `Reset all failed: ${e.message}`,
+                "Could not connect to server.",
                 "error"
             );
+
         }
+
     }
 
 
-    /* =====================================================
-       STOP SCANNER
-       ===================================================== */
+    // =========================================================
+    // STAFF LOGOUT
+    // =========================================================
 
-    function stopScannerAndLogout() {
+    function staffLogout() {
 
-        if (html5QrcodeScanner) {
-
-            html5QrcodeScanner
-                .clear()
-                .catch(() => {});
-
-
-            html5QrcodeScanner =
-                null;
-        }
-
+        sessionStorage.removeItem(
+            "manit_staff_pin"
+        );
 
         document
             .getElementById(
-                'admin-pass'
+                "staff-pass"
             )
-            .value =
-            '';
-
+            .value = "";
 
         switchView(
-            'view-login'
+            "view-login"
         );
+
     }
+
+
+    // =========================================================
+    // RESTORE SESSION
+    // =========================================================
+
+    window.addEventListener(
+        "DOMContentLoaded",
+        async () => {
+
+            const token =
+                localStorage.getItem(
+                    "manit_session_token"
+                );
+
+
+            const cached =
+                localStorage.getItem(
+                    "manit_active_student"
+                );
+
+
+            if (
+                token &&
+                cached
+            ) {
+
+                try {
+
+                    sessionToken =
+                        token;
+
+                    currentStudent =
+                        JSON.parse(
+                            cached
+                        );
+
+                    renderStudentCard();
+
+
+                    // Server decides whether
+                    // the session is actually valid.
+                    await checkMealStatus();
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+
+                    forceLogout();
+
+                }
+
+            }
+
+        }
+    );
+
+
+    // =========================================================
+    // ENTER KEY SUPPORT
+    // =========================================================
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key !==
+                "Enter"
+            ) {
+                return;
+            }
+
+
+            const activeView =
+                document.querySelector(
+                    ".view.active"
+                );
+
+
+            if (
+                activeView?.id ===
+                "view-login"
+            ) {
+
+                handleLogin();
+
+            }
+
+        }
+    );
 
 </script>
 
