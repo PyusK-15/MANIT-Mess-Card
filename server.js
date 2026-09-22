@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const path = require("path");
@@ -90,85 +89,251 @@ app.use(async (req, res, next) => {
 });
 
 // ============================================================
-// EMAIL CONFIGURATION
+// BREVO EMAIL CONFIGURATION
+// ============================================================
+//
+// One Brevo account + ONE API key.
+// Two verified sender emails can be used as fallback.
+//
+// Render environment variables:
+//
+// BREVO_API_KEY
+// BREVO_SENDER_EMAIL_1
+// BREVO_SENDER_EMAIL_2
+//
 // ============================================================
 
-const EMAIL_ACCOUNTS = [
-  {
-    user: process.env.EMAIL_1
-      ? process.env.EMAIL_1.trim()
-      : undefined,
+const BREVO_API_KEY = process.env.BREVO_API_KEY
+  ? process.env.BREVO_API_KEY.trim()
+  : "";
 
-    pass: process.env.PASS_1
-      ? process.env.PASS_1.replace(/\s+/g, "")
-      : undefined,
-  },
-
-  {
-    user: process.env.EMAIL_2
-      ? process.env.EMAIL_2.trim()
-      : undefined,
-
-    pass: process.env.PASS_2
-      ? process.env.PASS_2.replace(/\s+/g, "")
-      : undefined,
-  },
-].filter((account) => account.user && account.pass);
+const BREVO_SENDERS = [
+  process.env.BREVO_SENDER_EMAIL_1,
+  process.env.BREVO_SENDER_EMAIL_2,
+]
+  .map((email) =>
+    email ? email.trim().toLowerCase() : ""
+  )
+  .filter(Boolean)
+  .filter(
+    (email, index, array) =>
+      array.indexOf(email) === index
+  );
 
 console.log(
-  `📧 Configured email accounts: ${EMAIL_ACCOUNTS.length}`
+  `📧 Brevo configured: ${
+    BREVO_API_KEY ? "YES" : "NO"
+  }`
 );
 
-EMAIL_ACCOUNTS.forEach((account, index) => {
+console.log(
+  `📧 Brevo sender accounts: ${BREVO_SENDERS.length}`
+);
+
+BREVO_SENDERS.forEach((email, index) => {
   console.log(
-    `📧 Email account ${index + 1} configured: ${account.user}`
+    `📧 Brevo sender ${index + 1}: ${email}`
   );
 });
 
 // ============================================================
-// CREATE EMAIL TRANSPORTERS
-// ============================================================
-//
-// IMPORTANT:
-// Gmail SMTP is now using port 587 with STARTTLS instead of
-// port 465. This avoids the connection timeout we were seeing.
+// SEND EMAIL USING BREVO HTTPS API
 // ============================================================
 
-const emailTransporters = EMAIL_ACCOUNTS.map((account) =>
-  nodemailer.createTransport({
-    host: "smtp.gmail.com",
+async function sendBrevoEmail(
+  senderEmail,
+  to,
+  otp
+) {
+  if (!BREVO_API_KEY) {
+    throw new Error(
+      "BREVO_API_KEY is not configured."
+    );
+  }
 
-    port: 587,
-
-    secure: false,
-
-    requireTLS: true,
-
-    auth: {
-      user: account.user,
-      pass: account.pass,
+  const emailData = {
+    sender: {
+      name: "MANIT Digital Mess Card",
+      email: senderEmail,
     },
 
-    connectionTimeout: 10000,
+    to: [
+      {
+        email: to,
+      },
+    ],
 
-    greetingTimeout: 10000,
+    subject:
+      "MANIT Mess Card - Email Verification OTP",
 
-    socketTimeout: 20000,
+    textContent:
+      `Your MANIT Mess Card verification OTP is ${otp}. ` +
+      `This OTP is valid for 10 minutes. ` +
+      `Do not share this OTP with anyone.`,
 
-    tls: {
-      minVersion: "TLSv1.2",
-    },
-  })
-);
+    htmlContent: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>MANIT Digital Mess Card</title>
+      </head>
+
+      <body
+        style="
+          margin:0;
+          padding:0;
+          background:#f5f5f5;
+          font-family:Arial,sans-serif;
+        "
+      >
+
+        <div
+          style="
+            max-width:600px;
+            margin:30px auto;
+            background:white;
+            padding:30px;
+            border-radius:12px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.08);
+          "
+        >
+
+          <h2
+            style="
+              color:#222;
+              margin-top:0;
+            "
+          >
+            MANIT Digital Mess Card
+          </h2>
+
+          <p>
+            Your email verification OTP is:
+          </p>
+
+          <div
+            style="
+              font-size:32px;
+              font-weight:bold;
+              letter-spacing:8px;
+              padding:20px;
+              background:#f4f4f4;
+              text-align:center;
+              border-radius:10px;
+              margin:20px 0;
+            "
+          >
+            ${otp}
+          </div>
+
+          <p>
+            This OTP is valid for
+            <b>10 minutes</b>.
+          </p>
+
+          <p>
+            Please do not share this OTP with anyone.
+          </p>
+
+          <p>
+            If you did not request this OTP,
+            you can safely ignore this email.
+          </p>
+
+          <hr
+            style="
+              border:none;
+              border-top:1px solid #ddd;
+              margin:25px 0;
+            "
+          >
+
+          <p
+            style="
+              font-size:12px;
+              color:#777;
+            "
+          >
+            MANIT Digital Mess Card
+          </p>
+
+        </div>
+
+      </body>
+      </html>
+    `,
+  };
+
+  const response = await fetch(
+    "https://api.brevo.com/v3/smtp/email",
+    {
+      method: "POST",
+
+      headers: {
+        accept: "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json",
+      },
+
+      body: JSON.stringify(emailData),
+    }
+  );
+
+  const responseText =
+    await response.text();
+
+  let responseData = null;
+
+  try {
+    responseData =
+      responseText
+        ? JSON.parse(responseText)
+        : null;
+  } catch {
+    responseData = null;
+  }
+
+  if (!response.ok) {
+    const errorMessage =
+      responseData?.message ||
+      responseText ||
+      `Brevo returned HTTP ${response.status}`;
+
+    const error =
+      new Error(errorMessage);
+
+    error.status = response.status;
+    error.response = responseData;
+
+    throw error;
+  }
+
+  return responseData;
+}
 
 // ============================================================
 // SEND OTP EMAIL
 // ============================================================
+//
+// Sender 1 is tried first.
+// If it fails, sender 2 is tried automatically.
+//
+// ============================================================
 
-async function sendOTPEmail(to, otp) {
-  if (emailTransporters.length === 0) {
+async function sendOTPEmail(
+  to,
+  otp
+) {
+  if (!BREVO_API_KEY) {
     throw new Error(
-      "No email accounts are configured."
+      "Brevo API key is not configured."
+    );
+  }
+
+  if (BREVO_SENDERS.length === 0) {
+    throw new Error(
+      "No Brevo sender emails are configured."
     );
   }
 
@@ -176,118 +341,65 @@ async function sendOTPEmail(to, otp) {
 
   for (
     let i = 0;
-    i < emailTransporters.length;
+    i < BREVO_SENDERS.length;
     i++
   ) {
-    const transporter = emailTransporters[i];
-
-    const account = EMAIL_ACCOUNTS[i];
+    const senderEmail =
+      BREVO_SENDERS[i];
 
     try {
       console.log(
-        `📤 Trying OTP email account ${i + 1}...`
+        `📤 Trying Brevo sender ${i + 1}: ${senderEmail}`
       );
 
-      await transporter.sendMail({
-        from:
-          `"MANIT Hostel Mess Portal" <${account.user}>`,
-
-        to: to,
-
-        subject:
-          "MANIT Mess Card - Email Verification OTP",
-
-        text:
-          `Your MANIT Mess Card verification OTP is ${otp}. ` +
-          `This OTP is valid for 10 minutes. ` +
-          `Do not share this OTP with anyone.`,
-
-        html: `
-          <div
-            style="
-              font-family:Arial,sans-serif;
-              max-width:600px;
-              margin:auto;
-            "
-          >
-
-            <h2 style="color:#222;">
-              MANIT Digital Mess Card
-            </h2>
-
-            <p>
-              Your email verification OTP is:
-            </p>
-
-            <div
-              style="
-                font-size:32px;
-                font-weight:bold;
-                letter-spacing:8px;
-                padding:20px;
-                background:#f4f4f4;
-                text-align:center;
-                border-radius:10px;
-              "
-            >
-              ${otp}
-            </div>
-
-            <p>
-              This OTP is valid for
-              <b>10 minutes</b>.
-            </p>
-
-            <p>
-              If you did not request this OTP,
-              you can safely ignore this email.
-            </p>
-
-            <hr>
-
-            <p
-              style="
-                font-size:12px;
-                color:#777;
-              "
-            >
-              MANIT Digital Mess Card
-            </p>
-
-          </div>
-        `,
-      });
+      const result =
+        await sendBrevoEmail(
+          senderEmail,
+          to,
+          otp
+        );
 
       console.log(
-        `📨 OTP sent successfully to ${to} via Account ${i + 1}`
+        `📨 OTP sent successfully to ${to} via Brevo sender ${i + 1}`
       );
+
+      if (result?.messageId) {
+        console.log(
+          `📨 Brevo message ID: ${result.messageId}`
+        );
+      }
 
       return true;
     } catch (error) {
       lastError = error;
 
       console.error(
-        `❌ Email account ${i + 1} failed:`,
+        `❌ Brevo sender ${i + 1} failed:`,
         error.message
       );
 
-      if (error.code) {
+      if (error.status) {
         console.error(
-          `   SMTP error code: ${error.code}`
+          `   Brevo HTTP status: ${error.status}`
         );
       }
 
-      if (error.command) {
+      if (error.response) {
         console.error(
-          `   SMTP command: ${error.command}`
+          `   Brevo response:`,
+          JSON.stringify(
+            error.response
+          )
         );
       }
     }
   }
 
   throw new Error(
-    `All email accounts failed. ${
-      lastError ? lastError.message : ""
+    `All Brevo sender accounts failed. ${
+      lastError
+        ? lastError.message
+        : ""
     }`
   );
 }
@@ -296,163 +408,166 @@ async function sendOTPEmail(to, otp) {
 // STUDENT SCHEMA
 // ============================================================
 
-const studentSchema = new mongoose.Schema(
-  {
-    scholarId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-      trim: true,
-    },
+const studentSchema =
+  new mongoose.Schema(
+    {
+      scholarId: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+        trim: true,
+      },
 
-    collegeEmail: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-      trim: true,
-      lowercase: true,
-    },
+      collegeEmail: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+        trim: true,
+        lowercase: true,
+      },
 
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    room: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+      room: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    photo: {
-      type: String,
-      required: true,
-    },
+      photo: {
+        type: String,
+        required: true,
+      },
 
-    passwordHash: {
-      type: String,
-    },
+      passwordHash: {
+        type: String,
+      },
 
-    password: {
-      type: String,
-    },
+      password: {
+        type: String,
+      },
 
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
+      isVerified: {
+        type: Boolean,
+        default: false,
+      },
 
-    emailVerified: {
-      type: Boolean,
-      default: false,
-    },
+      emailVerified: {
+        type: Boolean,
+        default: false,
+      },
 
-    lastClaimedMeal: {
-      type: String,
-      default: "",
-    },
+      lastClaimedMeal: {
+        type: String,
+        default: "",
+      },
 
-    lastClaimedAt: {
-      type: Date,
-      default: null,
+      lastClaimedAt: {
+        type: Date,
+        default: null,
+      },
     },
-  },
-  {
-    timestamps: true,
-  }
-);
+    {
+      timestamps: true,
+    }
+  );
 
 // ============================================================
 // PENDING REGISTRATION SCHEMA
 // ============================================================
 
-const pendingRegistrationSchema = new mongoose.Schema(
-  {
-    scholarId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-      trim: true,
-    },
+const pendingRegistrationSchema =
+  new mongoose.Schema(
+    {
+      scholarId: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+        trim: true,
+      },
 
-    collegeEmail: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true,
-    },
+      collegeEmail: {
+        type: String,
+        required: true,
+        trim: true,
+        lowercase: true,
+      },
 
-    name: {
-      type: String,
-      required: true,
-    },
+      name: {
+        type: String,
+        required: true,
+      },
 
-    room: {
-      type: String,
-      required: true,
-    },
+      room: {
+        type: String,
+        required: true,
+      },
 
-    passwordHash: {
-      type: String,
-      required: true,
-    },
+      passwordHash: {
+        type: String,
+        required: true,
+      },
 
-    photo: {
-      type: String,
-      required: true,
-    },
+      photo: {
+        type: String,
+        required: true,
+      },
 
-    otpHash: {
-      type: String,
-      required: true,
-    },
+      otpHash: {
+        type: String,
+        required: true,
+      },
 
-    otpExpiresAt: {
-      type: Date,
-      required: true,
-    },
+      otpExpiresAt: {
+        type: Date,
+        required: true,
+      },
 
-    attempts: {
-      type: Number,
-      default: 0,
-    },
+      attempts: {
+        type: Number,
+        default: 0,
+      },
 
-    lastSentAt: {
-      type: Date,
-      default: null,
-    },
+      lastSentAt: {
+        type: Date,
+        default: null,
+      },
 
-    sendWindowStartedAt: {
-      type: Date,
-      default: null,
-    },
+      sendWindowStartedAt: {
+        type: Date,
+        default: null,
+      },
 
-    sendCount: {
-      type: Number,
-      default: 0,
-    },
+      sendCount: {
+        type: Number,
+        default: 0,
+      },
 
-    expiresAt: {
-      type: Date,
+      expiresAt: {
+        type: Date,
 
-      default: () =>
-        new Date(
-          Date.now() + 20 * 60 * 1000
-        ),
+        default: () =>
+          new Date(
+            Date.now() +
+              20 * 60 * 1000
+          ),
 
-      index: {
-        expires: 0,
+        index: {
+          expires: 0,
+        },
       },
     },
-  },
-  {
-    timestamps: true,
-  }
-);
+    {
+      timestamps: true,
+    }
+  );
 
 const Student =
   mongoose.models.Student ||
@@ -480,7 +595,10 @@ function cleanScholarId(value) {
 
 function generateOTP() {
   return crypto
-    .randomInt(100000, 1000000)
+    .randomInt(
+      100000,
+      1000000
+    )
     .toString();
 }
 
@@ -492,8 +610,10 @@ function hashOTP(otp) {
 }
 
 function maskEmail(email) {
-  const [name, domain] =
-    email.split("@");
+  const [
+    name,
+    domain,
+  ] = email.split("@");
 
   if (!name) {
     return email;
@@ -509,22 +629,35 @@ function maskEmail(email) {
 // HEALTH CHECK
 // ============================================================
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    server: "online",
-    mongodb:
-      mongoose.connection.readyState,
-    emailAccounts:
-      EMAIL_ACCOUNTS.length,
-  });
-});
+app.get(
+  "/api/health",
+  (req, res) => {
+    res.json({
+      success: true,
+
+      server: "online",
+
+      mongodb:
+        mongoose.connection
+          .readyState,
+
+      emailService:
+        "Brevo",
+
+      emailSenders:
+        BREVO_SENDERS.length,
+    });
+  }
+);
 
 // ============================================================
 // REGISTRATION - SEND OTP
 // ============================================================
 
-async function registerStart(req, res) {
+async function registerStart(
+  req,
+  res
+) {
   try {
     const {
       scholarId,
@@ -563,7 +696,9 @@ async function registerStart(req, res) {
     // ========================================================
 
     const cleanId =
-      cleanScholarId(scholarId);
+      cleanScholarId(
+        scholarId
+      );
 
     if (!cleanId) {
       return res.status(400).json({
@@ -589,12 +724,15 @@ async function registerStart(req, res) {
       });
     }
 
-    const now = new Date();
+    const now =
+      new Date();
 
     let pending =
-      await PendingRegistration.findOne({
-        scholarId: cleanId,
-      });
+      await PendingRegistration.findOne(
+        {
+          scholarId: cleanId,
+        }
+      );
 
     if (
       pending &&
@@ -623,7 +761,9 @@ async function registerStart(req, res) {
         sendWindowStartedAt.getTime() >=
         60 * 60 * 1000
     ) {
-      sendWindowStartedAt = now;
+      sendWindowStartedAt =
+        now;
+
       sendCount = 0;
     }
 
@@ -635,9 +775,11 @@ async function registerStart(req, res) {
       });
     }
 
-    const otp = generateOTP();
+    const otp =
+      generateOTP();
 
-    const otpHash = hashOTP(otp);
+    const otpHash =
+      hashOTP(otp);
 
     const passwordHash =
       await bcrypt.hash(
@@ -648,19 +790,26 @@ async function registerStart(req, res) {
     if (!pending) {
       pending =
         new PendingRegistration({
-          scholarId: cleanId,
+          scholarId:
+            cleanId,
 
-          collegeEmail: collegeEmail,
+          collegeEmail:
+            collegeEmail,
 
-          name: String(name).trim(),
+          name:
+            String(name).trim(),
 
-          room: String(room).trim(),
+          room:
+            String(room).trim(),
 
-          passwordHash: passwordHash,
+          passwordHash:
+            passwordHash,
 
-          photo: photo,
+          photo:
+            photo,
 
-          otpHash: otpHash,
+          otpHash:
+            otpHash,
 
           otpExpiresAt:
             new Date(
@@ -670,7 +819,8 @@ async function registerStart(req, res) {
 
           attempts: 0,
 
-          lastSentAt: now,
+          lastSentAt:
+            now,
 
           sendWindowStartedAt:
             sendWindowStartedAt,
@@ -697,9 +847,11 @@ async function registerStart(req, res) {
       pending.passwordHash =
         passwordHash;
 
-      pending.photo = photo;
+      pending.photo =
+        photo;
 
-      pending.otpHash = otpHash;
+      pending.otpHash =
+        otpHash;
 
       pending.otpExpiresAt =
         new Date(
@@ -709,7 +861,8 @@ async function registerStart(req, res) {
 
       pending.attempts = 0;
 
-      pending.lastSentAt = now;
+      pending.lastSentAt =
+        now;
 
       pending.sendWindowStartedAt =
         sendWindowStartedAt;
@@ -739,7 +892,8 @@ async function registerStart(req, res) {
 
       await PendingRegistration.deleteOne(
         {
-          scholarId: cleanId,
+          scholarId:
+            cleanId,
         }
       );
 
@@ -752,10 +906,14 @@ async function registerStart(req, res) {
 
     return res.json({
       success: true,
+
       message:
         "OTP sent successfully.",
+
       email:
-        maskEmail(collegeEmail),
+        maskEmail(
+          collegeEmail
+        ),
     });
   } catch (error) {
     console.error(
@@ -785,7 +943,10 @@ app.post(
 // REGISTRATION - VERIFY OTP
 // ============================================================
 
-async function registerVerify(req, res) {
+async function registerVerify(
+  req,
+  res
+) {
   try {
     const {
       scholarId,
@@ -793,7 +954,9 @@ async function registerVerify(req, res) {
     } = req.body;
 
     const cleanId =
-      cleanScholarId(scholarId);
+      cleanScholarId(
+        scholarId
+      );
 
     if (!cleanId || !otp) {
       return res.status(400).json({
@@ -804,9 +967,12 @@ async function registerVerify(req, res) {
     }
 
     const pending =
-      await PendingRegistration.findOne({
-        scholarId: cleanId,
-      });
+      await PendingRegistration.findOne(
+        {
+          scholarId:
+            cleanId,
+        }
+      );
 
     if (!pending) {
       return res.status(404).json({
@@ -821,9 +987,12 @@ async function registerVerify(req, res) {
       new Date() >
         pending.otpExpiresAt
     ) {
-      await PendingRegistration.deleteOne({
-        scholarId: cleanId,
-      });
+      await PendingRegistration.deleteOne(
+        {
+          scholarId:
+            cleanId,
+        }
+      );
 
       return res.status(400).json({
         success: false,
@@ -833,9 +1002,12 @@ async function registerVerify(req, res) {
     }
 
     if (pending.attempts >= 5) {
-      await PendingRegistration.deleteOne({
-        scholarId: cleanId,
-      });
+      await PendingRegistration.deleteOne(
+        {
+          scholarId:
+            cleanId,
+        }
+      );
 
       return res.status(429).json({
         success: false,
@@ -859,7 +1031,8 @@ async function registerVerify(req, res) {
 
       return res.status(400).json({
         success: false,
-        message: "Incorrect OTP.",
+        message:
+          "Incorrect OTP.",
       });
     }
 
@@ -872,22 +1045,29 @@ async function registerVerify(req, res) {
           collegeEmail:
             pending.collegeEmail,
 
-          name: pending.name,
+          name:
+            pending.name,
 
-          room: pending.room,
+          room:
+            pending.room,
 
           passwordHash:
             pending.passwordHash,
 
-          photo: pending.photo,
+          photo:
+            pending.photo,
 
-          emailVerified: true,
+          emailVerified:
+            true,
 
-          isVerified: false,
+          isVerified:
+            false,
 
-          lastClaimedMeal: "",
+          lastClaimedMeal:
+            "",
 
-          lastClaimedAt: null,
+          lastClaimedAt:
+            null,
         });
 
       await student.save();
@@ -906,17 +1086,22 @@ async function registerVerify(req, res) {
       throw createError;
     }
 
-    await PendingRegistration.deleteOne({
-      scholarId: cleanId,
-    });
+    await PendingRegistration.deleteOne(
+      {
+        scholarId:
+          cleanId,
+      }
+    );
 
     return res.json({
       success: true,
+
       message:
         "Registration successful! You can now login.",
 
       student: {
-        scholarId: cleanId,
+        scholarId:
+          cleanId,
       },
     });
   } catch (error) {
@@ -947,14 +1132,19 @@ app.post(
 // REGISTRATION - RESEND OTP
 // ============================================================
 
-async function registerResend(req, res) {
+async function registerResend(
+  req,
+  res
+) {
   try {
     const {
       scholarId,
     } = req.body;
 
     const cleanId =
-      cleanScholarId(scholarId);
+      cleanScholarId(
+        scholarId
+      );
 
     if (!cleanId) {
       return res.status(400).json({
@@ -965,9 +1155,12 @@ async function registerResend(req, res) {
     }
 
     const pending =
-      await PendingRegistration.findOne({
-        scholarId: cleanId,
-      });
+      await PendingRegistration.findOne(
+        {
+          scholarId:
+            cleanId,
+        }
+      );
 
     if (!pending) {
       return res.status(404).json({
@@ -977,7 +1170,8 @@ async function registerResend(req, res) {
       });
     }
 
-    const now = new Date();
+    const now =
+      new Date();
 
     if (
       pending.lastSentAt &&
@@ -1015,7 +1209,9 @@ async function registerResend(req, res) {
         sendWindowStartedAt.getTime() >=
         60 * 60 * 1000
     ) {
-      sendWindowStartedAt = now;
+      sendWindowStartedAt =
+        now;
+
       sendCount = 0;
     }
 
@@ -1027,7 +1223,8 @@ async function registerResend(req, res) {
       });
     }
 
-    const otp = generateOTP();
+    const otp =
+      generateOTP();
 
     try {
       await sendOTPEmail(
@@ -1058,7 +1255,8 @@ async function registerResend(req, res) {
 
     pending.attempts = 0;
 
-    pending.lastSentAt = now;
+    pending.lastSentAt =
+      now;
 
     pending.sendWindowStartedAt =
       sendWindowStartedAt;
@@ -1076,6 +1274,7 @@ async function registerResend(req, res) {
 
     return res.json({
       success: true,
+
       message:
         "New OTP sent successfully.",
 
@@ -1117,9 +1316,14 @@ app.post(
       } = req.body;
 
       const cleanId =
-        cleanScholarId(scholarId);
+        cleanScholarId(
+          scholarId
+        );
 
-      if (!cleanId || !password) {
+      if (
+        !cleanId ||
+        !password
+      ) {
         return res.status(400).json({
           success: false,
           message:
@@ -1129,7 +1333,8 @@ app.post(
 
       const student =
         await Student.findOne({
-          scholarId: cleanId,
+          scholarId:
+            cleanId,
         });
 
       if (!student) {
@@ -1140,15 +1345,20 @@ app.post(
         });
       }
 
-      let passwordCorrect = false;
+      let passwordCorrect =
+        false;
 
-      if (student.passwordHash) {
+      if (
+        student.passwordHash
+      ) {
         passwordCorrect =
           await bcrypt.compare(
             password,
             student.passwordHash
           );
-      } else if (student.password) {
+      } else if (
+        student.password
+      ) {
         passwordCorrect =
           student.password ===
           password;
@@ -1185,11 +1395,14 @@ app.post(
           collegeEmail:
             student.collegeEmail,
 
-          name: student.name,
+          name:
+            student.name,
 
-          room: student.room,
+          room:
+            student.room,
 
-          photo: student.photo,
+          photo:
+            student.photo,
 
           isVerified:
             student.isVerified,
@@ -1244,7 +1457,8 @@ app.get(
 
       const student =
         await Student.findOne({
-          scholarId: cleanId,
+          scholarId:
+            cleanId,
         }).lean();
 
       if (!student) {
@@ -1265,11 +1479,14 @@ app.get(
           collegeEmail:
             student.collegeEmail,
 
-          name: student.name,
+          name:
+            student.name,
 
-          room: student.room,
+          room:
+            student.room,
 
-          photo: student.photo,
+          photo:
+            student.photo,
 
           isVerified:
             student.isVerified,
@@ -1330,7 +1547,10 @@ app.post(
       const STAFF_PIN =
         "manitH10";
 
-      if (staffPin !== STAFF_PIN) {
+      if (
+        staffPin !==
+        STAFF_PIN
+      ) {
         return res.status(401).json({
           success: false,
           status: "denied",
@@ -1340,7 +1560,9 @@ app.post(
       }
 
       const cleanId =
-        cleanScholarId(scholarId);
+        cleanScholarId(
+          scholarId
+        );
 
       if (!cleanId) {
         return res.status(400).json({
@@ -1357,7 +1579,8 @@ app.post(
 
       const student =
         await Student.findOne({
-          scholarId: cleanId,
+          scholarId:
+            cleanId,
         });
 
       if (!student) {
@@ -1378,7 +1601,8 @@ app.post(
         });
       }
 
-      const today = new Date();
+      const today =
+        new Date();
 
       const todayString =
         today
@@ -1420,24 +1644,30 @@ app.post(
 
       return res.json({
         success: true,
+
         status: "allowed",
 
         message:
           `${selectedMeal} marked successfully for ${student.name}.`,
 
-        name: student.name,
+        name:
+          student.name,
 
-        room: student.room,
+        room:
+          student.room,
 
-        meal: selectedMeal,
+        meal:
+          selectedMeal,
 
         student: {
           scholarId:
             student.scholarId,
 
-          name: student.name,
+          name:
+            student.name,
 
-          room: student.room,
+          room:
+            student.room,
         },
       });
     } catch (error) {
@@ -1464,15 +1694,24 @@ function getCurrentMealSlot() {
   const hour =
     new Date().getHours();
 
-  if (hour >= 6 && hour < 11) {
+  if (
+    hour >= 6 &&
+    hour < 11
+  ) {
     return "Breakfast";
   }
 
-  if (hour >= 11 && hour < 16) {
+  if (
+    hour >= 11 &&
+    hour < 16
+  ) {
     return "Lunch";
   }
 
-  if (hour >= 16 && hour < 19) {
+  if (
+    hour >= 16 &&
+    hour < 19
+  ) {
     return "Snacks";
   }
 
@@ -1518,7 +1757,8 @@ app.post(
 
       const student =
         await Student.findOne({
-          scholarId: cleanId,
+          scholarId:
+            cleanId,
         });
 
       if (!student) {
@@ -1581,9 +1821,11 @@ app.post(
 
         {
           $set: {
-            lastClaimedMeal: "",
+            lastClaimedMeal:
+              "",
 
-            lastClaimedAt: null,
+            lastClaimedAt:
+              null,
           },
         }
       );
