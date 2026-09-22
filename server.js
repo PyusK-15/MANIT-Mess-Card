@@ -4,47 +4,23 @@ const cors = require('cors');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const app = express();
+
+/* =========================================================
+   BASIC SERVER CONFIGURATION
+========================================================= */
 
 app.use(express.json({ limit: '15mb' }));
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* =========================================================
-   DATABASE
-   ========================================================= */
+   ENVIRONMENT VARIABLES
+========================================================= */
 
-const MONGO_URI =
-    process.env.MONGO_URI ||
-    'mongodb+srv://pyus1528_db_user:Piyush123@manit-mess.y5xx5ki.mongodb.net/manitMessDB?retryWrites=true&w=majority';
-
-mongoose.connect(MONGO_URI, {
-    maxPoolSize: 50,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000
-})
-.then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
-.catch(err => console.error("❌ MongoDB Connection Error:", err.message));
-
-
-/* =========================================================
-   EMAIL CONFIGURATION
-   =========================================================
-
-   For now, put your Gmail sender credentials here.
-
-   IMPORTANT:
-   Use a Gmail APP PASSWORD, NOT your normal Gmail password.
-
-   Example:
-
-   const EMAIL_USER = 'yourmesscard@gmail.com';
-   const EMAIL_PASS = 'abcdefghijklmnop';
-
-   Do NOT put your student's MANIT password here.
-   This is only the account used to SEND OTP emails.
-   ========================================================= */
+const MONGO_URI = process.env.MONGO_URI;
 
 const EMAIL_1 = process.env.EMAIL_1;
 const PASS_1 = process.env.PASS_1;
@@ -52,39 +28,36 @@ const PASS_1 = process.env.PASS_1;
 const EMAIL_2 = process.env.EMAIL_2;
 const PASS_2 = process.env.PASS_2;
 
-let transporter = null;
-
-let transporter = null;
-
-if (EMAIL_1 && PASS_1) {
-    transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: EMAIL_1,
-            pass: PASS_1
-        }
-    });
-
-    console.log(`📧 Email service configured with ${EMAIL_1}`);
-} else {
-    console.log("⚠️ EMAIL_1 / PASS_1 not configured.");
-}
-
-    transporter.verify((error) => {
-        if (error) {
-            console.error("❌ Email configuration error:", error.message);
-        } else {
-            console.log("✅ Email service is ready");
-        }
-    });
-} else {
-    console.log("⚠️ EMAIL_USER / EMAIL_PASS not configured yet.");
-}
-
+/*
+   Temporary/demo staff PIN.
+   We will secure staff authentication separately later.
+*/
+const STAFF_PIN = process.env.STAFF_PIN || 'manitH10';
 
 /* =========================================================
-   STUDENT SCHEMA
-   ========================================================= */
+   MONGODB
+========================================================= */
+
+if (!MONGO_URI) {
+    console.error("❌ MONGO_URI is missing from environment variables.");
+    process.exit(1);
+}
+
+mongoose.connect(MONGO_URI, {
+    maxPoolSize: 50,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000
+})
+.then(() => {
+    console.log("✅ MongoDB Atlas Connected Successfully");
+})
+.catch(err => {
+    console.error("❌ MongoDB Connection Error:", err.message);
+});
+
+/* =========================================================
+   STUDENT MODEL
+========================================================= */
 
 const studentSchema = new mongoose.Schema({
     scholarId: {
@@ -110,9 +83,17 @@ const studentSchema = new mongoose.Schema({
         required: true
     },
 
+    /*
+      New accounts use passwordHash.
+      password is retained only so older test accounts
+      created by the previous version don't immediately break.
+    */
     passwordHash: {
-        type: String,
-        required: true
+        type: String
+    },
+
+    password: {
+        type: String
     },
 
     photo: {
@@ -120,17 +101,18 @@ const studentSchema = new mongoose.Schema({
         required: true
     },
 
-    // Email OTP verification
+    /*
+      emailVerified = OTP verification.
+      isVerified = physical verification/activation by mess staff.
+    */
     emailVerified: {
         type: Boolean,
         default: false
     },
 
-    // Kept for compatibility with your existing card UI.
-    // This can later be used for an optional physical MANIT ID check.
     isVerified: {
         type: Boolean,
-        default: true
+        default: false
     },
 
     lastClaimedMeal: {
@@ -140,13 +122,11 @@ const studentSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-
 const Student = mongoose.model('Student', studentSchema);
 
-
 /* =========================================================
-   TEMPORARY OTP REGISTRATION SCHEMA
-   ========================================================= */
+   PENDING REGISTRATION MODEL
+========================================================= */
 
 const pendingRegistrationSchema = new mongoose.Schema({
 
@@ -192,14 +172,34 @@ const pendingRegistrationSchema = new mongoose.Schema({
         required: true
     },
 
-    otpAttempts: {
+    /*
+      MongoDB automatically deletes this document
+      after 10 minutes.
+    */
+    expiresAt: {
+        type: Date,
+        required: true,
+        index: { expires: 0 }
+    },
+
+    attempts: {
         type: Number,
         default: 0
     },
 
-    lastOtpSentAt: {
+    lastSentAt: {
         type: Date,
-        required: true
+        default: null
+    },
+
+    sendWindowStartedAt: {
+        type: Date,
+        default: null
+    },
+
+    sendCount: {
+        type: Number,
+        default: 0
     }
 
 }, { timestamps: true });
@@ -207,37 +207,191 @@ const pendingRegistrationSchema = new mongoose.Schema({
 const PendingRegistration =
     mongoose.model('PendingRegistration', pendingRegistrationSchema);
 
+/* =========================================================
+   EMAIL CONFIGURATION
+========================================================= */
+
+let transporter1 = null;
+let transporter2 = null;
+
+if (EMAIL_1 && PASS_1) {
+
+    transporter1 = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: EMAIL_1,
+            pass: PASS_1
+        }
+    });
+
+    console.log(`📧 Email account 1 configured: ${EMAIL_1}`);
+
+} else {
+
+    console.log("⚠️ EMAIL_1 / PASS_1 not configured.");
+
+}
+
+
+if (EMAIL_2 && PASS_2) {
+
+    transporter2 = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: EMAIL_2,
+            pass: PASS_2
+        }
+    });
+
+    console.log(`📧 Email account 2 configured: ${EMAIL_2}`);
+
+} else {
+
+    console.log("⚠️ EMAIL_2 / PASS_2 not configured.");
+
+}
 
 /* =========================================================
-   HELPERS
-   ========================================================= */
+   HELPER: SEND OTP EMAIL
+========================================================= */
 
-function cleanScholarId(value) {
-    return String(value || '').trim().toLowerCase();
-}
+async function sendOTPEmail(toEmail, otp) {
 
+    if (!transporter1 && !transporter2) {
+        throw new Error(
+            "Email service is not configured. Add EMAIL_1/PASS_1 or EMAIL_2/PASS_2."
+        );
+    }
 
-function isValidScholarId(scholarId) {
+    const mailOptions = {
+        to: toEmail,
+        subject: "MANIT Digital Mess Card - OTP Verification",
+
+        text:
+`MANIT Digital Mess Card
+
+Your OTP is: ${otp}
+
+This OTP is valid for 10 minutes.
+
+If you did not request registration, please ignore this email.
+
+MANIT Digital Mess Card System`,
+
+        html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:25px;border:1px solid #ddd;border-radius:10px;">
+
+                <h2>MANIT Digital Mess Card</h2>
+
+                <p>Your registration verification OTP is:</p>
+
+                <div style="
+                    font-size:32px;
+                    font-weight:bold;
+                    letter-spacing:8px;
+                    padding:15px;
+                    background:#f3f3f3;
+                    text-align:center;
+                    border-radius:8px;
+                    margin:20px 0;
+                ">
+                    ${otp}
+                </div>
+
+                <p>
+                    This OTP is valid for <strong>10 minutes</strong>.
+                </p>
+
+                <p>
+                    If you did not request this registration,
+                    you can safely ignore this email.
+                </p>
+
+                <hr>
+
+                <p style="font-size:12px;color:#777;">
+                    MANIT Digital Mess Card System
+                </p>
+
+            </div>
+        `
+    };
+
     /*
-       MANIT Scholar IDs normally consist of letters/numbers.
-       We deliberately do not enforce a specific length here.
+      Try Gmail account 1 first.
     */
 
-    return /^[a-z0-9]+$/i.test(scholarId);
+    if (transporter1) {
+
+        try {
+
+            await transporter1.sendMail({
+                ...mailOptions,
+                from: EMAIL_1
+            });
+
+            console.log(`📨 OTP sent using EMAIL_1 to ${toEmail}`);
+
+            return {
+                success: true,
+                sender: EMAIL_1
+            };
+
+        } catch (error) {
+
+            console.error(
+                "⚠️ EMAIL_1 failed:",
+                error.message
+            );
+
+        }
+    }
+
+    /*
+      If account 1 fails, try account 2.
+    */
+
+    if (transporter2) {
+
+        try {
+
+            await transporter2.sendMail({
+                ...mailOptions,
+                from: EMAIL_2
+            });
+
+            console.log(`📨 OTP sent using EMAIL_2 to ${toEmail}`);
+
+            return {
+                success: true,
+                sender: EMAIL_2
+            };
+
+        } catch (error) {
+
+            console.error(
+                "❌ EMAIL_2 failed:",
+                error.message
+            );
+
+        }
+    }
+
+    throw new Error("Both email accounts failed to send the OTP.");
+
 }
 
-
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
+/* =========================================================
+   HELPER: CURRENT MEAL
+========================================================= */
 
 function getCurrentMealSlot() {
 
     const d = new Date(
-        new Date().toLocaleString("en-US", {
-            timeZone: "Asia/Kolkata"
-        })
+        new Date().toLocaleString(
+            "en-US",
+            { timeZone: "Asia/Kolkata" }
+        )
     );
 
     const hh = d.getHours().toString().padStart(2, '0');
@@ -253,23 +407,25 @@ function getCurrentMealSlot() {
     let mealSlot = "Mess Service";
 
     if (timeStr >= "07:30" && timeStr < "11:00") {
+
         mealSlot = "Breakfast";
-    }
 
-    else if (timeStr >= "12:30" && timeStr < "15:30") {
+    } else if (timeStr >= "12:30" && timeStr < "15:30") {
+
         mealSlot = "Lunch";
-    }
 
-    else if (timeStr >= "17:00" && timeStr < "18:30") {
+    } else if (timeStr >= "17:00" && timeStr < "18:30") {
+
         mealSlot = "Snacks";
-    }
 
-    else if (timeStr >= "19:30" && timeStr < "22:30") {
+    } else if (timeStr >= "19:30" && timeStr < "22:30") {
+
         mealSlot = "Dinner";
-    }
 
-    else {
+    } else {
+
         mealSlot = "Special / Off-Peak Service";
+
     }
 
     return {
@@ -279,102 +435,50 @@ function getCurrentMealSlot() {
     };
 }
 
-
 /* =========================================================
-   SEND OTP EMAIL
-   ========================================================= */
+   HELPER: SCHOLAR ID
+========================================================= */
 
-async function sendOTPEmail(email, otp, scholarId) {
+function cleanScholarId(value) {
 
-    if (!transporter) {
-        throw new Error(
-            "Email service is not configured. Add EMAIL_USER and EMAIL_PASS."
-        );
-    }
+    return String(value || '')
+        .trim()
+        .toLowerCase();
 
-    const mailOptions = {
-
-        from: `"MANIT Digital Mess Card" <${EMAIL_USER}>`,
-
-        to: email,
-
-        subject: "MANIT Mess Card - Email Verification OTP",
-
-        text:
-`MANIT Digital Mess Card
-
-Dear Student,
-
-Your OTP for registering your MANIT Digital Mess Card is:
-
-${otp}
-
-Scholar ID: ${scholarId}
-
-This OTP is valid for 10 minutes.
-
-If you did not request this OTP, please ignore this email.
-
-Regards,
-MANIT Digital Mess Card System`,
-
-        html: `
-        <div style="
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: auto;
-            padding: 25px;
-            border: 1px solid #e2e8f0;
-            border-radius: 15px;
-        ">
-
-            <h2 style="color:#0a2540;">
-                MANIT Digital Mess Card
-            </h2>
-
-            <p>
-                Your email verification OTP is:
-            </p>
-
-            <div style="
-                font-size:32px;
-                font-weight:bold;
-                letter-spacing:8px;
-                color:#2563eb;
-                padding:15px;
-                text-align:center;
-                background:#f8fafc;
-                border-radius:10px;
-            ">
-                ${otp}
-            </div>
-
-            <p>
-                <strong>Scholar ID:</strong> ${scholarId}
-            </p>
-
-            <p>
-                This OTP will expire in <strong>10 minutes</strong>.
-            </p>
-
-            <p style="color:#64748b;font-size:13px;">
-                If you did not request this verification, you can safely
-                ignore this email.
-            </p>
-
-        </div>
-        `
-    };
-
-    await transporter.sendMail(mailOptions);
 }
 
+/* =========================================================
+   HELPER: MASK EMAIL
+========================================================= */
+
+function maskEmail(email) {
+
+    const parts = email.split('@');
+
+    if (parts.length !== 2) {
+        return email;
+    }
+
+    const username = parts[0];
+
+    if (username.length <= 2) {
+        return `**@${parts[1]}`;
+    }
+
+    return (
+        username.substring(0, 2) +
+        '*'.repeat(Math.max(2, username.length - 2)) +
+        '@' +
+        parts[1]
+    );
+
+}
 
 /* =========================================================
-   1. START REGISTRATION
-   ========================================================= */
+   1. SEND OTP
+========================================================= */
 
-app.post('/api/register/start', async (req, res) => {
+app.post('/api/send-otp', async (req, res) => {
 
     try {
 
@@ -390,41 +494,39 @@ app.post('/api/register/start', async (req, res) => {
 
             return res.status(400).json({
                 success: false,
-                message: "All fields are required."
+                message: "All registration fields are required."
             });
-        }
 
+        }
 
         const cleanId = cleanScholarId(scholarId);
 
+        /*
+          MANIT scholar numbers normally look like 9 digits.
+        */
 
-        if (!isValidScholarId(cleanId)) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Invalid Scholar Number."
-            });
-        }
-
-
-        if (password.length < 6) {
+        if (!/^\d{9}$/.test(cleanId)) {
 
             return res.status(400).json({
                 success: false,
-                message: "Password must contain at least 6 characters."
+                message: "Please enter a valid 9-digit Scholar ID."
             });
-        }
 
+        }
 
         const collegeEmail =
             `${cleanId}@stu.manit.ac.in`;
 
-
-        /* Check permanent account */
+        /*
+          Check if account already exists.
+        */
 
         const existingStudent =
             await Student.findOne({
-                scholarId: cleanId
+                $or: [
+                    { scholarId: cleanId },
+                    { collegeEmail: collegeEmail }
+                ]
             });
 
         if (existingStudent) {
@@ -432,159 +534,217 @@ app.post('/api/register/start', async (req, res) => {
             return res.status(409).json({
                 success: false,
                 message:
-                    "An account already exists for this Scholar Number. Please log in."
+                    "An account already exists for this Scholar ID. Please log in."
             });
+
         }
 
+        /*
+          Find previous pending registration.
+        */
 
-        /* Check whether an OTP was recently sent */
-
-        const existingPending =
+        let pending =
             await PendingRegistration.findOne({
                 scholarId: cleanId
             });
 
+        const now = new Date();
 
-        if (existingPending) {
+        /*
+          Prevent OTP spam:
+          Minimum 60 seconds between OTP requests.
+        */
 
-            const secondsSinceLastOTP =
-                (Date.now() -
-                    existingPending.lastOtpSentAt.getTime()) / 1000;
+        if (
+            pending &&
+            pending.lastSentAt &&
+            (now.getTime() - pending.lastSentAt.getTime()) < 60000
+        ) {
 
-            if (secondsSinceLastOTP < 60) {
+            const secondsLeft = Math.ceil(
+                60 -
+                ((now.getTime() - pending.lastSentAt.getTime()) / 1000)
+            );
 
-                const remaining =
-                    Math.ceil(60 - secondsSinceLastOTP);
+            return res.status(429).json({
+                success: false,
+                message:
+                    `Please wait ${secondsLeft} seconds before requesting another OTP.`
+            });
+
+        }
+
+        /*
+          Limit to 5 OTP sends per hour.
+        */
+
+        if (pending) {
+
+            if (
+                pending.sendWindowStartedAt &&
+                (now.getTime() -
+                    pending.sendWindowStartedAt.getTime()) >=
+                60 * 60 * 1000
+            ) {
+
+                pending.sendWindowStartedAt = now;
+                pending.sendCount = 0;
+
+            }
+
+            if (pending.sendCount >= 5) {
 
                 return res.status(429).json({
                     success: false,
                     message:
-                        `Please wait ${remaining} seconds before requesting another OTP.`
+                        "Too many OTP requests. Please try again later."
                 });
+
             }
+
         }
 
+        /*
+          Generate secure 6-digit OTP.
+        */
 
-        /* Generate OTP */
-
-        const otp = generateOTP();
+        const otp =
+            crypto.randomInt(100000, 1000000).toString();
 
         const otpHash =
-            await bcrypt.hash(otp, 10);
+            crypto
+                .createHash('sha256')
+                .update(otp)
+                .digest('hex');
 
         const passwordHash =
             await bcrypt.hash(password, 12);
 
+        const expiresAt =
+            new Date(Date.now() + 10 * 60 * 1000);
 
-        const now = new Date();
+        if (!pending) {
 
-        const otpExpiresAt =
-            new Date(
-                now.getTime() + 10 * 60 * 1000
-            );
-
-
-        /* Save/update pending registration */
-
-        await PendingRegistration.findOneAndUpdate(
-
-            { scholarId: cleanId },
-
-            {
+            pending = new PendingRegistration({
                 scholarId: cleanId,
-
                 collegeEmail,
-
                 name: name.trim(),
-
                 room: room.trim(),
-
                 passwordHash,
-
                 photo,
-
                 otpHash,
+                otpExpiresAt: expiresAt,
+                expiresAt,
+                attempts: 0,
+                lastSentAt: now,
+                sendWindowStartedAt: now,
+                sendCount: 1
+            });
 
-                otpExpiresAt,
+        } else {
 
-                otpAttempts: 0,
+            pending.collegeEmail = collegeEmail;
+            pending.name = name.trim();
+            pending.room = room.trim();
+            pending.passwordHash = passwordHash;
+            pending.photo = photo;
+            pending.otpHash = otpHash;
+            pending.otpExpiresAt = expiresAt;
+            pending.expiresAt = expiresAt;
+            pending.attempts = 0;
+            pending.lastSentAt = now;
+            pending.sendCount += 1;
 
-                lastOtpSentAt: now
-            },
-
-            {
-                upsert: true,
-                new: true,
-                setDefaultsOnInsert: true
+            if (!pending.sendWindowStartedAt) {
+                pending.sendWindowStartedAt = now;
             }
-        );
 
+        }
 
-        /* Send OTP */
+        await pending.save();
+
+        /*
+          Send email.
+        */
 
         try {
 
-            await sendOTPEmail(
-                collegeEmail,
-                otp,
-                cleanId
+            const result =
+                await sendOTPEmail(
+                    collegeEmail,
+                    otp
+                );
+
+            console.log(
+                `✅ OTP successfully sent to ${collegeEmail} using ${result.sender}`
             );
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    `OTP sent to ${maskEmail(collegeEmail)}.`,
+
+                email:
+                    maskEmail(collegeEmail),
+
+                expiresIn: 600
+
+            });
 
         } catch (emailError) {
 
             console.error(
-                "OTP Email Error:",
+                "❌ OTP Email Error:",
                 emailError
             );
+
+            /*
+              Delete failed pending registration
+              so the user can try again.
+            */
 
             await PendingRegistration.deleteOne({
                 scholarId: cleanId
             });
 
             return res.status(500).json({
+
                 success: false,
+
                 message:
                     "Could not send OTP. Please check the email service configuration."
+
             });
+
         }
 
-
-        return res.status(200).json({
-
-            success: true,
-
-            message:
-                `OTP sent to ${cleanId.slice(0, 2)}******@stu.manit.ac.in`,
-
-            scholarId: cleanId,
-
-            emailMasked:
-                `${cleanId.slice(0, 2)}******@stu.manit.ac.in`
-
-        });
-
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(
-            "Registration Start Error:",
+            "❌ Send OTP Error:",
             err
         );
 
         return res.status(500).json({
+
             success: false,
-            message: "Unable to start registration."
+
+            message:
+                "Failed to send OTP."
+
         });
+
     }
+
 });
 
-
 /* =========================================================
-   2. VERIFY OTP
-   ========================================================= */
+   2. VERIFY OTP AND CREATE ACCOUNT
+========================================================= */
 
-app.post('/api/register/verify', async (req, res) => {
+app.post('/api/verify-otp', async (req, res) => {
 
     try {
 
@@ -593,39 +753,41 @@ app.post('/api/register/verify', async (req, res) => {
             otp
         } = req.body;
 
-
         if (!scholarId || !otp) {
 
             return res.status(400).json({
                 success: false,
-                message: "Scholar Number and OTP are required."
+                message: "Scholar ID and OTP are required."
             });
-        }
 
+        }
 
         const cleanId =
             cleanScholarId(scholarId);
-
 
         const pending =
             await PendingRegistration.findOne({
                 scholarId: cleanId
             });
 
-
         if (!pending) {
 
             return res.status(404).json({
                 success: false,
                 message:
-                    "No pending registration found. Please request a new OTP."
+                    "Registration request not found or OTP expired. Please request a new OTP."
             });
+
         }
 
+        /*
+          Check OTP expiry.
+        */
 
-        /* Check expiry */
-
-        if (new Date() > pending.otpExpiresAt) {
+        if (
+            new Date() >
+            pending.otpExpiresAt
+        ) {
 
             await PendingRegistration.deleteOne({
                 scholarId: cleanId
@@ -636,12 +798,14 @@ app.post('/api/register/verify', async (req, res) => {
                 message:
                     "OTP has expired. Please request a new OTP."
             });
+
         }
 
+        /*
+          Maximum 5 wrong attempts.
+        */
 
-        /* Check attempts */
-
-        if (pending.otpAttempts >= 5) {
+        if (pending.attempts >= 5) {
 
             await PendingRegistration.deleteOne({
                 scholarId: cleanId
@@ -650,42 +814,45 @@ app.post('/api/register/verify', async (req, res) => {
             return res.status(429).json({
                 success: false,
                 message:
-                    "Too many incorrect attempts. Please request a new OTP."
+                    "Too many incorrect OTP attempts. Please request a new OTP."
             });
+
         }
 
+        const submittedHash =
+            crypto
+                .createHash('sha256')
+                .update(String(otp).trim())
+                .digest('hex');
 
-        /* Compare OTP */
+        if (
+            submittedHash !==
+            pending.otpHash
+        ) {
 
-        const correctOTP =
-            await bcrypt.compare(
-                String(otp).trim(),
-                pending.otpHash
-            );
-
-
-        if (!correctOTP) {
-
-            pending.otpAttempts += 1;
+            pending.attempts += 1;
 
             await pending.save();
-
-            const remaining =
-                5 - pending.otpAttempts;
 
             return res.status(400).json({
                 success: false,
                 message:
-                    `Incorrect OTP. ${remaining} attempt(s) remaining.`
+                    "Incorrect OTP."
             });
+
         }
 
-
-        /* Make absolutely sure another account wasn't created */
+        /*
+          Check once more that the account wasn't created
+          while the OTP was pending.
+        */
 
         const existingStudent =
             await Student.findOne({
-                scholarId: cleanId
+                $or: [
+                    { scholarId: cleanId },
+                    { collegeEmail: pending.collegeEmail }
+                ]
             });
 
         if (existingStudent) {
@@ -697,18 +864,19 @@ app.post('/api/register/verify', async (req, res) => {
             return res.status(409).json({
                 success: false,
                 message:
-                    "An account already exists for this Scholar Number."
+                    "An account already exists for this Scholar ID."
             });
+
         }
 
-
-        /* Create permanent account */
+        /*
+          Create verified email account.
+        */
 
         const newStudent =
             new Student({
 
-                scholarId:
-                    pending.scholarId,
+                scholarId: pending.scholarId,
 
                 collegeEmail:
                     pending.collegeEmail,
@@ -729,34 +897,33 @@ app.post('/api/register/verify', async (req, res) => {
                     true,
 
                 /*
-                   Email verification is now the registration
-                   verification. Physical verification is no
-                   longer required before using the card.
+                  Physical MANIT/mess activation still happens
+                  when staff scans the card.
                 */
                 isVerified:
-                    true,
+                    false,
 
                 lastClaimedMeal:
                     ''
-            });
 
+            });
 
         await newStudent.save();
 
-
-        /* Remove temporary registration */
+        /*
+          Delete pending registration.
+        */
 
         await PendingRegistration.deleteOne({
             scholarId: cleanId
         });
-
 
         return res.status(201).json({
 
             success: true,
 
             message:
-                "Email verified! Your MANIT Digital Mess Card account has been created.",
+                "Email verified! Account created successfully. Present your physical MANIT ID at the mess for first-time activation.",
 
             student: {
 
@@ -773,167 +940,38 @@ app.post('/api/register/verify', async (req, res) => {
                     newStudent.photo,
 
                 isVerified:
-                    newStudent.isVerified
+                    newStudent.isVerified,
+
+                emailVerified:
+                    true
+
             }
 
         });
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(
-            "OTP Verification Error:",
+            "❌ Verify OTP Error:",
             err
         );
 
         return res.status(500).json({
+
             success: false,
-            message: "OTP verification failed."
-        });
-    }
-});
-
-
-/* =========================================================
-   3. RESEND OTP
-   ========================================================= */
-
-app.post('/api/register/resend', async (req, res) => {
-
-    try {
-
-        const {
-            scholarId
-        } = req.body;
-
-
-        if (!scholarId) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Scholar Number is required."
-            });
-        }
-
-
-        const cleanId =
-            cleanScholarId(scholarId);
-
-
-        const pending =
-            await PendingRegistration.findOne({
-                scholarId: cleanId
-            });
-
-
-        if (!pending) {
-
-            return res.status(404).json({
-                success: false,
-                message:
-                    "No pending registration found. Please start registration again."
-            });
-        }
-
-
-        /* 60 second cooldown */
-
-        const secondsSinceLastOTP =
-            (Date.now() -
-                pending.lastOtpSentAt.getTime()) / 1000;
-
-
-        if (secondsSinceLastOTP < 60) {
-
-            const remaining =
-                Math.ceil(60 - secondsSinceLastOTP);
-
-            return res.status(429).json({
-                success: false,
-                message:
-                    `Please wait ${remaining} seconds before requesting another OTP.`
-            });
-        }
-
-
-        const otp =
-            generateOTP();
-
-
-        const otpHash =
-            await bcrypt.hash(otp, 10);
-
-
-        pending.otpHash =
-            otpHash;
-
-        pending.otpExpiresAt =
-            new Date(
-                Date.now() + 10 * 60 * 1000
-            );
-
-        pending.otpAttempts =
-            0;
-
-        pending.lastOtpSentAt =
-            new Date();
-
-
-        await pending.save();
-
-
-        try {
-
-            await sendOTPEmail(
-                pending.collegeEmail,
-                otp,
-                cleanId
-            );
-
-        } catch (emailError) {
-
-            console.error(
-                "Resend Email Error:",
-                emailError
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Could not send the new OTP."
-            });
-        }
-
-
-        return res.json({
-
-            success: true,
 
             message:
-                `A new OTP has been sent to ${cleanId.slice(0, 2)}******@stu.manit.ac.in`
+                "OTP verification failed."
+
         });
 
     }
 
-    catch (err) {
-
-        console.error(
-            "Resend OTP Error:",
-            err
-        );
-
-        return res.status(500).json({
-            success: false,
-            message: "Could not resend OTP."
-        });
-    }
 });
 
-
 /* =========================================================
-   4. STUDENT LOGIN
-   ========================================================= */
+   3. STUDENT LOGIN
+========================================================= */
 
 app.post('/api/login', async (req, res) => {
 
@@ -944,26 +982,13 @@ app.post('/api/login', async (req, res) => {
             password
         } = req.body;
 
-
-        if (!scholarId || !password) {
-
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Scholar ID and password are required."
-            });
-        }
-
-
         const cleanId =
             cleanScholarId(scholarId);
-
 
         const student =
             await Student.findOne({
                 scholarId: cleanId
             });
-
 
         if (!student) {
 
@@ -972,15 +997,57 @@ app.post('/api/login', async (req, res) => {
                 message:
                     "Invalid Scholar ID or password."
             });
+
         }
 
+        let passwordCorrect = false;
 
-        const passwordCorrect =
-            await bcrypt.compare(
-                password,
-                student.passwordHash
+        /*
+          New accounts: bcrypt password.
+        */
+
+        if (student.passwordHash) {
+
+            passwordCorrect =
+                await bcrypt.compare(
+                    password,
+                    student.passwordHash
+                );
+
+        }
+
+        /*
+          Old test accounts:
+          temporarily support their old plaintext password,
+          then automatically convert it to bcrypt.
+        */
+
+        else if (
+            student.password &&
+            student.password === password
+        ) {
+
+            passwordCorrect = true;
+
+            const newHash =
+                await bcrypt.hash(
+                    password,
+                    12
+                );
+
+            await Student.updateOne(
+                { _id: student._id },
+                {
+                    $set: {
+                        passwordHash: newHash
+                    },
+                    $unset: {
+                        password: ""
+                    }
+                }
             );
 
+        }
 
         if (!passwordCorrect) {
 
@@ -989,18 +1056,8 @@ app.post('/api/login', async (req, res) => {
                 message:
                     "Invalid Scholar ID or password."
             });
+
         }
-
-
-        if (!student.emailVerified) {
-
-            return res.status(403).json({
-                success: false,
-                message:
-                    "Please verify your MANIT email before logging in."
-            });
-        }
-
 
         return res.json({
 
@@ -1021,32 +1078,38 @@ app.post('/api/login', async (req, res) => {
                     student.photo,
 
                 isVerified:
-                    student.isVerified
+                    student.isVerified,
+
+                emailVerified:
+                    student.emailVerified !== false
+
             }
 
         });
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(
-            "Login Error:",
+            "❌ Login Error:",
             err
         );
 
         return res.status(500).json({
+
             success: false,
+
             message:
                 "Login error."
+
         });
+
     }
+
 });
 
-
 /* =========================================================
-   5. STATUS POLL
-   ========================================================= */
+   4. STUDENT STATUS
+========================================================= */
 
 app.get('/api/status/:scholarId', async (req, res) => {
 
@@ -1055,27 +1118,33 @@ app.get('/api/status/:scholarId', async (req, res) => {
         const slot =
             getCurrentMealSlot();
 
-
         const student =
             await Student.findOne({
                 scholarId:
-                    cleanScholarId(req.params.scholarId)
+                    cleanScholarId(
+                        req.params.scholarId
+                    )
             }).lean();
-
 
         if (!student) {
 
             return res.json({
-                activeSlot: slot.name,
-                claimed: false,
-                isVerified: false
-            });
-        }
 
+                activeSlot:
+                    slot.name,
+
+                claimed:
+                    false,
+
+                isVerified:
+                    false
+
+            });
+
+        }
 
         const hasClaimed =
             student.lastClaimedMeal === slot.id;
-
 
         return res.json({
 
@@ -1086,16 +1155,17 @@ app.get('/api/status/:scholarId', async (req, res) => {
                 hasClaimed,
 
             isVerified:
-                student.isVerified
+                student.isVerified,
+
+            emailVerified:
+                student.emailVerified !== false
 
         });
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(
-            "Status Error:",
+            "❌ Status Error:",
             err
         );
 
@@ -1103,55 +1173,63 @@ app.get('/api/status/:scholarId', async (req, res) => {
             error:
                 "Check failed"
         });
+
     }
+
 });
 
-
 /* =========================================================
-   6. STAFF COUNTER SCANNER
-   ========================================================= */
+   5. STAFF SCANNER
+========================================================= */
 
 app.post('/api/scan', async (req, res) => {
 
     try {
 
-        if (!req.body.scholarId) {
+        const cleanId =
+            cleanScholarId(
+                req.body.scholarId
+            );
+
+        if (!cleanId) {
 
             return res.json({
                 status: 'error',
                 message:
-                    "Invalid QR code"
+                    "Invalid Scholar ID"
             });
+
         }
-
-
-        const cleanId =
-            cleanScholarId(req.body.scholarId);
-
 
         const slot =
             getCurrentMealSlot();
-
 
         const student =
             await Student.findOne({
                 scholarId: cleanId
             });
 
-
         if (!student) {
 
             return res.json({
-                status: 'error',
+
+                status:
+                    'error',
+
                 message:
                     "Unregistered Student"
+
             });
+
         }
 
+        /*
+          Email must be verified before mess access.
+        */
 
-        /* OTP/email verification is required */
-
-        if (!student.emailVerified) {
+        if (
+            student.emailVerified === false
+        ) {
 
             return res.json({
 
@@ -1165,14 +1243,34 @@ app.post('/api/scan', async (req, res) => {
                     student.room,
 
                 message:
-                    "MANIT email is not verified."
+                    "Student email has not been verified."
+
             });
+
         }
 
+        /*
+          First physical scan activates the card.
+        */
 
-        /* Check duplicate meal claim */
+        let justActivated = false;
 
-        if (student.lastClaimedMeal === slot.id) {
+        if (!student.isVerified) {
+
+            student.isVerified = true;
+
+            justActivated = true;
+
+        }
+
+        /*
+          Prevent duplicate meal claim.
+        */
+
+        if (
+            student.lastClaimedMeal ===
+            slot.id
+        ) {
 
             return res.json({
 
@@ -1186,19 +1284,16 @@ app.post('/api/scan', async (req, res) => {
                     student.room,
 
                 message:
-                    "Student already received this meal."
+                    "Meal already claimed for this meal slot."
+
             });
+
         }
-
-
-        /* Allow meal */
 
         student.lastClaimedMeal =
             slot.id;
 
-
         await student.save();
-
 
         return res.json({
 
@@ -1212,15 +1307,14 @@ app.post('/api/scan', async (req, res) => {
                 student.room,
 
             activated:
-                false
+                justActivated
+
         });
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(
-            "Scan Error:",
+            "❌ Scan Error:",
             err
         );
 
@@ -1231,14 +1325,16 @@ app.post('/api/scan', async (req, res) => {
 
             message:
                 "Scan processing error."
+
         });
+
     }
+
 });
 
-
 /* =========================================================
-   7. STAFF RESET ONE
-   ========================================================= */
+   6. STAFF RESET ONE
+========================================================= */
 
 app.post('/api/reset-one', async (req, res) => {
 
@@ -1249,8 +1345,9 @@ app.post('/api/reset-one', async (req, res) => {
             staffPin
         } = req.body;
 
-
-        if (staffPin !== 'manitH10') {
+        if (
+            staffPin !== STAFF_PIN
+        ) {
 
             return res.status(403).json({
 
@@ -1259,25 +1356,29 @@ app.post('/api/reset-one', async (req, res) => {
 
                 message:
                     "Unauthorized PIN"
-            });
-        }
 
+            });
+
+        }
 
         const updated =
             await Student.findOneAndUpdate(
 
                 {
                     scholarId:
-                        cleanScholarId(scholarId)
+                        cleanScholarId(
+                            scholarId
+                        )
                 },
 
                 {
                     $set: {
-                        lastClaimedMeal: ''
+                        lastClaimedMeal:
+                            ''
                     }
                 }
-            );
 
+            );
 
         if (!updated) {
 
@@ -1288,9 +1389,10 @@ app.post('/api/reset-one', async (req, res) => {
 
                 message:
                     "Scholar ID not found"
-            });
-        }
 
+            });
+
+        }
 
         return res.json({
 
@@ -1299,14 +1401,13 @@ app.post('/api/reset-one', async (req, res) => {
 
             message:
                 `Reset complete for ${scholarId}`
+
         });
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(
-            "Reset One Error:",
+            "❌ Reset One Error:",
             err
         );
 
@@ -1317,14 +1418,16 @@ app.post('/api/reset-one', async (req, res) => {
 
             message:
                 "Reset failed"
+
         });
+
     }
+
 });
 
-
 /* =========================================================
-   8. STAFF RESET ALL
-   ========================================================= */
+   7. STAFF RESET ALL
+========================================================= */
 
 app.post('/api/reset-all', async (req, res) => {
 
@@ -1334,8 +1437,9 @@ app.post('/api/reset-all', async (req, res) => {
             staffPin
         } = req.body;
 
-
-        if (staffPin !== 'manitH10') {
+        if (
+            staffPin !== STAFF_PIN
+        ) {
 
             return res.status(403).json({
 
@@ -1344,19 +1448,20 @@ app.post('/api/reset-all', async (req, res) => {
 
                 message:
                     "Unauthorized PIN"
-            });
-        }
 
+            });
+
+        }
 
         await Student.updateMany(
             {},
             {
                 $set: {
-                    lastClaimedMeal: ''
+                    lastClaimedMeal:
+                        ''
                 }
             }
         );
-
 
         return res.json({
 
@@ -1365,14 +1470,13 @@ app.post('/api/reset-all', async (req, res) => {
 
             message:
                 "All student cards reset successfully!"
+
         });
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error(
-            "Reset All Error:",
+            "❌ Reset All Error:",
             err
         );
 
@@ -1383,14 +1487,16 @@ app.post('/api/reset-all', async (req, res) => {
 
             message:
                 "Reset all failed"
+
         });
+
     }
+
 });
 
-
 /* =========================================================
-   HEALTH CHECK
-   ========================================================= */
+   8. HEALTH CHECK
+========================================================= */
 
 app.get('/api/health', (req, res) => {
 
@@ -1399,27 +1505,35 @@ app.get('/api/health', (req, res) => {
         success:
             true,
 
-        message:
-            "MANIT Digital Mess Card server is running."
+        server:
+            "running",
+
+        mongodb:
+            mongoose.connection.readyState === 1
+                ? "connected"
+                : "not connected",
+
+        email1:
+            !!EMAIL_1,
+
+        email2:
+            !!EMAIL_2
 
     });
 
 });
 
-
 /* =========================================================
-   SERVER
-   ========================================================= */
+   START SERVER
+========================================================= */
 
 const PORT =
     process.env.PORT || 3000;
 
+app.listen(PORT, () => {
 
-app.listen(
-    PORT,
-    () => {
-        console.log(
-            `🚀 Production server live on port ${PORT}`
-        );
-    }
-);
+    console.log(
+        `🚀 Production server live on port ${PORT}`
+    );
+
+});
