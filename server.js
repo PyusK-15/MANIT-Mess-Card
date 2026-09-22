@@ -7,65 +7,335 @@ const path = require("path");
 
 const app = express();
 
+const MONGO_URI = process.env.MONGO_URI;
+
+const PORT = process.env.PORT || 10000;
+
 app.use(cors());
-app.use(express.json({ limit: "12mb" }));
-app.use(express.urlencoded({ extended: true, limit: "12mb" }));
 
-// ============================================================
-// CONFIG
-// ============================================================
+app.use(
+  express.json({
+    limit: "15mb",
+  })
+);
 
-const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI || "";
-
-const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
-const BREVO_SENDER_EMAIL_1 = process.env.BREVO_SENDER_EMAIL_1 || "";
-const BREVO_SENDER_EMAIL_2 = process.env.BREVO_SENDER_EMAIL_2 || "";
-
-const STAFF_PIN = process.env.STAFF_PIN || "";
-
-const SESSION_DURATION_MS = 12 * 60 * 60 * 1000;
-const MEAL_COOLDOWN_MS = 2 * 60 * 60 * 1000;
-
-const OTP_EXPIRY_MS = 10 * 60 * 1000;
-const PENDING_REGISTRATION_EXPIRY_MS = 20 * 60 * 1000;
-
-const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
-const MAX_OTP_SENDS_PER_HOUR = 5;
-const MAX_OTP_VERIFY_ATTEMPTS = 5;
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "15mb",
+  })
+);
 
 // ============================================================
 // DATABASE CONNECTION
 // ============================================================
 
-let mongoConnectionPromise = null;
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = {
+    conn: null,
+    promise: null,
+  };
+}
 
 async function connectDB() {
-  if (!MONGO_URI) {
-    throw new Error("MONGO_URI is not configured");
+  if (cached.conn) {
+    return cached.conn;
   }
 
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
-  }
+  if (!cached.promise) {
+    mongoose.set("bufferCommands", false);
 
-  if (!mongoConnectionPromise) {
-    mongoConnectionPromise = mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 10000,
-    });
+    cached.promise = mongoose
+      .connect(MONGO_URI, {
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 30000,
+      })
+      .then((mongooseInstance) => {
+        console.log("✅ MongoDB Atlas Connected");
+        return mongooseInstance;
+      });
   }
 
   try {
-    await mongoConnectionPromise;
-    return mongoose.connection;
+    cached.conn = await cached.promise;
   } catch (error) {
-    mongoConnectionPromise = null;
+    cached.promise = null;
     throw error;
   }
+
+  return cached.conn;
+}
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("❌ Database connection error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Database connection failed.",
+    });
+  }
+});
+
+// ============================================================
+// BREVO
+// ============================================================
+
+const BREVO_API_KEY = process.env.BREVO_API_KEY
+  ? process.env.BREVO_API_KEY.trim()
+  : "";
+
+const BREVO_SENDERS = [
+  process.env.BREVO_SENDER_EMAIL_1,
+  process.env.BREVO_SENDER_EMAIL_2,
+]
+  .map((email) => (email ? email.trim().toLowerCase() : ""))
+  .filter(Boolean)
+  .filter(
+    (email, index, array) =>
+      array.indexOf(email) === index
+  );
+
+console.log(
+  `📧 Brevo configured: ${BREVO_API_KEY ? "YES" : "NO"}`
+);
+
+console.log(
+  `📧 Brevo senders: ${BREVO_SENDERS.length}`
+);
+
+// ============================================================
+// BREVO EMAIL
+// ============================================================
+
+async function sendBrevoEmail(senderEmail, to, otp) {
+  if (!BREVO_API_KEY) {
+    throw new Error(
+      "BREVO_API_KEY is not configured."
+    );
+  }
+
+  const emailData = {
+    sender: {
+      name: "MANIT Digital Mess Card",
+      email: senderEmail,
+    },
+
+    to: [
+      {
+        email: to,
+      },
+    ],
+
+    subject:
+      "MANIT Digital Mess Card - Email Verification OTP",
+
+    textContent:
+      `Your MANIT Digital Mess Card verification OTP is ${otp}. ` +
+      `This OTP is valid for 10 minutes. ` +
+      `Do not share this OTP with anyone.`,
+
+    htmlContent: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>MANIT Digital Mess Card</title>
+      </head>
+
+      <body
+        style="
+          margin:0;
+          padding:0;
+          background:#eef2ff;
+          font-family:Arial,sans-serif;
+        "
+      >
+
+        <div
+          style="
+            max-width:600px;
+            margin:35px auto;
+            background:#ffffff;
+            padding:35px;
+            border-radius:20px;
+            box-shadow:0 10px 40px rgba(0,0,0,.08);
+          "
+        >
+
+          <h2
+            style="
+              color:#0f172a;
+              margin-top:0;
+            "
+          >
+            MANIT Digital Mess Card
+          </h2>
+
+          <p>
+            Your email verification OTP is:
+          </p>
+
+          <div
+            style="
+              font-size:34px;
+              font-weight:bold;
+              letter-spacing:9px;
+              padding:22px;
+              background:#eef2ff;
+              text-align:center;
+              border-radius:14px;
+              margin:24px 0;
+              color:#2563eb;
+            "
+          >
+            ${otp}
+          </div>
+
+          <p>
+            This OTP is valid for
+            <b>10 minutes</b>.
+          </p>
+
+          <p>
+            Please do not share this OTP with anyone.
+          </p>
+
+          <p>
+            If you did not request this OTP,
+            you can safely ignore this email.
+          </p>
+
+          <hr
+            style="
+              border:none;
+              border-top:1px solid #e5e7eb;
+              margin:28px 0;
+            "
+          >
+
+          <p
+            style="
+              font-size:12px;
+              color:#64748b;
+            "
+          >
+            MANIT Digital Mess Card
+          </p>
+
+        </div>
+
+      </body>
+      </html>
+    `,
+  };
+
+  const response = await fetch(
+    "https://api.brevo.com/v3/smtp/email",
+    {
+      method: "POST",
+
+      headers: {
+        accept: "application/json",
+        "api-key": BREVO_API_KEY,
+        "content-type": "application/json",
+      },
+
+      body: JSON.stringify(emailData),
+    }
+  );
+
+  const responseText = await response.text();
+
+  let responseData = null;
+
+  try {
+    responseData = responseText
+      ? JSON.parse(responseText)
+      : null;
+  } catch {
+    responseData = null;
+  }
+
+  if (!response.ok) {
+    const errorMessage =
+      responseData?.message ||
+      responseText ||
+      `Brevo returned HTTP ${response.status}`;
+
+    const error = new Error(errorMessage);
+
+    error.status = response.status;
+    error.response = responseData;
+
+    throw error;
+  }
+
+  return responseData;
+}
+
+async function sendOTPEmail(to, otp) {
+  if (!BREVO_API_KEY) {
+    throw new Error(
+      "Brevo API key is not configured."
+    );
+  }
+
+  if (BREVO_SENDERS.length === 0) {
+    throw new Error(
+      "No Brevo sender emails are configured."
+    );
+  }
+
+  let lastError = null;
+
+  for (let i = 0; i < BREVO_SENDERS.length; i++) {
+    try {
+      console.log(
+        `📤 Trying Brevo sender ${i + 1}: ${BREVO_SENDERS[i]}`
+      );
+
+      const result = await sendBrevoEmail(
+        BREVO_SENDERS[i],
+        to,
+        otp
+      );
+
+      console.log(
+        `📨 OTP sent successfully to ${to}`
+      );
+
+      if (result?.messageId) {
+        console.log(
+          `📨 Brevo message ID: ${result.messageId}`
+        );
+      }
+
+      return true;
+    } catch (error) {
+      lastError = error;
+
+      console.error(
+        `❌ Brevo sender ${i + 1} failed:`,
+        error.message
+      );
+    }
+  }
+
+  throw new Error(
+    `All Brevo sender accounts failed. ${
+      lastError ? lastError.message : ""
+    }`
+  );
 }
 
 // ============================================================
-// SCHEMAS
+// STUDENT SCHEMA
 // ============================================================
 
 const studentSchema = new mongoose.Schema(
@@ -76,15 +346,15 @@ const studentSchema = new mongoose.Schema(
       unique: true,
       index: true,
       trim: true,
-      lowercase: true,
     },
 
     collegeEmail: {
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
+      index: true,
       trim: true,
+      lowercase: true,
     },
 
     name: {
@@ -101,38 +371,32 @@ const studentSchema = new mongoose.Schema(
 
     photo: {
       type: String,
-      default: "",
+      required: true,
     },
 
     passwordHash: {
       type: String,
-      required: true,
     },
 
-    // Kept only for compatibility with older records.
+    // Legacy field retained so existing accounts
+    // do not break during migration.
     password: {
       type: String,
-      default: "",
     },
 
-    // OTP verification is the only verification.
+    // Email/OTP verification.
     emailVerified: {
       type: Boolean,
       default: false,
     },
 
-    // Session authentication
-    sessionTokenHash: {
-      type: String,
-      default: "",
+    // Kept for compatibility with old database records.
+    // It is no longer required for meal claims.
+    isVerified: {
+      type: Boolean,
+      default: true,
     },
 
-    sessionExpiresAt: {
-      type: Date,
-      default: null,
-    },
-
-    // Meal claim
     lastClaimedMeal: {
       type: String,
       default: "",
@@ -142,95 +406,122 @@ const studentSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-  },
-  {
-    timestamps: true,
-  }
-);
 
-const pendingRegistrationSchema = new mongoose.Schema(
-  {
-    scholarId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
-
-    collegeEmail: {
-      type: String,
-      required: true,
-    },
-
-    name: {
-      type: String,
-      required: true,
-    },
-
-    room: {
-      type: String,
-      required: true,
-    },
-
-    photo: {
+    // Server-side session token.
+    sessionTokenHash: {
       type: String,
       default: "",
     },
 
-    passwordHash: {
-      type: String,
-      required: true,
-    },
-
-    otpHash: {
-      type: String,
-      required: true,
-    },
-
-    otpExpiresAt: {
-      type: Date,
-      required: true,
-    },
-
-    pendingExpiresAt: {
-      type: Date,
-      required: true,
-      index: true,
-    },
-
-    lastOtpSentAt: {
+    sessionExpiresAt: {
       type: Date,
       default: null,
     },
-
-    otpSendCount: {
-      type: Number,
-      default: 1,
-    },
-
-    otpSendWindowStartedAt: {
-      type: Date,
-      default: Date.now,
-    },
-
-    verifyAttempts: {
-      type: Number,
-      default: 0,
-    },
   },
+
   {
     timestamps: true,
   }
 );
 
-pendingRegistrationSchema.index(
-  { pendingExpiresAt: 1 },
-  { expireAfterSeconds: 0 }
-);
+// ============================================================
+// PENDING REGISTRATION
+// ============================================================
+
+const pendingRegistrationSchema =
+  new mongoose.Schema(
+    {
+      scholarId: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+        trim: true,
+      },
+
+      collegeEmail: {
+        type: String,
+        required: true,
+        trim: true,
+        lowercase: true,
+      },
+
+      name: {
+        type: String,
+        required: true,
+      },
+
+      room: {
+        type: String,
+        required: true,
+      },
+
+      passwordHash: {
+        type: String,
+        required: true,
+      },
+
+      photo: {
+        type: String,
+        required: true,
+      },
+
+      otpHash: {
+        type: String,
+        required: true,
+      },
+
+      otpExpiresAt: {
+        type: Date,
+        required: true,
+      },
+
+      attempts: {
+        type: Number,
+        default: 0,
+      },
+
+      lastSentAt: {
+        type: Date,
+        default: null,
+      },
+
+      sendWindowStartedAt: {
+        type: Date,
+        default: null,
+      },
+
+      sendCount: {
+        type: Number,
+        default: 0,
+      },
+
+      expiresAt: {
+        type: Date,
+
+        default: () =>
+          new Date(
+            Date.now() +
+              20 * 60 * 1000
+          ),
+
+        index: {
+          expires: 0,
+        },
+      },
+    },
+
+    {
+      timestamps: true,
+    }
+  );
 
 const Student =
   mongoose.models.Student ||
-  mongoose.model("Student", studentSchema);
+  mongoose.model(
+    "Student",
+    studentSchema
+  );
 
 const PendingRegistration =
   mongoose.models.PendingRegistration ||
@@ -249,327 +540,183 @@ function cleanScholarId(value) {
     .toLowerCase();
 }
 
-function normalizeText(value) {
-  return String(value || "").trim();
+function generateOTP() {
+  return crypto
+    .randomInt(100000, 1000000)
+    .toString();
 }
 
-function hashValue(value) {
+function hashOTP(otp) {
   return crypto
     .createHash("sha256")
-    .update(String(value))
+    .update(String(otp))
     .digest("hex");
 }
 
-function generateOtp() {
-  return String(
-    Math.floor(100000 + Math.random() * 900000)
-  );
-}
-
 function generateSessionToken() {
-  return crypto.randomBytes(32).toString("hex");
+  return crypto
+    .randomBytes(32)
+    .toString("hex");
 }
 
-function getBearerToken(req) {
-  const header = req.headers.authorization || "";
-
-  if (!header.startsWith("Bearer ")) {
-    return "";
-  }
-
-  return header.slice(7).trim();
+function hashSessionToken(token) {
+  return crypto
+    .createHash("sha256")
+    .update(String(token))
+    .digest("hex");
 }
 
 function maskEmail(email) {
-  if (!email || !email.includes("@")) {
-    return email || "";
+  const parts = email.split("@");
+
+  const name = parts[0];
+  const domain = parts[1];
+
+  if (!name || !domain) {
+    return email;
   }
 
-  const [local, domain] = email.split("@");
-
-  if (local.length <= 2) {
-    return `${local[0] || "*"}***@${domain}`;
-  }
-
-  return `${local.slice(0, 2)}***@${domain}`;
+  return `${name.slice(0, 2)}******@${domain}`;
 }
 
-function studentResponse(student) {
+function publicStudent(student, sessionToken = null) {
   return {
     scholarId: student.scholarId,
     collegeEmail: student.collegeEmail,
     name: student.name,
     room: student.room,
-    photo: student.photo || "",
+    photo: student.photo,
+
+    // OTP verification is the actual verification.
+    isVerified: Boolean(student.emailVerified),
+
     emailVerified: Boolean(student.emailVerified),
-    lastClaimedAt: student.lastClaimedAt || null,
+
+    lastClaimedMeal:
+      student.lastClaimedMeal || "",
+
+    lastClaimedAt:
+      student.lastClaimedAt || null,
+
+    sessionToken,
   };
-}
-
-function cooldownInfo(lastClaimedAt, now = new Date()) {
-  if (!lastClaimedAt) {
-    return {
-      claimed: false,
-      canClaim: true,
-      cooldownRemainingMs: 0,
-      nextClaimAt: null,
-    };
-  }
-
-  const claimedTime = new Date(lastClaimedAt).getTime();
-
-  if (Number.isNaN(claimedTime)) {
-    return {
-      claimed: false,
-      canClaim: true,
-      cooldownRemainingMs: 0,
-      nextClaimAt: null,
-    };
-  }
-
-  const nextClaimTime =
-    claimedTime + MEAL_COOLDOWN_MS;
-
-  const remaining =
-    Math.max(0, nextClaimTime - now.getTime());
-
-  return {
-    claimed: remaining > 0,
-    canClaim: remaining <= 0,
-    cooldownRemainingMs: remaining,
-    nextClaimAt:
-      remaining > 0
-        ? new Date(nextClaimTime).toISOString()
-        : null,
-  };
-}
-
-// ============================================================
-// BREVO EMAIL
-// ============================================================
-
-async function sendBrevoEmail({
-  to,
-  subject,
-  htmlContent,
-  textContent,
-}) {
-  if (!BREVO_API_KEY) {
-    throw new Error("BREVO_API_KEY is not configured");
-  }
-
-  const senders = [
-    BREVO_SENDER_EMAIL_1,
-    BREVO_SENDER_EMAIL_2,
-  ].filter(Boolean);
-
-  if (senders.length === 0) {
-    throw new Error(
-      "No Brevo sender email is configured"
-    );
-  }
-
-  let lastError = null;
-
-  for (const senderEmail of senders) {
-    try {
-      const response = await fetch(
-        "https://api.brevo.com/v3/smtp/email",
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json",
-            "api-key": BREVO_API_KEY,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            sender: {
-              email: senderEmail,
-              name: "MANIT Digital Mess Card",
-            },
-            to: [
-              {
-                email: to,
-              },
-            ],
-            subject,
-            htmlContent,
-            textContent,
-          }),
-        }
-      );
-
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        lastError = new Error(
-          `Brevo ${response.status}: ${responseText}`
-        );
-        continue;
-      }
-
-      return true;
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw (
-    lastError ||
-    new Error("Unable to send email")
-  );
-}
-
-async function sendOTPEmail(email, otp) {
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-</head>
-<body style="font-family:Arial,sans-serif;background:#f5f7fb;padding:30px;">
-  <div style="max-width:520px;margin:auto;background:white;border-radius:18px;padding:30px;">
-    <h2 style="margin-top:0;">MANIT Digital Mess Card</h2>
-
-    <p>Your email verification OTP is:</p>
-
-    <div style="
-      font-size:34px;
-      font-weight:800;
-      letter-spacing:8px;
-      padding:20px;
-      text-align:center;
-      background:#f1f4f9;
-      border-radius:14px;
-      margin:20px 0;
-    ">
-      ${otp}
-    </div>
-
-    <p>This OTP expires in <strong>10 minutes</strong>.</p>
-
-    <p style="color:#666;">
-      If you did not request this verification, you can ignore this email.
-    </p>
-  </div>
-</body>
-</html>
-`;
-
-  const textContent = `
-MANIT Digital Mess Card
-
-Your verification OTP is: ${otp}
-
-This OTP expires in 10 minutes.
-`;
-
-  await sendBrevoEmail({
-    to: email,
-    subject: "MANIT Digital Mess Card - Verification OTP",
-    htmlContent,
-    textContent,
-  });
 }
 
 // ============================================================
 // AUTHENTICATION
 // ============================================================
 
-async function authenticateStudent(req) {
-  const token = getBearerToken(req);
+async function authenticateStudent(req, res) {
+  const auth =
+    req.headers.authorization || "";
 
-  if (!token) {
+  if (!auth.startsWith("Bearer ")) {
+    res.status(401).json({
+      success: false,
+      message:
+        "Your login session is missing. Please login again.",
+    });
+
     return null;
   }
 
-  const tokenHash = hashValue(token);
+  const token = auth.slice(7).trim();
 
-  const student = await Student.findOne({
-    sessionTokenHash: tokenHash,
-    sessionExpiresAt: {
-      $gt: new Date(),
-    },
-    emailVerified: true,
-  });
+  if (!token) {
+    res.status(401).json({
+      success: false,
+      message:
+        "Invalid login session.",
+    });
+
+    return null;
+  }
+
+  const tokenHash =
+    hashSessionToken(token);
+
+  const student =
+    await Student.findOne({
+      sessionTokenHash: tokenHash,
+    });
+
+  if (!student) {
+    res.status(401).json({
+      success: false,
+      message:
+        "Login session expired. Please login again.",
+    });
+
+    return null;
+  }
+
+  if (
+    !student.sessionExpiresAt ||
+    student.sessionExpiresAt.getTime() <
+      Date.now()
+  ) {
+    student.sessionTokenHash = "";
+    student.sessionExpiresAt = null;
+
+    await student.save();
+
+    res.status(401).json({
+      success: false,
+      message:
+        "Login session expired. Please login again.",
+    });
+
+    return null;
+  }
 
   return student;
-}
-
-function requireStaff(req, res, next) {
-  const token = getBearerToken(req);
-
-  if (!token || !STAFF_PIN) {
-    return res.status(401).json({
-      success: false,
-      message: "Staff authentication required.",
-    });
-  }
-
-  const expected = hashValue(
-    `${STAFF_PIN}:MANIT-MESS-STAFF`
-  );
-
-  const provided = hashValue(
-    `${token}:MANIT-MESS-STAFF`
-  );
-
-  if (provided !== expected) {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid staff session.",
-    });
-  }
-
-  next();
 }
 
 // ============================================================
 // HEALTH
 // ============================================================
 
-app.get("/api/health", async (req, res) => {
-  try {
-    await connectDB();
-
-    res.json({
-      success: true,
-      status: "online",
-      database: "connected",
-      time: new Date().toISOString(),
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      status: "error",
-      database: "disconnected",
-    });
-  }
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    server: "online",
+    mongodb:
+      mongoose.connection.readyState,
+    emailService: "Brevo",
+    emailSenders:
+      BREVO_SENDERS.length,
+  });
 });
 
 // ============================================================
-// REGISTRATION - START
+// REGISTER START
 // ============================================================
 
-app.post("/api/register/start", async (req, res) => {
+async function registerStart(req, res) {
   try {
-    await connectDB();
+    const {
+      scholarId,
+      name,
+      room,
+      password,
+      photo,
+    } = req.body;
 
-    const scholarId = cleanScholarId(req.body.scholarId);
-    const name = normalizeText(req.body.name);
-    const room = normalizeText(req.body.room);
-    const password = String(req.body.password || "");
-    const photo = String(req.body.photo || "");
-
-    if (!scholarId || !name || !room || !password) {
+    if (
+      !scholarId ||
+      !name ||
+      !room ||
+      !password ||
+      !photo
+    ) {
       return res.status(400).json({
         success: false,
         message:
-          "Scholar ID, name, room and password are required.",
+          "Please fill all registration fields.",
       });
     }
 
-    if (password.length < 6) {
+    if (String(password).length < 6) {
       return res.status(400).json({
         success: false,
         message:
@@ -577,164 +724,427 @@ app.post("/api/register/start", async (req, res) => {
       });
     }
 
-    const collegeEmail =
-      `${scholarId}@stu.manit.ac.in`;
+    // No 9-digit restriction.
 
-    const existingStudent = await Student.findOne({
-      scholarId,
-    });
+    const cleanId =
+      cleanScholarId(scholarId);
+
+    if (!cleanId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please enter your scholar number.",
+      });
+    }
+
+    const collegeEmail =
+      `${cleanId}@stu.manit.ac.in`;
+
+    const existingStudent =
+      await Student.findOne({
+        scholarId: cleanId,
+      });
 
     if (existingStudent) {
       return res.status(409).json({
         success: false,
         message:
-          "This Scholar ID is already registered.",
+          "An account with this scholar number already exists. Please login.",
       });
     }
 
     const now = new Date();
 
-    const existingPending =
+    let pending =
       await PendingRegistration.findOne({
-        scholarId,
+        scholarId: cleanId,
       });
 
     if (
-      existingPending &&
-      existingPending.lastOtpSentAt &&
+      pending &&
+      pending.lastSentAt &&
       now.getTime() -
-        new Date(
-          existingPending.lastOtpSentAt
-        ).getTime() <
-        OTP_RESEND_COOLDOWN_MS
+        pending.lastSentAt.getTime() <
+        60 * 1000
     ) {
-      const remaining = Math.ceil(
-        (
-          OTP_RESEND_COOLDOWN_MS -
-          (
-            now.getTime() -
-            new Date(
-              existingPending.lastOtpSentAt
-            ).getTime()
-          )
-        ) / 1000
-      );
-
       return res.status(429).json({
         success: false,
         message:
-          `Please wait ${remaining} seconds before requesting another OTP.`,
-        cooldownSeconds: remaining,
+          "Please wait 60 seconds before requesting another OTP.",
       });
     }
 
+    let sendWindowStartedAt =
+      pending?.sendWindowStartedAt ||
+      null;
+
+    let sendCount =
+      pending?.sendCount || 0;
+
+    if (
+      !sendWindowStartedAt ||
+      now.getTime() -
+        sendWindowStartedAt.getTime() >=
+        60 * 60 * 1000
+    ) {
+      sendWindowStartedAt = now;
+      sendCount = 0;
+    }
+
+    if (sendCount >= 5) {
+      return res.status(429).json({
+        success: false,
+        message:
+          "Too many OTP requests. Please try again after one hour.",
+      });
+    }
+
+    const otp = generateOTP();
+
+    const otpHash = hashOTP(otp);
+
     const passwordHash =
-      await bcrypt.hash(password, 12);
+      await bcrypt.hash(
+        password,
+        12
+      );
 
-    const otp = generateOtp();
+    if (!pending) {
+      pending =
+        new PendingRegistration({
+          scholarId: cleanId,
 
-    const pending = existingPending || new PendingRegistration();
+          collegeEmail,
 
-    pending.scholarId = scholarId;
-    pending.collegeEmail = collegeEmail;
-    pending.name = name;
-    pending.room = room;
-    pending.photo = photo;
-    pending.passwordHash = passwordHash;
-    pending.otpHash = hashValue(otp);
-    pending.otpExpiresAt = new Date(
-      now.getTime() + OTP_EXPIRY_MS
-    );
-    pending.pendingExpiresAt = new Date(
-      now.getTime() +
-        PENDING_REGISTRATION_EXPIRY_MS
-    );
-    pending.lastOtpSentAt = now;
+          name: String(name).trim(),
 
-    if (!existingPending) {
-      pending.otpSendCount = 1;
-      pending.otpSendWindowStartedAt = now;
-      pending.verifyAttempts = 0;
+          room: String(room).trim(),
+
+          passwordHash,
+
+          photo,
+
+          otpHash,
+
+          otpExpiresAt:
+            new Date(
+              now.getTime() +
+                10 * 60 * 1000
+            ),
+
+          attempts: 0,
+
+          lastSentAt: now,
+
+          sendWindowStartedAt,
+
+          sendCount:
+            sendCount + 1,
+
+          expiresAt:
+            new Date(
+              now.getTime() +
+                20 * 60 * 1000
+            ),
+        });
     } else {
-      const windowAge =
-        now.getTime() -
+      pending.collegeEmail =
+        collegeEmail;
+
+      pending.name =
+        String(name).trim();
+
+      pending.room =
+        String(room).trim();
+
+      pending.passwordHash =
+        passwordHash;
+
+      pending.photo = photo;
+
+      pending.otpHash =
+        otpHash;
+
+      pending.otpExpiresAt =
         new Date(
-          pending.otpSendWindowStartedAt
-        ).getTime();
+          now.getTime() +
+            10 * 60 * 1000
+        );
 
-      if (windowAge >= 60 * 60 * 1000) {
-        pending.otpSendCount = 1;
-        pending.otpSendWindowStartedAt = now;
-      } else {
-        if (
-          pending.otpSendCount >=
-          MAX_OTP_SENDS_PER_HOUR
-        ) {
-          return res.status(429).json({
-            success: false,
-            message:
-              "Too many OTP requests. Please try again later.",
-          });
-        }
+      pending.attempts = 0;
 
-        pending.otpSendCount += 1;
-      }
+      pending.lastSentAt = now;
+
+      pending.sendWindowStartedAt =
+        sendWindowStartedAt;
+
+      pending.sendCount =
+        sendCount + 1;
+
+      pending.expiresAt =
+        new Date(
+          now.getTime() +
+            20 * 60 * 1000
+        );
     }
 
     await pending.save();
 
-    await sendOTPEmail(
-      collegeEmail,
-      otp
-    );
+    try {
+      await sendOTPEmail(
+        collegeEmail,
+        otp
+      );
+    } catch (emailError) {
+      console.error(
+        "❌ OTP email failed:",
+        emailError.message
+      );
 
-    res.json({
+      await PendingRegistration.deleteOne({
+        scholarId: cleanId,
+      });
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Could not send OTP email. Please try again later.",
+      });
+    }
+
+    return res.json({
       success: true,
+
       message:
-        "OTP sent to your MANIT student email.",
-      scholarId,
-      email: maskEmail(collegeEmail),
+        "OTP sent successfully.",
+
+      email:
+        maskEmail(
+          collegeEmail
+        ),
     });
   } catch (error) {
     console.error(
-      "REGISTER START ERROR:",
+      "❌ /register/start error:",
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message:
-        "Unable to start registration. Please try again.",
+        "Server error while starting registration.",
     });
   }
-});
+}
+
+app.post(
+  "/api/register/start",
+  registerStart
+);
+
+app.post(
+  "/api/send-otp",
+  registerStart
+);
 
 // ============================================================
-// REGISTRATION - VERIFY
+// VERIFY OTP
 // ============================================================
 
-app.post("/api/register/verify", async (req, res) => {
+async function registerVerify(req, res) {
   try {
-    await connectDB();
+    const {
+      scholarId,
+      otp,
+    } = req.body;
 
-    const scholarId = cleanScholarId(
-      req.body.scholarId
-    );
+    const cleanId =
+      cleanScholarId(scholarId);
 
-    const otp = String(
-      req.body.otp || ""
-    ).trim();
-
-    if (!scholarId || !/^\d{6}$/.test(otp)) {
+    if (!cleanId || !otp) {
       return res.status(400).json({
         success: false,
-        message: "Enter the 6-digit OTP.",
+        message:
+          "Scholar number and OTP are required.",
       });
     }
 
     const pending =
       await PendingRegistration.findOne({
-        scholarId,
+        scholarId: cleanId,
+      });
+
+    if (!pending) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Registration session expired. Please start registration again.",
+      });
+    }
+
+    if (
+      !pending.otpExpiresAt ||
+      new Date() >
+        pending.otpExpiresAt
+    ) {
+      await PendingRegistration.deleteOne({
+        scholarId: cleanId,
+      });
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "OTP has expired. Please request a new OTP.",
+      });
+    }
+
+    if (pending.attempts >= 5) {
+      await PendingRegistration.deleteOne({
+        scholarId: cleanId,
+      });
+
+      return res.status(429).json({
+        success: false,
+        message:
+          "Too many incorrect OTP attempts. Please start again.",
+      });
+    }
+
+    const suppliedHash =
+      hashOTP(
+        String(otp).trim()
+      );
+
+    if (
+      suppliedHash !==
+      pending.otpHash
+    ) {
+      pending.attempts += 1;
+
+      await pending.save();
+
+      return res.status(400).json({
+        success: false,
+        message:
+          "Incorrect OTP.",
+      });
+    }
+
+    let student;
+
+    try {
+      student =
+        new Student({
+          scholarId:
+            pending.scholarId,
+
+          collegeEmail:
+            pending.collegeEmail,
+
+          name:
+            pending.name,
+
+          room:
+            pending.room,
+
+          passwordHash:
+            pending.passwordHash,
+
+          photo:
+            pending.photo,
+
+          emailVerified:
+            true,
+
+          // OTP verification activates the card.
+          isVerified:
+            true,
+
+          lastClaimedMeal:
+            "",
+
+          lastClaimedAt:
+            null,
+        });
+
+      await student.save();
+    } catch (createError) {
+      if (
+        createError.code ===
+        11000
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "An account with this scholar number or email already exists.",
+        });
+      }
+
+      throw createError;
+    }
+
+    await PendingRegistration.deleteOne({
+      scholarId: cleanId,
+    });
+
+    return res.json({
+      success: true,
+
+      message:
+        "Registration successful! Your email has been verified. You can now login.",
+
+      student: {
+        scholarId: cleanId,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "❌ /register/verify error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Server error while verifying OTP.",
+    });
+  }
+}
+
+app.post(
+  "/api/register/verify",
+  registerVerify
+);
+
+app.post(
+  "/api/verify-otp",
+  registerVerify
+);
+
+// ============================================================
+// RESEND OTP
+// ============================================================
+
+async function registerResend(req, res) {
+  try {
+    const {
+      scholarId,
+    } = req.body;
+
+    const cleanId =
+      cleanScholarId(scholarId);
+
+    if (!cleanId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Please enter your scholar number.",
+      });
+    }
+
+    const pending =
+      await PendingRegistration.findOne({
+        scholarId: cleanId,
       });
 
     if (!pending) {
@@ -745,885 +1155,700 @@ app.post("/api/register/verify", async (req, res) => {
       });
     }
 
-    if (
-      pending.otpExpiresAt.getTime() <
-      Date.now()
-    ) {
-      await PendingRegistration.deleteOne({
-        _id: pending._id,
-      });
-
-      return res.status(410).json({
-        success: false,
-        message:
-          "OTP expired. Please request a new OTP.",
-      });
-    }
-
-    if (
-      pending.verifyAttempts >=
-      MAX_OTP_VERIFY_ATTEMPTS
-    ) {
-      return res.status(429).json({
-        success: false,
-        message:
-          "Too many incorrect attempts. Please register again.",
-      });
-    }
-
-    const suppliedHash =
-      hashValue(otp);
-
-    if (
-      suppliedHash !== pending.otpHash
-    ) {
-      pending.verifyAttempts += 1;
-      await pending.save();
-
-      return res.status(400).json({
-        success: false,
-        message: "Incorrect OTP.",
-        attemptsRemaining:
-          Math.max(
-            0,
-            MAX_OTP_VERIFY_ATTEMPTS -
-              pending.verifyAttempts
-          ),
-      });
-    }
-
-    const existing =
-      await Student.findOne({
-        scholarId,
-      });
-
-    if (existing) {
-      await PendingRegistration.deleteOne({
-        _id: pending._id,
-      });
-
-      return res.status(409).json({
-        success: false,
-        message:
-          "This Scholar ID is already registered.",
-      });
-    }
-
-    const student =
-      await Student.create({
-        scholarId: pending.scholarId,
-        collegeEmail:
-          pending.collegeEmail,
-        name: pending.name,
-        room: pending.room,
-        photo: pending.photo || "",
-        passwordHash:
-          pending.passwordHash,
-        password: "",
-        emailVerified: true,
-        sessionTokenHash: "",
-        sessionExpiresAt: null,
-        lastClaimedMeal: "",
-        lastClaimedAt: null,
-      });
-
-    await PendingRegistration.deleteOne({
-      _id: pending._id,
-    });
-
-    res.json({
-      success: true,
-      message:
-        "Registration successful. Your email has been verified.",
-      student: studentResponse(student),
-    });
-  } catch (error) {
-    console.error(
-      "REGISTER VERIFY ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to verify registration.",
-    });
-  }
-});
-
-// ============================================================
-// RESEND OTP
-// ============================================================
-
-app.post("/api/register/resend", async (req, res) => {
-  try {
-    await connectDB();
-
-    const scholarId = cleanScholarId(
-      req.body.scholarId
-    );
-
-    if (!scholarId) {
-      return res.status(400).json({
-        success: false,
-        message: "Scholar ID is required.",
-      });
-    }
-
-    const pending =
-      await PendingRegistration.findOne({
-        scholarId,
-      });
-
-    if (!pending) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Registration session not found.",
-      });
-    }
-
     const now = new Date();
 
     if (
-      pending.lastOtpSentAt &&
+      pending.lastSentAt &&
       now.getTime() -
-        pending.lastOtpSentAt.getTime() <
-        OTP_RESEND_COOLDOWN_MS
+        pending.lastSentAt.getTime() <
+        60 * 1000
     ) {
-      const remaining = Math.ceil(
-        (
-          OTP_RESEND_COOLDOWN_MS -
+      const remaining =
+        Math.ceil(
           (
-            now.getTime() -
-            pending.lastOtpSentAt.getTime()
-          )
-        ) / 1000
-      );
+            60 * 1000 -
+            (
+              now.getTime() -
+              pending.lastSentAt.getTime()
+            )
+          ) / 1000
+        );
 
       return res.status(429).json({
         success: false,
         message:
-          `Please wait ${remaining} seconds.`,
-        cooldownSeconds: remaining,
+          `Please wait ${remaining} seconds before requesting another OTP.`,
       });
     }
 
-    const windowAge =
-      now.getTime() -
-      pending.otpSendWindowStartedAt.getTime();
+    let sendWindowStartedAt =
+      pending.sendWindowStartedAt;
 
-    if (windowAge >= 60 * 60 * 1000) {
-      pending.otpSendCount = 0;
-      pending.otpSendWindowStartedAt = now;
-    }
+    let sendCount =
+      pending.sendCount || 0;
 
     if (
-      pending.otpSendCount >=
-      MAX_OTP_SENDS_PER_HOUR
+      !sendWindowStartedAt ||
+      now.getTime() -
+        sendWindowStartedAt.getTime() >=
+        60 * 60 * 1000
     ) {
+      sendWindowStartedAt = now;
+      sendCount = 0;
+    }
+
+    if (sendCount >= 5) {
       return res.status(429).json({
         success: false,
         message:
-          "OTP request limit reached. Please try again later.",
+          "Too many OTP requests. Please try again after one hour.",
       });
     }
 
-    const otp = generateOtp();
+    const otp = generateOTP();
 
-    pending.otpHash = hashValue(otp);
-    pending.otpExpiresAt = new Date(
-      now.getTime() + OTP_EXPIRY_MS
-    );
-    pending.pendingExpiresAt = new Date(
-      now.getTime() +
-        PENDING_REGISTRATION_EXPIRY_MS
-    );
-    pending.lastOtpSentAt = now;
-    pending.otpSendCount += 1;
-    pending.verifyAttempts = 0;
+    try {
+      await sendOTPEmail(
+        pending.collegeEmail,
+        otp
+      );
+    } catch (emailError) {
+      console.error(
+        "❌ Resend OTP email failed:",
+        emailError.message
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Could not send OTP email. Please try again later.",
+      });
+    }
+
+    pending.otpHash =
+      hashOTP(otp);
+
+    pending.otpExpiresAt =
+      new Date(
+        now.getTime() +
+          10 * 60 * 1000
+      );
+
+    pending.attempts = 0;
+
+    pending.lastSentAt = now;
+
+    pending.sendWindowStartedAt =
+      sendWindowStartedAt;
+
+    pending.sendCount =
+      sendCount + 1;
+
+    pending.expiresAt =
+      new Date(
+        now.getTime() +
+          20 * 60 * 1000
+      );
 
     await pending.save();
 
-    await sendOTPEmail(
-      pending.collegeEmail,
-      otp
-    );
-
-    res.json({
+    return res.json({
       success: true,
-      message: "A new OTP has been sent.",
+
+      message:
+        "New OTP sent successfully.",
+
+      email:
+        maskEmail(
+          pending.collegeEmail
+        ),
     });
   } catch (error) {
     console.error(
-      "RESEND OTP ERROR:",
+      "❌ /register/resend error:",
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message:
-        "Unable to resend OTP.",
+        "Server error while resending OTP.",
     });
   }
-});
+}
+
+app.post(
+  "/api/register/resend",
+  registerResend
+);
 
 // ============================================================
 // LOGIN
 // ============================================================
 
-app.post("/api/login", async (req, res) => {
-  try {
-    await connectDB();
-
-    const scholarId = cleanScholarId(
-      req.body.scholarId
-    );
-
-    const password = String(
-      req.body.password || ""
-    );
-
-    if (!scholarId || !password) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Scholar ID and password are required.",
-      });
-    }
-
-    const student =
-      await Student.findOne({
+app.post(
+  "/api/login",
+  async (req, res) => {
+    try {
+      const {
         scholarId,
-      });
+        password,
+      } = req.body;
 
-    if (!student) {
-      return res.status(401).json({
-        success: false,
-        message:
-          "Invalid Scholar ID or password.",
-      });
-    }
-
-    let passwordValid = false;
-
-    if (student.passwordHash) {
-      passwordValid =
-        await bcrypt.compare(
-          password,
-          student.passwordHash
+      const cleanId =
+        cleanScholarId(
+          scholarId
         );
-    } else if (student.password) {
-      passwordValid =
-        password === student.password;
 
-      if (passwordValid) {
-        student.passwordHash =
-          await bcrypt.hash(password, 12);
-        student.password = "";
-        await student.save();
+      if (
+        !cleanId ||
+        !password
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Scholar number and password are required.",
+        });
       }
-    }
 
-    if (!passwordValid) {
-      return res.status(401).json({
-        success: false,
-        message:
-          "Invalid Scholar ID or password.",
-      });
-    }
-
-    if (!student.emailVerified) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Please complete OTP verification first.",
-      });
-    }
-
-    const sessionToken =
-      generateSessionToken();
-
-    student.sessionTokenHash =
-      hashValue(sessionToken);
-
-    student.sessionExpiresAt =
-      new Date(
-        Date.now() +
-          SESSION_DURATION_MS
-      );
-
-    await student.save();
-
-    res.json({
-      success: true,
-      message: "Login successful.",
-      sessionToken,
-      sessionExpiresAt:
-        student.sessionExpiresAt,
-      student:
-        studentResponse(student),
-    });
-  } catch (error) {
-    console.error(
-      "LOGIN ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to login.",
-    });
-  }
-});
-
-// ============================================================
-// STUDENT STATUS
-// ============================================================
-
-app.get("/api/status", async (req, res) => {
-  try {
-    await connectDB();
-
-    const student =
-      await authenticateStudent(req);
-
-    if (!student) {
-      return res.status(401).json({
-        success: false,
-        message:
-          "Session expired. Please login again.",
-      });
-    }
-
-    const now = new Date();
-
-    const cooldown =
-      cooldownInfo(
-        student.lastClaimedAt,
-        now
-      );
-
-    res.json({
-      success: true,
-      serverNow:
-        now.toISOString(),
-
-      student:
-        studentResponse(student),
-
-      claimed:
-        cooldown.claimed,
-
-      canClaim:
-        cooldown.canClaim,
-
-      cooldownRemainingMs:
-        cooldown.cooldownRemainingMs,
-
-      nextClaimAt:
-        cooldown.nextClaimAt,
-    });
-  } catch (error) {
-    console.error(
-      "STATUS ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to fetch status.",
-    });
-  }
-});
-
-// ============================================================
-// CLAIM MEAL
-// ============================================================
-
-app.post("/api/claim", async (req, res) => {
-  try {
-    await connectDB();
-
-    const token =
-      getBearerToken(req);
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message:
-          "Please login again.",
-      });
-    }
-
-    const tokenHash =
-      hashValue(token);
-
-    const now = new Date();
-
-    const cutoff =
-      new Date(
-        now.getTime() -
-          MEAL_COOLDOWN_MS
-      );
-
-    /*
-      IMPORTANT:
-
-      The cooldown check is done inside the
-      MongoDB update itself.
-
-      This prevents two rapid requests from
-      both successfully claiming a meal.
-    */
-
-    const student =
-      await Student.findOneAndUpdate(
-        {
-          sessionTokenHash:
-            tokenHash,
-
-          sessionExpiresAt: {
-            $gt: now,
-          },
-
-          emailVerified: true,
-
-          $or: [
-            {
-              lastClaimedAt: null,
-            },
-            {
-              lastClaimedAt: {
-                $lte: cutoff,
-              },
-            },
-          ],
-        },
-        {
-          $set: {
-            lastClaimedAt: now,
-            lastClaimedMeal: "Meal",
-          },
-        },
-        {
-          new: true,
-        }
-      );
-
-    if (!student) {
-      const currentStudent =
+      const student =
         await Student.findOne({
-          sessionTokenHash:
-            tokenHash,
-          sessionExpiresAt: {
-            $gt: now,
-          },
+          scholarId: cleanId,
         });
 
-      if (!currentStudent) {
+      if (!student) {
         return res.status(401).json({
           success: false,
           message:
-            "Session expired. Please login again.",
+            "Invalid scholar number or password.",
         });
       }
 
-      const cooldown =
-        cooldownInfo(
-          currentStudent.lastClaimedAt,
-          now
-        );
+      let passwordCorrect =
+        false;
 
-      if (cooldown.claimed) {
-        return res.status(429).json({
+      if (student.passwordHash) {
+        passwordCorrect =
+          await bcrypt.compare(
+            password,
+            student.passwordHash
+          );
+      } else if (student.password) {
+        passwordCorrect =
+          student.password ===
+          password;
+
+        if (passwordCorrect) {
+          student.passwordHash =
+            await bcrypt.hash(
+              password,
+              12
+            );
+
+          student.password =
+            undefined;
+
+          await student.save();
+        }
+      }
+
+      if (!passwordCorrect) {
+        return res.status(401).json({
           success: false,
           message:
-            "Meal already received.",
-          claimed: true,
-          cooldownRemainingMs:
-            cooldown.cooldownRemainingMs,
-          nextClaimAt:
-            cooldown.nextClaimAt,
+            "Invalid scholar number or password.",
         });
       }
 
-      return res.status(409).json({
-        success: false,
-        message:
-          "Unable to claim the meal. Please try again.",
-      });
-    }
+      // If an old account exists that was created before
+      // OTP verification became the activation mechanism,
+      // require email verification.
+      if (!student.emailVerified) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "This account has not completed email verification.",
+        });
+      }
 
-    const nextClaimAt =
-      new Date(
-        now.getTime() +
-          MEAL_COOLDOWN_MS
+      const sessionToken =
+        generateSessionToken();
+
+      student.sessionTokenHash =
+        hashSessionToken(
+          sessionToken
+        );
+
+      // Login remains valid for 12 hours.
+      student.sessionExpiresAt =
+        new Date(
+          Date.now() +
+            12 * 60 * 60 * 1000
+        );
+
+      await student.save();
+
+      return res.json({
+        success: true,
+
+        student:
+          publicStudent(
+            student,
+            sessionToken
+          ),
+      });
+    } catch (error) {
+      console.error(
+        "❌ /api/login error:",
+        error
       );
 
-    res.json({
-      success: true,
-      message:
-        "Meal received successfully.",
-      claimed: true,
-      claimedAt:
-        now.toISOString(),
-      nextClaimAt:
-        nextClaimAt.toISOString(),
-      cooldownRemainingMs:
-        MEAL_COOLDOWN_MS,
-    });
-  } catch (error) {
-    console.error(
-      "CLAIM ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Unable to record meal claim.",
-    });
+      return res.status(500).json({
+        success: false,
+        message:
+          "Server error while logging in.",
+      });
+    }
   }
-});
+);
 
 // ============================================================
 // LOGOUT
 // ============================================================
 
-app.post("/api/logout", async (req, res) => {
-  try {
-    await connectDB();
+app.post(
+  "/api/logout",
+  async (req, res) => {
+    try {
+      const student =
+        await authenticateStudent(
+          req,
+          res
+        );
 
-    const token =
-      getBearerToken(req);
+      if (!student) {
+        return;
+      }
 
-    if (token) {
-      await Student.updateOne(
-        {
-          sessionTokenHash:
-            hashValue(token),
-        },
-        {
-          $set: {
-            sessionTokenHash: "",
-            sessionExpiresAt: null,
-          },
+      student.sessionTokenHash = "";
+      student.sessionExpiresAt = null;
+
+      await student.save();
+
+      return res.json({
+        success: true,
+        message: "Logged out.",
+      });
+    } catch (error) {
+      console.error(
+        "❌ /api/logout error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Could not logout.",
+      });
+    }
+  }
+);
+
+// ============================================================
+// STATUS
+// ============================================================
+
+app.get(
+  "/api/status",
+  async (req, res) => {
+    try {
+      const student =
+        await authenticateStudent(
+          req,
+          res
+        );
+
+      if (!student) {
+        return;
+      }
+
+      const lastClaimedAt =
+        student.lastClaimedAt
+          ? student.lastClaimedAt.getTime()
+          : null;
+
+      const cooldownMs =
+        2 * 60 * 60 * 1000;
+
+      let cooldownEndsAt = null;
+
+      let claimAvailable = true;
+
+      if (lastClaimedAt) {
+        cooldownEndsAt =
+          lastClaimedAt +
+          cooldownMs;
+
+        if (
+          Date.now() <
+          cooldownEndsAt
+        ) {
+          claimAvailable = false;
         }
-      );
-    }
+      }
 
-    res.json({
-      success: true,
-      message: "Logged out.",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Logout failed.",
-    });
-  }
-});
+      return res.json({
+        success: true,
 
-// ============================================================
-// STAFF LOGIN
-// ============================================================
+        student: publicStudent(
+          student
+        ),
 
-app.post("/api/staff/login", async (req, res) => {
-  try {
-    if (!STAFF_PIN) {
-      return res.status(503).json({
-        success: false,
-        message:
-          "Staff login is not configured on the server.",
+        claimed:
+          Boolean(
+            student.lastClaimedMeal
+          ),
+
+        lastClaimedMeal:
+          student.lastClaimedMeal ||
+          "",
+
+        lastClaimedAt:
+          student.lastClaimedAt ||
+          null,
+
+        claimAvailable,
+
+        cooldownEndsAt,
+
+        cooldownRemainingMs:
+          claimAvailable
+            ? 0
+            : Math.max(
+                0,
+                cooldownEndsAt -
+                  Date.now()
+              ),
       });
-    }
-
-    const pin = String(
-      req.body.pin || ""
-    );
-
-    if (!pin) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Staff password is required.",
-      });
-    }
-
-    if (pin !== STAFF_PIN) {
-      return res.status(401).json({
-        success: false,
-        message:
-          "Invalid staff password.",
-      });
-    }
-
-    /*
-      Stateless short-lived staff token.
-
-      The token is derived from the private staff
-      PIN and an expiry timestamp.
-    */
-
-    const expiresAt =
-      Date.now() +
-      4 * 60 * 60 * 1000;
-
-    const payload =
-      Buffer.from(
-        `staff.${expiresAt}`
-      ).toString("base64url");
-
-    const signature =
-      hashValue(
-        `${payload}.${STAFF_PIN}`
+    } catch (error) {
+      console.error(
+        "❌ /api/status error:",
+        error
       );
 
-    const staffToken =
-      `${payload}.${signature}`;
-
-    res.json({
-      success: true,
-      message:
-        "Staff login successful.",
-      staffToken,
-      expiresAt:
-        new Date(expiresAt).toISOString(),
-    });
-  } catch (error) {
-    console.error(
-      "STAFF LOGIN ERROR:",
-      error
-    );
-
-    res.status(500).json({
-      success: false,
-      message:
-        "Staff login failed.",
-    });
-  }
-});
-
-// ============================================================
-// STAFF TOKEN VERIFICATION
-// ============================================================
-
-function verifyStaffToken(token) {
-  if (!STAFF_PIN || !token) {
-    return false;
-  }
-
-  const parts =
-    token.split(".");
-
-  if (parts.length !== 2) {
-    return false;
-  }
-
-  const payload = parts[0];
-  const signature = parts[1];
-
-  const expected =
-    hashValue(
-      `${payload}.${STAFF_PIN}`
-    );
-
-  if (signature !== expected) {
-    return false;
-  }
-
-  try {
-    const decoded =
-      Buffer.from(
-        payload,
-        "base64url"
-      ).toString("utf8");
-
-    const [type, expiry] =
-      decoded.split(".");
-
-    if (type !== "staff") {
-      return false;
+      return res.status(500).json({
+        success: false,
+        message:
+          "Server error while checking status.",
+      });
     }
-
-    if (
-      Number(expiry) <= Date.now()
-    ) {
-      return false;
-    }
-
-    return true;
-  } catch {
-    return false;
   }
-}
-
-function requireStaffToken(req, res, next) {
-  const token =
-    getBearerToken(req);
-
-  if (!verifyStaffToken(token)) {
-    return res.status(401).json({
-      success: false,
-      message:
-        "Staff session expired.",
-    });
-  }
-
-  next();
-}
+);
 
 // ============================================================
-// RESET ONE
+// CLAIM MEAL
+// ============================================================
+//
+// IMPORTANT:
+// There are intentionally NO meal-time restrictions.
+//
+// The student can claim whenever the card is available.
+// The only restriction is:
+//     one successful claim every 2 hours.
+//
 // ============================================================
 
 app.post(
-  "/api/reset-one",
-  requireStaffToken,
+  "/api/claim",
   async (req, res) => {
     try {
-      await connectDB();
-
-      const scholarId =
-        cleanScholarId(
-          req.body.scholarId
+      const student =
+        await authenticateStudent(
+          req,
+          res
         );
 
-      if (!scholarId) {
-        return res.status(400).json({
+      if (!student) {
+        return;
+      }
+
+      if (!student.emailVerified) {
+        return res.status(403).json({
           success: false,
+          status: "denied",
           message:
-            "Scholar ID is required.",
+            "Email verification is required.",
         });
       }
 
-      const student =
+      const now = new Date();
+
+      const cooldownMs =
+        2 * 60 * 60 * 1000;
+
+      if (
+        student.lastClaimedAt &&
+        now.getTime() -
+          student.lastClaimedAt.getTime() <
+          cooldownMs
+      ) {
+        const availableAt =
+          new Date(
+            student.lastClaimedAt.getTime() +
+              cooldownMs
+          );
+
+        const remaining =
+          Math.max(
+            0,
+            availableAt.getTime() -
+              now.getTime()
+          );
+
+        return res.status(429).json({
+          success: false,
+          status: "cooldown",
+
+          message:
+            "Meal already received. Please wait until the 2-hour cooldown ends.",
+
+          lastClaimedMeal:
+            student.lastClaimedMeal ||
+            "Meal",
+
+          lastClaimedAt:
+            student.lastClaimedAt,
+
+          cooldownEndsAt:
+            availableAt,
+
+          cooldownRemainingMs:
+            remaining,
+        });
+      }
+
+      /*
+       * We don't impose breakfast/lunch/dinner
+       * restrictions.
+       *
+       * Instead we record the claim as a live
+       * mess claim.
+       */
+
+      const claimLabel =
+        "Mess Meal";
+
+      /*
+       * Atomic update.
+       *
+       * This prevents two almost-simultaneous
+       * requests from both successfully claiming
+       * the meal.
+       */
+
+      const previousCutoff =
+        new Date(
+          now.getTime() -
+            cooldownMs
+        );
+
+      const updatedStudent =
         await Student.findOneAndUpdate(
           {
-            scholarId,
+            _id: student._id,
+
+            emailVerified: true,
+
+            $or: [
+              {
+                lastClaimedAt:
+                  null,
+              },
+
+              {
+                lastClaimedAt: {
+                  $lte:
+                    previousCutoff,
+                },
+              },
+            ],
           },
+
           {
             $set: {
-              lastClaimedAt: null,
-              lastClaimedMeal: "",
+              lastClaimedMeal:
+                claimLabel,
+
+              lastClaimedAt:
+                now,
             },
           },
+
           {
             new: true,
           }
         );
 
-      if (!student) {
-        return res.status(404).json({
+      if (!updatedStudent) {
+        const latest =
+          await Student.findById(
+            student._id
+          );
+
+        const availableAt =
+          latest?.lastClaimedAt
+            ? new Date(
+                latest.lastClaimedAt.getTime() +
+                  cooldownMs
+              )
+            : now;
+
+        return res.status(429).json({
           success: false,
+          status: "cooldown",
+
           message:
-            "Student not found.",
+            "Meal already received. Please wait until the 2-hour cooldown ends.",
+
+          lastClaimedMeal:
+            latest?.lastClaimedMeal ||
+            "Meal",
+
+          lastClaimedAt:
+            latest?.lastClaimedAt ||
+            null,
+
+          cooldownEndsAt:
+            availableAt,
+
+          cooldownRemainingMs:
+            Math.max(
+              0,
+              availableAt.getTime() -
+                Date.now()
+            ),
         });
       }
 
-      res.json({
+      console.log(
+        `🍽️ MEAL CLAIMED: ${updatedStudent.scholarId} at ${now.toISOString()}`
+      );
+
+      return res.json({
         success: true,
+
+        status: "claimed",
+
         message:
-          `Meal claim reset for ${student.scholarId}.`,
+          "Meal received successfully.",
+
+        meal:
+          claimLabel,
+
+        claimedAt:
+          updatedStudent.lastClaimedAt,
+
+        cooldownEndsAt:
+          new Date(
+            now.getTime() +
+              cooldownMs
+          ),
+
+        cooldownDurationMs:
+          cooldownMs,
       });
     } catch (error) {
       console.error(
-        "RESET ONE ERROR:",
+        "❌ /api/claim error:",
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message:
-          "Unable to reset meal.",
+          "Server error while claiming meal.",
       });
     }
   }
 );
 
 // ============================================================
-// RESET ALL
+// LEGACY ROUTES
 // ============================================================
+//
+// These intentionally do NOT provide QR scanning anymore.
+// They return a clear message so an old cached frontend
+// cannot silently perform the previous staff-scan workflow.
+//
+
+app.post(
+  "/api/scan",
+  (req, res) => {
+    return res.status(410).json({
+      success: false,
+      message:
+        "QR scanning has been removed. Students now claim meals directly from their digital card.",
+    });
+  }
+);
+
+app.post(
+  "/api/reset-one",
+  (req, res) => {
+    return res.status(410).json({
+      success: false,
+      message:
+        "The old staff reset system has been removed.",
+    });
+  }
+);
 
 app.post(
   "/api/reset-all",
-  requireStaffToken,
-  async (req, res) => {
-    try {
-      await connectDB();
-
-      const result =
-        await Student.updateMany(
-          {},
-          {
-            $set: {
-              lastClaimedAt: null,
-              lastClaimedMeal: "",
-            },
-          }
-        );
-
-      res.json({
-        success: true,
-        message:
-          "All meal claims have been reset.",
-        modified:
-          result.modifiedCount,
-      });
-    } catch (error) {
-      console.error(
-        "RESET ALL ERROR:",
-        error
-      );
-
-      res.status(500).json({
-        success: false,
-        message:
-          "Unable to reset all claims.",
-      });
-    }
+  (req, res) => {
+    return res.status(410).json({
+      success: false,
+      message:
+        "The old staff reset system has been removed.",
+    });
   }
 );
 
 // ============================================================
-// FRONTEND
+// STATIC WEBSITE
 // ============================================================
 
 app.use(
   express.static(
-    path.join(__dirname, "public")
+    path.join(
+      __dirname,
+      "public"
+    )
   )
 );
 
-app.get("/", (req, res) => {
-  res.sendFile(
-    path.join(
-      __dirname,
-      "public",
-      "index.html"
-    )
-  );
-});
+app.get(
+  "*",
+  (req, res) => {
+    res.sendFile(
+      path.join(
+        __dirname,
+        "public",
+        "index.html"
+      )
+    );
+  }
+);
 
 // ============================================================
 // START SERVER
 // ============================================================
 
-app.listen(PORT, async () => {
-  console.log(
-    `MANIT Digital Mess Card running on port ${PORT}`
-  );
-
-  try {
-    await connectDB();
-    console.log("MongoDB connected.");
-  } catch (error) {
-    console.error(
-      "MongoDB connection failed:",
-      error.message
+app.listen(
+  PORT,
+  () => {
+    console.log(
+      `🚀 MANIT Digital Mess Card running on port ${PORT}`
     );
   }
-});
+);
